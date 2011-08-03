@@ -30,7 +30,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>10</number>
       </property>
       <widget class="QWidget" name="tabMainResponses">
        <attribute name="title">
@@ -2646,7 +2646,7 @@ ${global_cookie_jar}</string>
         <item>
          <widget class="QTabWidget" name="cookiesTabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="cookiesCookieJarTab">
            <attribute name="title">
@@ -2870,6 +2870,40 @@ ${global_cookie_jar}</string>
            <attribute name="title">
             <string>Flash Cookies</string>
            </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_59">
+            <item>
+             <widget class="QSplitter" name="splitter_10">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QTreeWidget" name="cookiesFlashCookiesTreeWidget">
+               <column>
+                <property name="text">
+                 <string>Domain</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Name</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Value</string>
+                </property>
+               </column>
+              </widget>
+              <widget class="QFrame" name="frame_13">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+              </widget>
+             </widget>
+            </item>
+           </layout>
           </widget>
           <widget class="QWidget" name="cookiesLocalStorageTab">
            <attribute name="title">

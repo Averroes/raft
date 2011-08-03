@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'RaftMain.ui'
 #
-# Created: Tue Aug  2 17:20:27 2011
+# Created: Tue Aug  2 21:15:41 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -1411,6 +1411,18 @@ class Ui_MainWindow(object):
         self.cookiesTabWidget.addTab(self.cookiesCookieJarTab, _fromUtf8(""))
         self.cookiesFlashCookiesTab = QtGui.QWidget()
         self.cookiesFlashCookiesTab.setObjectName(_fromUtf8("cookiesFlashCookiesTab"))
+        self.verticalLayout_59 = QtGui.QVBoxLayout(self.cookiesFlashCookiesTab)
+        self.verticalLayout_59.setObjectName(_fromUtf8("verticalLayout_59"))
+        self.splitter_10 = QtGui.QSplitter(self.cookiesFlashCookiesTab)
+        self.splitter_10.setOrientation(QtCore.Qt.Vertical)
+        self.splitter_10.setObjectName(_fromUtf8("splitter_10"))
+        self.cookiesFlashCookiesTreeWidget = QtGui.QTreeWidget(self.splitter_10)
+        self.cookiesFlashCookiesTreeWidget.setObjectName(_fromUtf8("cookiesFlashCookiesTreeWidget"))
+        self.frame_13 = QtGui.QFrame(self.splitter_10)
+        self.frame_13.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.frame_13.setFrameShadow(QtGui.QFrame.Raised)
+        self.frame_13.setObjectName(_fromUtf8("frame_13"))
+        self.verticalLayout_59.addWidget(self.splitter_10)
         self.cookiesTabWidget.addTab(self.cookiesFlashCookiesTab, _fromUtf8(""))
         self.cookiesLocalStorageTab = QtGui.QWidget()
         self.cookiesLocalStorageTab.setObjectName(_fromUtf8("cookiesLocalStorageTab"))
@@ -1784,7 +1796,7 @@ class Ui_MainWindow(object):
         self.toolBar.addAction(self.actionConfig)
 
         self.retranslateUi(MainWindow)
-        self.mainTabWidget.setCurrentIndex(0)
+        self.mainTabWidget.setCurrentIndex(10)
         self.reqTabWidget.setCurrentIndex(1)
         self.reqRespTabWidget.setCurrentIndex(-1)
         self.webFuzzTab.setCurrentIndex(0)
@@ -1796,7 +1808,7 @@ class Ui_MainWindow(object):
         self.tabDataBank.setCurrentIndex(0)
         self.tabWidgetDataBankFormFill.setCurrentIndex(0)
         self.tabScoping.setCurrentIndex(0)
-        self.cookiesTabWidget.setCurrentIndex(0)
+        self.cookiesTabWidget.setCurrentIndex(1)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QObject.connect(self.actionQuit, QtCore.SIGNAL(_fromUtf8("triggered()")), MainWindow.close)
         QtCore.QObject.connect(self.quitButton, QtCore.SIGNAL(_fromUtf8("clicked()")), MainWindow.close)
@@ -2056,6 +2068,9 @@ class Ui_MainWindow(object):
         self.cookiesCookieJarSaveButton.setText(QtGui.QApplication.translate("MainWindow", "Save", None, QtGui.QApplication.UnicodeUTF8))
         self.cookiesCookieJarDeleteButton.setText(QtGui.QApplication.translate("MainWindow", "Delete", None, QtGui.QApplication.UnicodeUTF8))
         self.cookiesTabWidget.setTabText(self.cookiesTabWidget.indexOf(self.cookiesCookieJarTab), QtGui.QApplication.translate("MainWindow", "Cookie Jar", None, QtGui.QApplication.UnicodeUTF8))
+        self.cookiesFlashCookiesTreeWidget.headerItem().setText(0, QtGui.QApplication.translate("MainWindow", "Domain", None, QtGui.QApplication.UnicodeUTF8))
+        self.cookiesFlashCookiesTreeWidget.headerItem().setText(1, QtGui.QApplication.translate("MainWindow", "Name", None, QtGui.QApplication.UnicodeUTF8))
+        self.cookiesFlashCookiesTreeWidget.headerItem().setText(2, QtGui.QApplication.translate("MainWindow", "Value", None, QtGui.QApplication.UnicodeUTF8))
         self.cookiesTabWidget.setTabText(self.cookiesTabWidget.indexOf(self.cookiesFlashCookiesTab), QtGui.QApplication.translate("MainWindow", "Flash Cookies", None, QtGui.QApplication.UnicodeUTF8))
         self.cookiesLocalStorageTreeWidget.headerItem().setText(0, QtGui.QApplication.translate("MainWindow", "Domain", None, QtGui.QApplication.UnicodeUTF8))
         self.cookiesLocalStorageTreeWidget.headerItem().setText(1, QtGui.QApplication.translate("MainWindow", "Name", None, QtGui.QApplication.UnicodeUTF8))

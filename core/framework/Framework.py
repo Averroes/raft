@@ -87,6 +87,9 @@ class Framework(QObject):
     def get_web_db_path(self):
         return self.web_db_path
 
+    def get_user_home_dir(self):
+        return self.home_dir
+
     def getContentExtractor(self):
         return self._contentExtractor
 

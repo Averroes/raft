@@ -24,6 +24,7 @@ from PyQt4.QtCore import Qt, QObject, SIGNAL
 from PyQt4.QtGui import *
 
 from core.data.LocalStorage import LocalStorage
+from core.data.FlashCookies import FlashCookies
 
 class CookiesTab(QObject):
     def __init__(self, framework, mainWindow):
@@ -41,6 +42,7 @@ class CookiesTab(QObject):
         self.mainWindow.cookiesLocalStorageDeleteButton.clicked.connect(self.handle_localStorageDelete_clicked)
 
         self.localStorage = LocalStorage(self.framework)
+        self.flashCookies = FlashCookies(self.framework)
         
         self.Data = None
         self.cursor = None
@@ -68,7 +70,7 @@ class CookiesTab(QObject):
             self.populate_cookie_jar_tree()
         elif 1 == index:
             # flash
-            pass
+            self.populate_flash_cookies_tree()
         elif 2 == index:
             self.populate_local_storage_tree()
         else:
@@ -253,3 +255,22 @@ class CookiesTab(QObject):
         self.mainWindow.cookiesLocalStorageNameEdit.setText(str(name))
         self.mainWindow.cookiesLocalStorageValueEdit.setText(str(value))
 
+    def populate_flash_cookies_tree(self):
+        self.mainWindow.cookiesFlashCookiesTreeWidget.clear()
+        flashcookies = self.flashCookies.read_flashcookies()
+        for domain in flashcookies.keys():
+            domainItems = self.mainWindow.cookiesFlashCookiesTreeWidget.findItems(domain, Qt.MatchExactly)
+            if len(domainItems) > 0:
+                # append
+                parentItem = domainItems[-1]
+            else:
+                parentItem = QTreeWidgetItem([
+                        domain,
+                        '',
+                        ''
+                        ])
+                self.mainWindow.cookiesFlashCookiesTreeWidget.addTopLevelItem(parentItem)
+            for element in flashcookies[domain]:
+                pass
+
+        
