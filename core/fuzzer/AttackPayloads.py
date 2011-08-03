@@ -49,7 +49,7 @@ class AttackPayloads(object):
             self.xss_attacks = self.file_read(self.payloads_dir + self.xss_file)
         return self.xss_attacks
     
-    # file_read is stolen from pywebfuzz, courtesy of Nathan Hamiel
+    # file_read is modified from pywebfuzz, courtesy of Nathan
     def file_read(self,location):
         """ Read the file contents and return the results. Used in the construction
         of the values for the lists """ 

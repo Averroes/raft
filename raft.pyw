@@ -188,6 +188,8 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         # TODO: currentChanged no longer available 
         self.responsesDataTree.clicked.connect(self.fill_bottom)
         self.responsesDataTree.activated.connect(self.fill_bottom)
+        # TODO: Setup sorting for the responsesDataTree.  The following enables the QTreeView for sorting, but doesn't actually work.
+        #self.responsesDataTree.setSortingEnabled(True)
         
         #analysis tab connections
         self.mainAnalysisTreeWidget.clicked.connect(self.analysistree_handle_click)
@@ -567,7 +569,6 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
                 if founddata is not None:
                     self.set_analysis_request_response_highlight('response',founddata)
 
-            
     def set_analysis_request_response_highlight(self, section, searchtext):
         self.mainAnalysisTabRequestResponse.set_search(section, searchtext)
 
@@ -762,6 +763,8 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         analyzerdict=TreeWidgetTools.obj_list_to_dict(self.analyzerlist,valueattr='isenabled')
         
         TreeWidgetTools.populate_tree_widget(dialog.analyzerList,analyzerdict)
+        dialog.analyzerList.setSortingEnabled(True)
+        dialog.analyzerList.sortItems(0,0)
         #generated.setParent(dialog.LeftWidget)
         #dialog.verticalLayoutTopLeft.addWidget(generated)
         

@@ -25,6 +25,8 @@ import os
 import sys
 import struct
 
+#from core.fuzzer import AttackPayloads
+
 from ...AbstractAnalyzer import AbstractAnalyzer
 
 
