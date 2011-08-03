@@ -122,8 +122,6 @@ class Timing(AbstractAnalyzer):
                 self.hosts[host][path]['max'] = elapsedtime
                     
     def postanalysis(self,results):
-        #pp = pprint.PrettyPrinter(indent=4)
-        #pp.pprint(self.hosts)
         for h in self.hosts.iterkeys():
             host = self.hosts[h]
             output = "total requests: %5d  min: %5d   max: %5d   ave: %5d" % (host['count'],host['min'], host['max'], host['total']/host['count'])
@@ -135,8 +133,5 @@ class Timing(AbstractAnalyzer):
                                      certainty=None,
                                      context=h
                                      )
-        
-        #print "Requestdate:  " + requestdate
-        #print "Responsedate: " + responsedate
         
         

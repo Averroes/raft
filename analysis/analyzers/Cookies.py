@@ -126,7 +126,7 @@ class FindInsecureCookies(AbstractAnalyzer):
             dataoutput += "'%s':'%s'" % (self.outputPathRestrictedHeader,outputPR)
         
         if len(dataoutput) > 0:
-            print found.group(0).__class__
+            #print found.group(0).__class__
             results.addPageResult(pageid=target.responseId, 
                                 url=target.responseUrl,
                                 type=self.friendlyname,
