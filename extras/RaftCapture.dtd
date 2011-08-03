@@ -1,0 +1,22 @@
+<!-- RAFT Capture XML DTD version 1.0 -->
+<!ELEMENT raft (capture*)>
+<!ATTLIST raft version CDATA #IMPLIED>
+<!ELEMENT capture (request, response?, analysis?)>
+<!ELEMENT request (method?, url?, host?, hostip?, datetime?, headers, body?)>
+<!ELEMENT response (status?, content_type?, content_length?, elapsed?, headers, body?)>
+<!ELEMENT analysis (notes?, confirmed?)>
+<!ELEMENT method (#PCDATA)>
+<!ELEMENT url (#PCDATA)>
+<!ELEMENT host (#PCDATA)>
+<!ELEMENT hostip (#PCDATA)>
+<!ELEMENT datetime (#PCDATA)>
+<!ELEMENT headers (#PCDATA)>
+<!ATTLIST headers encoding (none|base64) "none">
+<!ELEMENT body (#PCDATA)>
+<!ATTLIST body encoding (none|base64) "none">
+<!ELEMENT status (#PCDATA)>
+<!ELEMENT content_type (#PCDATA)>
+<!ELEMENT content_length (#PCDATA)>
+<!ELEMENT elapsed (#PCDATA)>
+<!ELEMENT notes (#PCDATA)>
+<!ELEMENT confirmed (#PCDATA)>
