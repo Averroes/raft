@@ -154,4 +154,8 @@ defaultconfig=\
                     86: 'server object error',
                     87: 'supplied argument is not a valid MySQL result resource',
                     88: 'unexpected end of SQL command'},
+ 'Local Storage Detected': {'HTML5 Local Storage':'localStorage',
+                            'dojox multiplatform storage library':'dojox.storage',
+                            'Web SQL Database Object':'openDatabase',
+                            'Web SQL Database Execute':'executeSql'},
  'Other Strings': {'Test': 'Test'}}
