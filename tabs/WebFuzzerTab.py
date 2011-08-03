@@ -45,6 +45,7 @@ from core.web.RenderingWebView import RenderingWebView
 from widgets.ResponsesContextMenuWidget import ResponsesContextMenuWidget
 from widgets.MiniResponseRenderWidget import MiniResponseRenderWidget
 from core.network.InMemoryCookieJar import InMemoryCookieJar
+from core.fuzzer import AttackPayloads
 
 SQLi = """' or 1=1--
 %27
@@ -94,6 +95,8 @@ class WebFuzzerTab(QObject):
         self.re_replacement = re.compile(r'\$\{(\w+)\}')
         
         self.setup_fuzzer_tab()
+        
+        self.pending_fuzz_requests = None
 
         self.Data = None
         self.cursor = None
@@ -291,6 +294,8 @@ class WebFuzzerTab(QObject):
             self.mainWindow.wfStdStartButton.setText('Start Attack')
             return
         
+        self.pending_fuzz_requests = {}
+        
         url = str(self.mainWindow.wfStdUrlEdit.text())
         # Will this work?
         self.framework.set_raft_config_value('wfStdUrlEdit', url)
@@ -298,40 +303,43 @@ class WebFuzzerTab(QObject):
         method = str(self.mainWindow.stdFuzzerReqMethod.currentText())
         
         replacements = self.build_replacements(method, url)
-        
-        (method, url, headers, body, use_global_cookie_jar) = self.process_template(url, templateText, replacements)
 
         sequenceId = None
         if self.mainWindow.wfStdPreChk.isChecked():
             sequenceId = str(self.mainWindow.wfStdPreBox.itemData(self.mainWindow.wfStdPreBox.currentIndex()).toString())
         
-        self.requestRunner = RequestRunner(self.framework, self)
-        if use_global_cookie_jar:
-            self.requesterCookieJar = self.framework.get_global_cookie_jar()
-        else:
-            self.requesterCookieJar = InMemoryCookieJar(self.framework, self)
-            
-        self.requestRunner.setup(self.fuzzer_response_received, self.requesterCookieJar, sequenceId)
-        
         # Fuzzing stuff
         payload_mapping = self.create_payload_map()
+
         
         re_parameters = re.compile(r'(\$\{\w+\})')
         re_parameter_name = re.compile(r'^\$\{(\w+)\}$')
         
         template_items = []
         parameter_names = set()
-        for item in re_parameters.split(template):
+        for item in re_parameters.split(templateText):
             m = re_parameter_name.match(item)
             if m:
                 name = m.group(1)
-                parameter_names.add(name)
-                template_items.append(('parameter', name)) # template item type and name
+                if name in ["method", "request_uri", "global_cookie_jar"]:
+                    template_items.append(('text', item))
+                else:
+                    parameter_names.add(name)
+                    template_items.append(('parameter', name)) # template item type and name
             else:
                 template_items.append(('text', item)) # text replacement
                 
         store_template_items = json.dumps(template_items)
         store_payload_mapping = json.dumps(payload_mapping)
+        
+        Payloads = AttackPayloads.AttackPayloads()
+        fuzz_payloads = {}
+        for item in payload_mapping:
+            if "SQLi" in payload_mapping[item]:
+                fuzz_payloads["SQLi"] = Payloads.get_sqli_attacks()
+            elif "XSS" in payload_mapping[item]:
+                fuzz_payloads["XSS"] = Payloads.get_xss_attacks()
+        
         
         test_slots = []
         counters = []
@@ -354,8 +362,8 @@ class WebFuzzerTab(QObject):
         position_end = len(counters) - 1
         position = position_end
         
-        
         finished = False
+        first = True
         while not finished:
             data = {}
             for j in range(0, len(test_slots)):
@@ -370,9 +378,23 @@ class WebFuzzerTab(QObject):
                     # assuming form encoding type with this hack
                     template_io.write(data[temp_value].replace(' ', '+').replace('&','%26').replace('=','%3D'))
         
-            request = template_io.getvalue()
-            print('%s%s%s' % ('-'*32, request, '-'*32))
-        
+            templateText = template_io.getvalue()
+            context = uuid.uuid4().hex
+            # print('%s%s%s' % ('-'*32, request, '-'*32))
+            (method, url, headers, body, use_global_cookie_jar) = self.process_template(url, templateText, replacements)
+            
+            if first:
+                    self.mainWindow.wfStdStartButton.setText('Cancel')
+                    if use_global_cookie_jar:
+                        self.fuzzRequesterCookieJar = self.framework.get_global_cookie_jar()
+                    else:
+                        self.fuzzRequesterCookieJar = InMemoryCookieJar(self.framework, self)
+                    self.requestRunner = RequestRunner(self.framework, self)
+                    self.requestRunner.setup(self.fuzzer_response_received, self.fuzzRequesterCookieJar, sequenceId)
+                    first = False
+
+            self.pending_fuzz_requests[context] = self.requestRunner.queue_request(method, url, headers, body, context)
+            
             # increment to next test
             counters[position] = (counters[position] + 1) % (tests_count[position])
             while position >= 0 and counters[position] == 0:
@@ -382,12 +404,8 @@ class WebFuzzerTab(QObject):
             if position == -1:
                 finished = True
             else:
-                position = position_end
-        # end fuzzing stuff
+                position = position_end        
         
-
-        self.pending_request = self.requestRunner.queue_request(method, url, headers, body)
-        self.mainWindow.wfStdStartButton.setText('Cancel')
         self.miniResponseRenderWidget.clear_response_render()
                 
        
@@ -441,6 +459,7 @@ class WebFuzzerTab(QObject):
         headers_dict = {}
         first = True
         for line in headers.splitlines():
+            print(line)
             if not line:
                 break
             if '$' in line:
