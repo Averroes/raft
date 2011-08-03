@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'RaftMain.ui'
 #
-# Created: Tue Aug  2 21:15:41 2011
+# Created: Wed Aug  3 09:44:47 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -1796,7 +1796,7 @@ class Ui_MainWindow(object):
         self.toolBar.addAction(self.actionConfig)
 
         self.retranslateUi(MainWindow)
-        self.mainTabWidget.setCurrentIndex(10)
+        self.mainTabWidget.setCurrentIndex(0)
         self.reqTabWidget.setCurrentIndex(1)
         self.reqRespTabWidget.setCurrentIndex(-1)
         self.webFuzzTab.setCurrentIndex(0)
@@ -1808,7 +1808,7 @@ class Ui_MainWindow(object):
         self.tabDataBank.setCurrentIndex(0)
         self.tabWidgetDataBankFormFill.setCurrentIndex(0)
         self.tabScoping.setCurrentIndex(0)
-        self.cookiesTabWidget.setCurrentIndex(1)
+        self.cookiesTabWidget.setCurrentIndex(0)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QObject.connect(self.actionQuit, QtCore.SIGNAL(_fromUtf8("triggered()")), MainWindow.close)
         QtCore.QObject.connect(self.quitButton, QtCore.SIGNAL(_fromUtf8("clicked()")), MainWindow.close)

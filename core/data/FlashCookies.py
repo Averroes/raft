@@ -42,6 +42,9 @@ class FlashCookies:
 
     def visit_flashcookies_files(self, obj, dirname, entries):
         for entry in entries:
+            if not obj.has_key('randomized'):
+                if entry not in ('.','..'):
+                    obj['randomized'] = entry
             if entry.endswith('.sol'):
                 self.flashcookies_files.append((dirname, entry))
 
@@ -60,17 +63,23 @@ class FlashCookies:
         base_path = self.get_base_path()
         self.flashcookies_files = []
         self.flashcookies = {}
-
-        os.path.walk(base_path, self.visit_flashcookies_files, None)
+        user_dir = {}
+        os.path.walk(base_path, self.visit_flashcookies_files, user_dir)
         for item in self.flashcookies_files:
             try:
                 dirname, entry = item
                 filename = os.path.join(dirname, entry)
-                n = dirname.rfind(os.path.sep)
-                domain = dirname[n+1:]
-                if not self.flashcookies.has_key(domain):
-                    self.flashcookies[domain] = []
-                self.flashcookies[domain].append(sol.load(filename))
+                n = dirname.find(user_dir['randomized'])
+                if n > -1:
+                    domain = dirname[n+len(user_dir['randomized'])+1:]
+                    n = domain.find(os.path.sep)
+                    if n > -1:
+                        domain = domain[:n]
+                    if not self.flashcookies.has_key(domain):
+                        self.flashcookies[domain] = []
+                    lso = sol.load(filename)
+                    print(lso)
+                    self.flashcookies[domain].append(lso)
             except Exception, error:
                 self.framework.report_exception(error)
         

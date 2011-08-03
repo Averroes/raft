@@ -271,6 +271,34 @@ class CookiesTab(QObject):
                         ])
                 self.mainWindow.cookiesFlashCookiesTreeWidget.addTopLevelItem(parentItem)
             for element in flashcookies[domain]:
-                pass
+                item = QTreeWidgetItem([
+                        domain,
+                        str(element.name),
+                        '',
+                        ])
+                parentItem.addChild(item)
+                self.add_flash_name_value_item(item, domain, element)
+
+    def add_flash_name_value_item(self, parentItem, domain, element):
+        if isinstance(element, dict):
+            for name in element.keys():
+                value = element[name]
+                if isinstance(value, dict):
+                    item = QTreeWidgetItem([
+                            '',
+                            str(name),
+                            '',
+                            ])
+                    parentItem.addChild(item)
+                    self.add_flash_name_value_item(item, domain, value)
+                else:
+                    item = QTreeWidgetItem([
+                            '',
+                            str(name),
+                            str(value),
+                            ])
+                    parentItem.addChild(item)
+            
+
 
         

@@ -30,7 +30,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>10</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabMainResponses">
        <attribute name="title">
@@ -2646,7 +2646,7 @@ ${global_cookie_jar}</string>
         <item>
          <widget class="QTabWidget" name="cookiesTabWidget">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="cookiesCookieJarTab">
            <attribute name="title">
