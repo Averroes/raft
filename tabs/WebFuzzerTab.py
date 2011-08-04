@@ -69,10 +69,11 @@ class WebFuzzerTab(QObject):
         self.mainWindow.wfPay5FuzzRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay5StaticRadio.toggled.connect(self.handle_payload_toggled)
         
-        # inserted to initially fill the sequences box. Need to do this better
+        # inserted to initially fill the sequences box.
+        # ToDo: Need to do this better
         self.mainWindow.mainTabWidget.currentChanged.connect(self.fill_sequences)
         self.mainWindow.stdFuzzTab.currentChanged.connect(self.fill_sequences)
-        self.mainWindow.webFuzzTab.currentChanged.connect(self.fill_payloads)
+        # self.mainWindow.webFuzzTab.currentChanged.connect(self.fill_payloads)
         self.mainWindow.wfStdAddButton.clicked.connect(self.insert_payload_marker)
         self.mainWindow.wfStdStartButton.clicked.connect(self.start_fuzzing_clicked)
         
@@ -86,6 +87,8 @@ class WebFuzzerTab(QObject):
         
         self.setup_fuzzer_tab()
         
+        # Fill the payloads combo boxes on init
+        self.fill_payloads()
         self.pending_fuzz_requests = None
 
         self.Data = None
