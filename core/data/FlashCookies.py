@@ -78,7 +78,6 @@ class FlashCookies:
                     if not self.flashcookies.has_key(domain):
                         self.flashcookies[domain] = []
                     lso = sol.load(filename)
-                    print(lso)
                     self.flashcookies[domain].append(lso)
             except Exception, error:
                 self.framework.report_exception(error)
