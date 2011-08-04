@@ -831,6 +831,13 @@ ${global_cookie_jar}</string>
                   </item>
                  </layout>
                 </item>
+                <item>
+                 <widget class="QProgressBar" name="fuzzerStandardProgressBar">
+                  <property name="value">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
                </layout>
               </widget>
               <widget class="QWidget" name="tab_20">
@@ -857,6 +864,30 @@ ${global_cookie_jar}</string>
                    </property>
                   </widget>
                  </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_32">
+                  <item>
+                   <spacer name="horizontalSpacer_19">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="fuzzerHistoryClearButton">
+                    <property name="text">
+                     <string>Clear Results</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                </layout>
               </widget>

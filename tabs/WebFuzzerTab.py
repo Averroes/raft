@@ -68,6 +68,8 @@ class WebFuzzerTab(QObject):
         self.mainWindow.wfPay4StaticRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay5FuzzRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay5StaticRadio.toggled.connect(self.handle_payload_toggled)
+
+        self.mainWindow.fuzzerHistoryClearButton.clicked.connect(self.fuzzer_history_clear_button_clicked)
         
         # inserted to initially fill the sequences box.
         # ToDo: Need to do this better
@@ -98,6 +100,7 @@ class WebFuzzerTab(QObject):
     def db_attach(self):
         self.Data = self.framework.getDB()
         self.cursor = self.Data.allocate_thread_cursor()
+        self.fill_fuzzers()
 
     def db_detach(self):
         self.close_cursor()
@@ -117,7 +120,12 @@ class WebFuzzerTab(QObject):
         self.mainWindow.fuzzerHistoryTreeView.clicked.connect(self.handle_fuzzer_history_clicked)
         self.responsesContextMenu = ResponsesContextMenuWidget(self.framework, self.fuzzerHistoryDataModel, self.mainWindow.fuzzerHistoryTreeView, self)
 
-        self.miniResponseRenderWidget = MiniResponseRenderWidget(self.framework, self.mainWindow.reqRespTabWidget, self)
+    def fill_fuzzers(self):
+        history_items = []
+        for row in self.Data.get_all_fuzzer_history(self.cursor):
+            response_item = [m or '' for m in row]
+            history_items.append(response_item)
+        self.fuzzerHistoryDataModel.append_data(history_items)
         
     def fuzzer_history_item_double_clicked(self, index):
         Id = interface.index_to_id(self.fuzzerHistoryDataModel, index)
@@ -227,15 +235,14 @@ class WebFuzzerTab(QObject):
     def handle_fuzzer_history_clicked(self):
         index = self.mainWindow.fuzzerHistoryTreeView.currentIndex()
         Id = interface.index_to_id(self.fuzzerHistoryDataModel, index)
-        print(Id)
         if Id:
             row = self.Data.read_responses_by_id(self.cursor, Id)
             if not row:
                 return
             responseItems = [m or '' for m in list(row)]
             url = str(responseItems[ResponsesTable.URL])
-            reqHeaders = str(responseItems[ResponsesTable.REQ_HEADERS])
-            reqData = str(responseItems[ResponsesTable.REQ_DATA])
+            reqHeaders = str(responseItems[ResponsesTable.RES_HEADERS])
+            reqData = str(responseItems[ResponsesTable.RES_DATA])
             contentType = str(responseItems[ResponsesTable.RES_CONTENT_TYPE])
             self.miniResponseRenderWidget.populate_response_text(url, reqHeaders, reqData, contentType)
         
@@ -296,11 +303,14 @@ class WebFuzzerTab(QObject):
         
     def start_fuzzing_clicked(self):
         """ Start the fuzzing attack """
-        
-        if 'Cancel' == self.mainWindow.wfStdStartButton.text() and self.pending_request is not None:
-            self.pending_request.cancel()
-            self.pending_request = None
+
+        if 'Cancel' == self.mainWindow.wfStdStartButton.text() and self.pending_fuzz_requests is not None:
+            self.cancel_fuzz_requests = True
+            for context, pending_request in self.pending_fuzz_requests.iteritems():
+                pending_request.cancel()
+            self.pending_fuzz_requests = None
             self.mainWindow.wfStdStartButton.setText('Start Attack')
+            self.mainWindow.fuzzerStandardProgressBar.setValue(0)
             return
         
         self.pending_fuzz_requests = {}
@@ -370,6 +380,9 @@ class WebFuzzerTab(QObject):
             
         position_end = len(counters) - 1
         position = position_end
+
+        self.miniResponseRenderWidget.clear_response_render()
+        self.mainWindow.fuzzerStandardProgressBar.setMaximum(total_tests)
         
         finished = False
         first = True
@@ -415,8 +428,6 @@ class WebFuzzerTab(QObject):
             else:
                 position = position_end        
         
-        self.miniResponseRenderWidget.clear_response_render()
-                
        
     def build_replacements(self, method, url):
         replacements = {}
@@ -496,9 +507,18 @@ class WebFuzzerTab(QObject):
 
         return (method, url, headers_dict, body, use_global_cookie_jar)
         
-        
+    def fuzzer_history_clear_button_clicked(self):
+        self.Data.clear_fuzzer_history(self.cursor)
+        self.fuzzerHistoryDataModel.clearModel()
+
     def fuzzer_response_received(self, response_id, context):
-        
+        self.mainWindow.fuzzerStandardProgressBar.setValue(self.mainWindow.fuzzerStandardProgressBar.value()+1)
+        context = str(context)
+        if self.pending_fuzz_requests is not None:
+            try:
+                self.pending_fuzz_requests.pop(context)
+            except KeyError, e:
+                pass
         if 0 != response_id:
             row = self.Data.read_responses_by_id(self.cursor, response_id)
             if row:
@@ -506,17 +526,12 @@ class WebFuzzerTab(QObject):
                 self.Data.insert_fuzzer_history(self.cursor, response_id)
                 self.fuzzerHistoryDataModel.append_data([response_item])
 
-                url = str(response_item[ResponsesTable.URL])
-                headers = str(response_item[ResponsesTable.RES_HEADERS])
-                body = str(response_item[ResponsesTable.RES_DATA])
-                contentType = str(response_item[ResponsesTable.RES_CONTENT_TYPE])
-
-                self.miniResponseRenderWidget.populate_response_text(url, headers, body, contentType)
-                
-        
-        self.mainWindow.wfStdStartButton.setText('Start Attack')
-        self.pending_request = None
-            
-    def print_test(self):
-        print("test")
+        finished = False
+        if self.pending_fuzz_requests is None or len(self.pending_fuzz_requests) == 0:
+            self.mainWindow.fuzzerStandardProgressBar.setValue(self.mainWindow.fuzzerStandardProgressBar.maximum())
+            finished = True
+        elif self.mainWindow.fuzzerStandardProgressBar.value() == self.mainWindow.fuzzerStandardProgressBar.maximum():
+            finished = True
+        if finished:
+            self.mainWindow.wfStdStartButton.setText('Start Attack')
         
