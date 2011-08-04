@@ -35,18 +35,12 @@ class XSSFinder(AbstractAnalyzer):
         rawRequest = target.rawRequest
         
         for found in self.AlertRegex.finditer(responseBody):
-            print "Found %s in responseBody" % found.group(2)
-            #TempRegex = re.compile(found.group(0))
-            #print "rawReq: %s" % rawRequest
             match = re.search(found.group(2),target.requestHeaders + target.requestBody)
-            print match
             if match is not None:
-                print "Success: %s" % found.group(2)
-                highlight=found.group(1)
                 results.addPageResult(pageid=target.responseId, 
                                 url=target.responseUrl,
                                 type=self.friendlyname,
                                 desc=self.desc,
-                                data={'Javascript Alert found':found.group(1)},
+                                data={'Possible XSS':found.group(1)},
                                 span=found.span(),
-                                highlightdata=highlight)
+                                highlightdata=found.group(1))
