@@ -62,9 +62,11 @@ class RegexFinder(AbstractAnalyzer):
 #Strings for default config
 defaultconfig=\
 {
-    'PII':
+    'Private Information':
         {
-            'SSN': '\D(\d{3}\-{0,1}\d{2}\-{0,1}\d{4})\D'
+            'SSN': '\D(\d{3}\-{0,1}\d{2}\-{0,1}\d{4})\D',
+            'US Phone Number': '\D(\({0,1}\d{3}\){0,1}-{0,1}\d{3}-{0,1}\d{4})\D',
+            'Email Address': '([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})'
         },
     'Credit Card Numbers':
         {

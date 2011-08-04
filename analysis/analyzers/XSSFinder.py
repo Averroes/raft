@@ -41,6 +41,6 @@ class XSSFinder(AbstractAnalyzer):
                                 url=target.responseUrl,
                                 type=self.friendlyname,
                                 desc=self.desc,
-                                data={'Possible XSS':found.group(1)},
+                                data={'Javascript Alert found':found.group(1)},
                                 span=found.span(),
                                 highlightdata=found.group(1))
