@@ -122,13 +122,15 @@ class Timing(AbstractAnalyzer):
                 self.hosts[host][path]['max'] = elapsedtime
                     
     def postanalysis(self,results):
+        header = "<table border='1'><tr><td align='center' width=200><b>HOST</b></td><td align='center' width=100><b>REQUESTS</b></td><td align='center' width=100><b>MIN</b></td><td align='center' width=100><b>MAX</b></td><td align='center' width=100><b>AVE</b></td></tr>"
+        tail = "</table>"
         for h in self.hosts.iterkeys():
             host = self.hosts[h]
-            output = "total requests: %5d  min: %5d   max: %5d   ave: %5d" % (host['count'],host['min'], host['max'], host['total']/host['count'])
+            output = "<tr><td align='left'>%s</td><td align='right'>%d</td><td align='right'>%d</td><td align='right'>%d</td><td align='right'>%5d</td></tr>" % (h,host['count'],host['min'], host['max'], host['total']/host['count'])
             # def addOverallResult(self, type, desc, data, span=None, severity=None, certainty=None, context=None):
             results.addOverallResult(type=self.friendlyname,
                                      desc=self.desc,
-                                     data={h:output},
+                                     data={h:header + output + tail},
                                      span=None,
                                      certainty=None,
                                      context=h

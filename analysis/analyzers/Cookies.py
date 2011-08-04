@@ -111,19 +111,15 @@ class FindInsecureCookies(AbstractAnalyzer):
                 outputPR += "%s " % name
                 
                 
-        dataoutput = ''
+        dataoutput = {}
         if len(outputSecure) > 0:
-            dataoutput += "'%s':'%s'" % (self.outputSecureHeader,outputSecure)
+            dataoutput[self.outputSecureHeader] = outputSecure
             
         if len(outputHttp) > 0:
-            if len(dataoutput) > 0:
-                dataoutput += ","
-            dataoutput += "'%s':'%s'" % (self.outputHttpHeader,outputHttp)
+            dataoutput[self.outputHttpHeader] = outputHttp
             
         if len(outputPR) > 0:
-            if len(dataoutput) > 0:
-                dataoutput += ","
-            dataoutput += "'%s':'%s'" % (self.outputPathRestrictedHeader,outputPR)
+            dataoutput[self.outputPathRestrictedHeader] = outputPR
         
         if len(dataoutput) > 0:
             #print found.group(0).__class__
@@ -131,8 +127,9 @@ class FindInsecureCookies(AbstractAnalyzer):
                                 url=target.responseUrl,
                                 type=self.friendlyname,
                                 desc=self.desc,
-                                data="{%s}" % dataoutput,
-                                span=None)
+                                data=dataoutput,
+                                span=None,
+                                highlightdata=found.group(0))
 
     def postanalysis(self,results):
         outputSecureValue = ""

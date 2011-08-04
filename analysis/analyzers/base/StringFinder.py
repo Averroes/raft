@@ -28,7 +28,8 @@ class StringFinder(AbstractAnalyzer):
         self.desc="Searches for static strings in files."
         self.friendlyname="Find Strings" 
     
-    def preanalysis(self):
+    def preanalysis(self):
+
         currconfig=self.getCurrentConfiguration()
         
         self.searchstrings=dict(currconfig)
