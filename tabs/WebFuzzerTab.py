@@ -47,16 +47,6 @@ from widgets.MiniResponseRenderWidget import MiniResponseRenderWidget
 from core.network.InMemoryCookieJar import InMemoryCookieJar
 from core.fuzzer import AttackPayloads
 
-SQLi = """' or 1=1--
-%27
-Something else
-"""
-XSS = """<script>alert(0)</script>
-<ScRiPt>alert(0)</script>
-Some more stuff
-"""
-
-
 class WebFuzzerTab(QObject):
     def __init__(self, framework, mainWindow):
         QObject.__init__(self, mainWindow)
@@ -121,6 +111,7 @@ class WebFuzzerTab(QObject):
         self.fuzzerHistoryDataModel = ResponsesDataModel.ResponsesDataModel(self.framework, self)
         self.mainWindow.fuzzerHistoryTreeView.setModel(self.fuzzerHistoryDataModel)
         self.mainWindow.fuzzerHistoryTreeView.doubleClicked.connect(self.fuzzer_history_item_double_clicked)
+        self.mainWindow.fuzzerHistoryTreeView.clicked.connect(self.handle_fuzzer_history_clicked)
         self.responsesContextMenu = ResponsesContextMenuWidget(self.framework, self.fuzzerHistoryDataModel, self.mainWindow.fuzzerHistoryTreeView, self)
 
         self.miniResponseRenderWidget = MiniResponseRenderWidget(self.framework, self.mainWindow.reqRespTabWidget, self)
@@ -229,6 +220,21 @@ class WebFuzzerTab(QObject):
         self.mainWindow.wfPay4StaticEdit.setEnabled(self.mainWindow.wfPay4StaticRadio.isChecked())
         self.mainWindow.wfPay5PayloadBox.setEnabled(self.mainWindow.wfPay5FuzzRadio.isChecked())
         self.mainWindow.wfPay5StaticEdit.setEnabled(self.mainWindow.wfPay5StaticRadio.isChecked())
+
+    def handle_fuzzer_history_clicked(self):
+        index = self.mainWindow.fuzzerHistoryTreeView.currentIndex()
+        Id = interface.index_to_id(self.fuzzerHistoryDataModel, index)
+        print(Id)
+        if Id:
+            row = self.Data.read_responses_by_id(self.cursor, Id)
+            if not row:
+                return
+            responseItems = [m or '' for m in list(row)]
+            url = str(responseItems[ResponsesTable.URL])
+            reqHeaders = str(responseItems[ResponsesTable.REQ_HEADERS])
+            reqData = str(responseItems[ResponsesTable.REQ_DATA])
+            contentType = str(responseItems[ResponsesTable.RES_CONTENT_TYPE])
+            self.miniResponseRenderWidget.populate_response_text(url, reqHeaders, reqData, contentType)
         
     def webfuzzer_populate_response_id(self, Id):
         
