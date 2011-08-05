@@ -20,7 +20,7 @@
 #
 
 import PyQt4
-from PyQt4.QtCore import Qt, QObject, SIGNAL
+from PyQt4.QtCore import Qt, QObject, SIGNAL, QDateTime
 from PyQt4.QtGui import *
 
 from core.data.LocalStorage import LocalStorage
