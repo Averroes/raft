@@ -350,10 +350,10 @@ class RequesterTab(QObject):
         replacements['scheme'] = splitted.scheme or ''
         replacements['netloc'] = splitted.netloc or ''
         replacements['host'] = splitted.hostname or ''
-        replacements['path'] = splitted.path or ''
+        replacements['path'] = splitted.path or '/'
         replacements['query'] = splitted.query or ''
         replacements['fragment'] = splitted.fragment or ''
-        replacements['request_uri'] = urlparse.urlunsplit(('', '', splitted.path, splitted.query, ''))
+        replacements['request_uri'] = urlparse.urlunsplit(('', '', replacements['path'], replacements['query'], ''))
         replacements['user_agent'] = self.framework.useragent()
         return replacements
 
