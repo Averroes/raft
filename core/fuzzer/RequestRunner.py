@@ -104,13 +104,18 @@ class RequestRunner(QObject):
 
         self.qlock.lock()
         try:
+            if self.sequence_needed:
+                self.setup_sequence_items()
+                self.sequence_needed = False
 
             self.request_context[request.context] = request
             self.request_queue.append(request)
-            if self.sequence_needed:
-                request.sequence_needed = True
-                self.sequence_needed = False
-            if len(self.inflight_list) < self.max_concurrent:
+
+            if 0 == len(self.inflight_list):
+                do_process = True
+            elif self.sequence_enabled: # TODO: this needs to modified to detect when a sequence is being run
+                do_process = False
+            elif len(self.inflight_list) < self.max_concurrent:
                 do_process = True
 
         finally:
@@ -124,7 +129,7 @@ class RequestRunner(QObject):
     def response_received(self, response):
         do_process = False
         user_request_completed = False
-        user_request = False
+        is_sequence = False
         original_request = None
         self.qlock.lock()
         try:
@@ -152,11 +157,15 @@ class RequestRunner(QObject):
                 if user_request_completed:
                     if self.post_sequence_enabled:
                         self.setup_post_sequence_items()
+            else:
+                is_sequence = True
 
             if 0 == len(self.inflight_list):
                 do_process = True
+            elif is_sequence:
+                do_process = False
             elif self.sequence_enabled and not self.sequenceManager.has_session_detection():
-                pass
+                do_process = False
             elif len(self.inflight_list) < self.max_concurrent:
                 do_process = True
 
@@ -189,8 +198,7 @@ class RequestRunner(QObject):
                 request = self.request_queue.popleft()
                 if self.request_context.has_key(request.context):
                     if self.sequence_enabled and request.sequence_needed:
-                        if not self.sequenceManager.has_session_detection():
-                            single_step = True
+                        single_step = True
                         # put back user request
                         request.sequence_needed = False
                         self.request_queue.appendleft(request)
@@ -216,7 +224,9 @@ class RequestRunner(QObject):
         # this function must be called with lock
         request_list = self.sequenceManager.get_request_list()
         for i in range(len(request_list), 0, -1):
-            self.request_queue.appendleft(request_list[i-1])
+            request = request_list[i-1]
+            self.request_queue.appendleft(request)
+        print(self.request_queue)
 
     def setup_post_sequence_items(self):
         # this function must be called with lock

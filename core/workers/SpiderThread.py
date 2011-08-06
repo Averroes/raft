@@ -374,9 +374,9 @@ class SpiderThread(QThread):
                             self.framework.log_warning('missing response id: %s' % (response_id))
                             continue
 
-                        reponse_items = [m or '' for m in row]
-                        qurl = QUrl.fromEncoded(reponse_items[ResponsesTable.URL])
-                        dataContent = str(reponse_items[ResponsesTable.RES_DATA])
+                        response_items = [m or '' for m in row]
+                        qurl = QUrl.fromEncoded(response_items[ResponsesTable.URL])
+                        dataContent = str(response_items[ResponsesTable.RES_DATA])
 
                         render_item = (response_id, dataContent, qurl, depth) 
                         keep_looping = False
@@ -425,12 +425,12 @@ class SpiderThread(QThread):
         if not row:
             self.framework.log_warning('missing response id: %s' % (response_id))
             return
-        reponse_items = [m or '' for m in row]
+        response_items = [m or '' for m in row]
 
-        url = str(reponse_items[ResponsesTable.URL])
-        response_headers = str(reponse_items[ResponsesTable.RES_HEADERS])
-        response_body = str(reponse_items[ResponsesTable.RES_DATA])
-        content_type = str(reponse_items[ResponsesTable.RES_CONTENT_TYPE])
+        url = str(response_items[ResponsesTable.URL])
+        response_headers = str(response_items[ResponsesTable.RES_HEADERS])
+        response_body = str(response_items[ResponsesTable.RES_DATA])
+        content_type = str(response_items[ResponsesTable.RES_CONTENT_TYPE])
 
         spider_requests = self.calculate_spider_requests(url, response_headers, response_body, content_type, new_depth)
         self.add_spider_requests(spider_requests, url, new_depth)
@@ -559,17 +559,17 @@ class SpiderThread(QThread):
                 already_seen[base_url] = method
                 found = False
                 for row in self.Data.read_responses_by_url(self.read_cursor, base_url):
-                    reponse_items = [m or '' for m in row]
-                    if reponse_items[ResponsesTable.REQ_METHOD] == method:
-                        content_type = str(reponse_items[ResponsesTable.RES_CONTENT_TYPE])
+                    response_items = [m or '' for m in row]
+                    if response_items[ResponsesTable.REQ_METHOD] == method:
+                        content_type = str(response_items[ResponsesTable.RES_CONTENT_TYPE])
                         found = True
-                        found_response_id = int(reponse_items[ResponsesTable.ID])
+                        found_response_id = int(response_items[ResponsesTable.ID])
                         break
             if not found:
                 # TODO: probably shouldn't go back to database for this ....
                 for row in self.Data.read_spider_queue_by_url(self.read_cursor, base_url):
-                    reponse_items = [m or '' for m in row]
-                    if reponse_items[SpiderQueueTable.STATUS] != 'D' and reponse_items[SpiderQueueTable.METHOD] == method:
+                    response_items = [m or '' for m in row]
+                    if response_items[SpiderQueueTable.STATUS] != 'D' and response_items[SpiderQueueTable.METHOD] == method:
                         found = True
                         break
             if not found:

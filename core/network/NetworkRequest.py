@@ -26,7 +26,7 @@ class NetworkRequest(QObject):
         QObject.__init__(self, parent)
         self.request = request
         self.reply = reply
-        self.reponse = response
+        self.response = response
         self.context = context
 
     def cancel(self):

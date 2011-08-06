@@ -224,7 +224,6 @@ class RequesterTab(QObject):
         self.miniResponseRenderWidget.clear_response_render()
 
     def requester_response_received(self, response_id, context):
-        print(response_id, context)
         if 0 != response_id:
             row = self.Data.read_responses_by_id(self.cursor, response_id)
             if row:
@@ -243,7 +242,6 @@ class RequesterTab(QObject):
         self.pending_request = None
 
     def requester_bulk_request_button_clicked(self):
-
         if 'Cancel' == self.mainWindow.bulkRequestPushButton.text() and self.pending_bulk_requests is not None:
             self.cancel_bulk_requests = True
             for context, pending_request in self.pending_bulk_requests.iteritems():
@@ -264,6 +262,7 @@ class RequesterTab(QObject):
         url_list = str(self.mainWindow.bulkRequestUrlListEdit.toPlainText())
         self.framework.set_raft_config_value('bulkRequestUrlListEdit', url_list)
         request_urls = url_list.splitlines()
+        self.mainWindow.bulkRequestProgressBar.setValue(0)
         self.mainWindow.bulkRequestProgressBar.setMaximum(len(request_urls))
 
         sequenceId = None
