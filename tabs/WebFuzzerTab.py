@@ -45,7 +45,7 @@ from core.web.RenderingWebView import RenderingWebView
 from widgets.ResponsesContextMenuWidget import ResponsesContextMenuWidget
 from widgets.MiniResponseRenderWidget import MiniResponseRenderWidget
 from core.network.InMemoryCookieJar import InMemoryCookieJar
-from core.fuzzer import AttackPayloads
+from core.fuzzer import Payloads
 
 class WebFuzzerTab(QObject):
     def __init__(self, framework, mainWindow):
@@ -88,6 +88,9 @@ class WebFuzzerTab(QObject):
         self.re_replacement = re.compile(r'\$\{(\w+)\}')
         
         self.setup_fuzzer_tab()
+        
+        self.Attacks = Payloads.Payloads()
+        self.Attacks.list_files()
         
         # Fill the payloads combo boxes on init
         self.fill_payloads()
@@ -165,8 +168,16 @@ class WebFuzzerTab(QObject):
         
         selectedText = comboBox.currentText()
         comboBox.clear()
-        comboBox.addItem("SQLi")
-        comboBox.addItem("XSS")
+        # comboBox.addItem("SQLi")
+        # comboBox.addItem("XSS")
+        
+        payloads = self.Attacks.list_files()
+        for item in payloads:
+            if item.startswith("."):
+                pass
+            else:
+                comboBox.addItem(item)
+        
         
     def create_payload_map(self):
         # create payload map from configuration tab
@@ -331,6 +342,7 @@ class WebFuzzerTab(QObject):
         payload_mapping = self.create_payload_map()
 
         
+        
         re_parameters = re.compile(r'(\$\{\w+\})')
         re_parameter_name = re.compile(r'^\$\{(\w+)\}$')
         
@@ -351,14 +363,15 @@ class WebFuzzerTab(QObject):
         store_template_items = json.dumps(template_items)
         store_payload_mapping = json.dumps(payload_mapping)
         
-        Payloads = AttackPayloads.AttackPayloads()
         fuzz_payloads = {}
-        for item in payload_mapping:
-            if "SQLi" in payload_mapping[item]:
-                fuzz_payloads["SQLi"] = Payloads.get_sqli_attacks()
-            elif "XSS" in payload_mapping[item]:
-                fuzz_payloads["XSS"] = Payloads.get_xss_attacks()
         
+        for item in payload_mapping:
+            if "fuzz" in payload_mapping[item]:
+                newitem = payload_mapping[item]
+                filename = newitem[1]
+                values = self.Attacks.read_data(filename)
+                print(values)
+                fuzz_payloads[filename] = values
         
         test_slots = []
         counters = []
