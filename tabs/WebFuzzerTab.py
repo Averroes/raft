@@ -352,7 +352,7 @@ class WebFuzzerTab(QObject):
             m = re_parameter_name.match(item)
             if m:
                 name = m.group(1)
-                if name in ["method", "request_uri", "global_cookie_jar", "user_agent"]:
+                if name in ["method", "request_uri", "global_cookie_jar", "user_agent", "host"]:
                     template_items.append(('text', item))
                 else:
                     parameter_names.add(name)
@@ -370,7 +370,6 @@ class WebFuzzerTab(QObject):
                 newitem = payload_mapping[item]
                 filename = newitem[1]
                 values = self.Attacks.read_data(filename)
-                print(values)
                 fuzz_payloads[filename] = values
         
         test_slots = []

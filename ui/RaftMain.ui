@@ -2428,6 +2428,40 @@ ${global_cookie_jar}</string>
            <attribute name="title">
             <string>Fuzz Payloads</string>
            </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_61">
+            <item>
+             <widget class="QSplitter" name="splitter_14">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <widget class="QWidget" name="verticalLayoutWidget">
+               <layout class="QVBoxLayout" name="verticalLayout_60">
+                <item>
+                 <widget class="QComboBox" name="dbankPayloadsBox"/>
+                </item>
+                <item>
+                 <spacer name="verticalSpacer_2">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QPlainTextEdit" name="dbankFuzzValuesEdit">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </widget>
+            </item>
+           </layout>
           </widget>
           <widget class="QWidget" name="tab_5">
            <attribute name="title">

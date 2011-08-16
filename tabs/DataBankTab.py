@@ -1,5 +1,6 @@
 #
 # Author: Gregory Fleischer (gfleischer@gmail.com)
+#         Nathan Hamiel
 #
 # Copyright (c) 2011 RAFT Team
 #
@@ -26,6 +27,7 @@ from PyQt4.QtGui import *
 
 from core.data.FormFillValues import FormFillValues
 from core.data.FormFillPatterns import FormFillPatterns
+from core.fuzzer import Payloads
 
 class DataBankTab(QObject):
     def __init__(self, framework, mainWindow):
@@ -37,6 +39,10 @@ class DataBankTab(QObject):
         self.formFillPatterns = FormFillPatterns()
 
         self.mainWindow.pushButtonDataBankSave.clicked.connect(self.do_save_databank)
+        self.mainWindow.dbankPayloadsBox.activated.connect(self.fill_fuzz_values)
+        
+        self.Attacks = Payloads.Payloads()
+        self.fill_payload_combo_box()
 
         self.Data = None
         self.cursor = None
@@ -166,3 +172,30 @@ class DataBankTab(QObject):
         self.formFillPatterns.FullName = str(self.mainWindow.formFillFullNamePattern.text().toUtf8())
 
         self.framework.set_raft_config_value('FORMFILL.PATTERNS', self.formFillPatterns.flatten())
+        
+    
+    def fill_payload_combo_box(self):
+        
+        comboBox = self.mainWindow.dbankPayloadsBox
+        comboBox.clear()
+        
+        payloads = self.Attacks.list_files()
+        for item in payloads:
+            if item.startswith("."):
+                pass
+            else:
+                comboBox.addItem(item)
+                
+    def fill_fuzz_values(self):
+        """ Fill the textedit with the fuzz values of the selected payload file """
+        
+        filename = self.mainWindow.dbankPayloadsBox.currentText()
+        
+        # Clear the textedit
+        self.mainWindow.dbankFuzzValuesEdit.clear()
+        
+        values = self.Attacks.read_data(filename)
+        
+        for item in values:
+            self.mainWindow.dbankFuzzValuesEdit.appendPlainText(item)
+            
