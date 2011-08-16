@@ -33,8 +33,6 @@ class Payloads(object):
         
         payload_listing = os.listdir(self.payloads_dir)
         
-        # Need to remove hidden files such as ones that start with a . prior to returning the file list.
-        print(payload_listing)
         return payload_listing
         
     def read_data(self, payload_file):
@@ -50,5 +48,4 @@ class Payloads(object):
                 
         f.close()
         
-        print(vals)
         return vals
