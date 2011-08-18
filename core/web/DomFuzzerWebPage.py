@@ -36,6 +36,8 @@ class DomFuzzerWebPage(BaseWebPage):
         self.configure_frame(self.mainFrame())
 
     def set_page_settings(self, settings):
+        # DOM fuzzer is useless without JavaScript enabled
+        settings.setAttribute(QtWebKit.QWebSettings.JavascriptEnabled, True)
         settings.setAttribute(QtWebKit.QWebSettings.AutoLoadImages, False)
         settings.setAttribute(QtWebKit.QWebSettings.JavascriptCanOpenWindows, False)
 

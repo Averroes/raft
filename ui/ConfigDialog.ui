@@ -101,7 +101,7 @@
          <x>10</x>
          <y>160</y>
          <width>331</width>
-         <height>161</height>
+         <height>191</height>
         </rect>
        </property>
        <property name="title">
@@ -111,7 +111,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>120</y>
+          <y>150</y>
           <width>181</width>
           <height>20</height>
          </rect>
@@ -124,7 +124,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>60</y>
+          <y>90</y>
           <width>191</width>
           <height>20</height>
          </rect>
@@ -137,7 +137,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>90</y>
+          <y>120</y>
           <width>151</width>
           <height>20</height>
          </rect>
@@ -150,13 +150,26 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>30</y>
+          <y>60</y>
           <width>181</width>
           <height>20</height>
          </rect>
         </property>
         <property name="text">
          <string>Enable Web Storage?</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="browserEnableJavaScriptCheckBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>181</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Enable JavaScript?</string>
         </property>
        </widget>
       </widget>

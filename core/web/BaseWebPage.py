@@ -37,7 +37,8 @@ class BaseWebPage(QtWebKit.QWebPage):
 
     def __raft_config_updated(self, name, value):
         name = str(name)
-        if name in ('browser_web_storage_enabled', 
+        if name in ('browser_javascript_enabled',
+                    'browser_web_storage_enabled',
                     'browser_plugins_enabled', 
                     'browser_java_enabled', 
                     'browser_auto_load_images'):
@@ -45,6 +46,10 @@ class BaseWebPage(QtWebKit.QWebPage):
             
     def __set_page_settings(self):
         settings = self.settings()
+        settings.setAttribute(
+            QtWebKit.QWebSettings.JavascriptEnabled, 
+            self.__framework.get_raft_config_value('browser_javascript_enabled', bool, True)
+            )
         if self.__framework.get_raft_config_value('browser_web_storage_enabled', bool, True):
             settings.enablePersistentStorage(self.__framework.get_web_db_path())
         settings.setAttribute(
@@ -59,7 +64,5 @@ class BaseWebPage(QtWebKit.QWebPage):
             QtWebKit.QWebSettings.AutoLoadImages, 
             self.__framework.get_raft_config_value('browser_auto_load_images', bool, True)
             )
-
-        settings.setAttribute(QtWebKit.QWebSettings.JavascriptEnabled, True)
 
         self.set_page_settings(settings)

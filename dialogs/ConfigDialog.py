@@ -141,12 +141,14 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.framework.set_raft_config_value('SPIDER', configuration)
 
     def fill_browser_edits(self):
+        self.browserEnableJavaScriptCheckBox.setChecked(self.framework.get_raft_config_value('browser_javascript_enabled', bool, True))
         self.browserEnableWebStorageCheckBox.setChecked(self.framework.get_raft_config_value('browser_web_storage_enabled', bool, True))
         self.browserEnablePluginsCheckBox.setChecked(self.framework.get_raft_config_value('browser_plugins_enabled', bool, True))
         self.browserEnableJavaCheckBox.setChecked(self.framework.get_raft_config_value('browser_java_enabled', bool, True))
         self.browserAutoLoadImagesCheckBox.setChecked(self.framework.get_raft_config_value('browser_auto_load_images', bool, True))
     
     def save_browser_config(self):
+        self.framework.set_raft_config_value('browser_javascript_enabled', self.browserEnableJavaScriptCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_web_storage_enabled', self.browserEnableWebStorageCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_plugins_enabled', self.browserEnablePluginsCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_java_enabled', self.browserEnableJavaCheckBox.isChecked())
