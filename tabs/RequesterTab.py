@@ -93,6 +93,8 @@ class RequesterTab(QObject):
 
         self.miniResponseRenderWidget = MiniResponseRenderWidget(self.framework, self.mainWindow.reqRespTabWidget, self)
 
+        self.scopeController = self.framework.getScopeController()
+
     def requester_history_item_double_clicked(self, index):
         Id = interface.index_to_id(self.requesterHistoryDataModel, index)
         if Id:
@@ -283,6 +285,11 @@ class RequesterTab(QObject):
                     url = self.re_replacement.sub(lambda m: replacements.get(m.group(1)), template_url)
                 else:
                     url = request_url
+
+                if not self.scopeController.isUrlInScope(url, url):
+                    self.framework.log_warning('skipping out of scope URL: %s' % (url))
+                    self.mainWindow.bulkRequestProgressBar.setValue(self.mainWindow.bulkRequestProgressBar.value()+1)
+                    continue
                 
                 replacements = self.build_replacements(method, url)
                 (method, url, headers, body, use_global_cookie_jar) = self.process_template(url, templateText, replacements)
