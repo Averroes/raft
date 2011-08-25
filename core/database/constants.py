@@ -165,3 +165,9 @@ class SpiderInternalStateTable():
     STATE_KEY = 1
     STATE_COUNT = 2
     STATE_VALUE = 3
+
+class ConfigurationTable():
+    COMPONENT = 0
+    CONFIG_NAME = 1
+    CONFIG_VALUE = 2
+

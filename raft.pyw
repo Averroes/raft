@@ -98,6 +98,7 @@ from actions import importers
 from actions import request
 from actions import interface
 from actions import encoderlib
+from actions import SettingsFiles
 
 from core.database import database
 from core.database.constants import ResponsesTable
@@ -232,6 +233,8 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.actionImport_WebScarab.triggered.connect(self.import_webscarab)
         self.actionImport_ParosMessages.triggered.connect(lambda x: self.import_paros('paros_message'))
         self.actionRefresh_Responses.triggered.connect(self.refresh_responses)
+        self.actionExport_Settings.triggered.connect(self.export_settings)
+        self.actionImport_Settings.triggered.connect(self.import_settings)
 
         self.actionEncoder_Decoder.triggered.connect(self.detach_encoder)
 
@@ -457,6 +460,20 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
     def refresh_responses(self):
         self.fillResponses(True)
 
+    def export_settings(self):
+        filename = QFileDialog.getSaveFileName(None, "Export RAFT Settings", "", "RAFT Settings File (*.raftsettings)")
+        if filename:
+            self.Progress.show()
+            SettingsFiles.process_export(self.framework, filename)
+            self.Progress.close()
+
+    def import_settings(self):
+        filename = QFileDialog.getOpenFileName(None, "Import RAFT Settings", "", "RAFT Settings File (*.raftsettings)")
+        if filename:
+            self.Progress.show()
+            SettingsFiles.process_import(self.framework, filename)
+            self.Progress.close()
+        
     def import_file_finished(self):
         self.Progress.close()
         self.fillResponses()

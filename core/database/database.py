@@ -1008,6 +1008,14 @@ class Db:
             self.conn.commit()
         finally:
             self.qlock.unlock()
+
+    def read_all_config_values(self, cursor):
+        self.qlock.lock()
+        try:
+            cursor.execute("SELECT Component, ConfigName, ConfigValue FROM configuration")
+            return cursor
+        finally:
+            self.qlock.unlock()
         
     def get_config_value(self, cursor, component, name, rtype = str, default_value = None):
         self.qlock.lock()
