@@ -107,38 +107,19 @@ class AnalyzerThread(QThread):
         resultclass=resulttype.__class__
         return "".join((resultclass.__module__,".",resultclass.__name__))
         
-    def db_to_HTTP_transaction(self,dbrow):
-        """Translates a database row of request and response data into a nested dictionary"""
-        """TODO:  Consider changing this into a class with dictionary-style getters/setters"""
-        transaction={}
-        transaction['request']={}
-        transaction['response']={}
-        transaction['request']['headers']=str(dbrow[ResponsesTable.REQ_HEADERS])
-        transaction['request']['data']=str(dbrow[ResponsesTable.REQ_DATA])
-        transaction['request']['method']=str(dbrow[ResponsesTable.REQ_METHOD])
-        transaction['request']['date']=str(dbrow[ResponsesTable.REQDATE])
-        transaction['request']['time']=str(dbrow[ResponsesTable.REQTIME])
-        transaction['request']['host']=str(dbrow[ResponsesTable.REQ_HOST])
-        transaction['request']['hash']=str(dbrow[ResponsesTable.REQ_DATA_HASHVAL])
-        transaction['response']['headers']=str(dbrow[ResponsesTable.RES_HEADERS])
-        transaction['response']['data']=str(dbrow[ResponsesTable.RES_DATA])
-        transaction['response']['status']=str(dbrow[ResponsesTable.STATUS])
-        transaction['response']['hash']=str(dbrow[ResponsesTable.RES_DATA_HASHVAL])
-        transaction['id']=dbrow[ResponsesTable.ID]
-        transaction['url']=str(dbrow[ResponsesTable.URL])
-        return transaction    
-    
     def analyze_content(self):
         """ Perform analysis on the captured content"""
 
         #TODO:  NEW DB THREAD TO HOLD RESPONSES, ANOTHER FOR WRITING RESULTS
-        #This is a temporary fix!  Will suck if response list gets too big!
+        scopeController = self.framework.getScopeController()
         response = self.Data.read_all_responses(self.read_cursor)
-        #transactionlist=list()
+        response_IDs = []
         for row in response:
             dbrow = [m or '' for m in row]
-            self.framework.get_request_response(dbrow[ResponsesTable.ID])
-            #transactionlist.append(RequestResponse.RequestResponse(self.framework,dbrow[ResponsesTable.ID]))
+            Id = dbrow[ResponsesTable.ID]
+            url = dbrow[ResponsesTable.URL]
+            if scopeController.isUrlInScope(url, url):
+                response_IDs.append(Id)
             
         #Instantiate all found analyzers
         analyzerobjects = AnalyzerList(self.framework)
@@ -164,8 +145,8 @@ class AnalyzerThread(QThread):
         
         fullanalysistext=StringIO()
 
-        for id in self.framework.request_response_dict.iterkeys():
-            transaction=self.framework.request_response_dict[id]
+        for Id in response_IDs:
+            transaction = self.framework.get_request_response(Id)
             for analyzer in analyzerobjects:
                 try:
                     
