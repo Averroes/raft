@@ -108,6 +108,10 @@ class ResponsesContextMenuWidget(QObject):
         self.showSubMenu.addAction(self.make_data_tree_show_item_action("Show only this Request Data Hash", ResponsesTable.REQ_DATA_HASHVAL))
         self.showSubMenu.addAction(self.make_data_tree_show_item_action("Show only this Response Data Hash", ResponsesTable.RES_DATA_HASHVAL))
 
+        responsesDataTreeShowAction = QAction("Show In Scope", self)
+        responsesDataTreeShowAction.triggered.connect(self.data_tree_show_in_scope)
+        self.menu.addAction(responsesDataTreeShowAction)
+
         responsesDataTreeShowAction = QAction("Show All", self)
         responsesDataTreeShowAction.triggered.connect(self.data_tree_show_all)
         self.menu.addAction(responsesDataTreeShowAction)
@@ -260,10 +264,19 @@ class ResponsesContextMenuWidget(QObject):
             for i in range(0, self.dataModel.rowCount()):
                 itemIndex = self.dataModel.index(i, column)
                 data = str(self.dataModel.data(itemIndex).toString())
-                if data == value:
-                    self.treeView.setRowHidden(i, QModelIndex(), False)
-                else:
+                if data != value:
                     self.treeView.setRowHidden(i, QModelIndex(), True)
+
+    def data_tree_show_in_scope(self):
+        scopeController = self.framework.getScopeController()
+        urlColumn = self.dataModel.translate_offset(ResponsesTable.URL)
+        for i in range(0, self.dataModel.rowCount()):
+            itemIndex = self.dataModel.index(i, urlColumn)
+            url = str(self.dataModel.data(itemIndex).toString())
+            if scopeController.isUrlInScope(url, url):
+                self.treeView.setRowHidden(i, QModelIndex(), False)
+            else:
+                self.treeView.setRowHidden(i, QModelIndex(), True)
 
     def data_tree_show_all(self):
         for i in range(0, self.dataModel.rowCount()):
