@@ -104,11 +104,18 @@ class ParseAdapter:
                 self.response_headers = ''
                 self.response_body = ''
 
-            self.content_length = ''
-            self.elapsed = ''
-            self.notes = ''
-            self.confirmed = ''
-    
+            self.extras = extras
+            if extras and isinstance(extras, dict):
+                self.content_length = extras.get('content_length')
+                self.elapsed = extras.get('elapsed')
+                self.notes = extras.get('notes')
+                self.confirmed = extras.get('confirmed')
+            else:
+                self.content_length = ''
+                self.elapsed = ''
+                self.notes = ''
+                self.confirmed = ''
+
 class raft_parse_xml():
     """ Parses Raft XML file into request and result data """
 

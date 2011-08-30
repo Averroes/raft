@@ -38,6 +38,12 @@ class StandardNetworkAccessManager(BaseNetworkAccessManager):
             self.setCookieJar(cookieJar)
             cookieJar.setParent(None)
 
+#        QObject.connect(self, SIGNAL('authenticationRequired(QNetworkReply, QAuthenticator)'), self.handle_authenticationRequired)
+        self.proxyAuthenticationRequired.connect(self.handle_proxyAuthenticationRequired)
+
+    def handle_proxyAuthenticationRequired(self, proxy, authenticator):
+        print('proxyAuthenticationRequired', proxy, authenticator)
+
     def createRequest(self, operation, request, outgoingData = None):
         try: 
             url = str(request.url().toEncoded()).encode('ascii', 'ignore')

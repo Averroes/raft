@@ -34,10 +34,11 @@ class BaseNetworkAccessManager(QtNetwork.QNetworkAccessManager):
         self.__use_proxy = False
 
         self.setProxy(QtNetwork.QNetworkProxy())
+#        QObject.connect(self, SIGNAL('authenticationRequired(QNetworkReply *, QAuthenticator *)'), self.handle_authenticationRequired)
+        self.authenticationRequired.connect(self.handle_authenticationRequired)
 
         self.framework.subscribe_database_events(self.__db_attach, self.__db_detach)
         self.framework.subscribe_raft_config_updated(self.__handle_raft_config_updated)
-
 
     def __db_attach(self):
         self.__proxy_host = self.framework.get_raft_config_value('proxy_host', str)
@@ -86,3 +87,5 @@ class BaseNetworkAccessManager(QtNetwork.QNetworkAccessManager):
 #             print(name, (int(proxy.capabilities()))&value)
 
 
+    def handle_authenticationRequired(self, reply, authenticator):
+        print('authenticationRequired', reply, authenticator)

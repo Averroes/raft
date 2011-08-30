@@ -73,7 +73,6 @@ from lxml import etree
 # Import UI components
 from ui import RaftMain
 from ui import RaftAbout
-from ui import SimpleDialog
 
 from dialogs.SearchDialog import SearchDialog
 from dialogs.RequestResponseDetailDialog import RequestResponseDetailDialog
@@ -83,6 +82,7 @@ from dialogs.DiffDialog import DiffDialog
 from dialogs.AnalysisConfigDialog import AnalysisConfigDialog
 from dialogs.ConfigDialog import ConfigDialog
 from dialogs.RaftBrowserDialog import RaftBrowserDialog
+from dialogs.SimpleDialog import SimpleDialog
 
 from tabs import VulnerabilitiesTab
 from tabs import DataBankTab
@@ -826,14 +826,6 @@ class RaftAboutDialog(QDialog, RaftAbout.Ui_aboutDialog):
         self.setupUi(self)
         version_string = __version__
         self.versionLabel.setText(version_string)
-
-class SimpleDialog(QDialog, SimpleDialog.Ui_simpleDialog):
-    """ Simple dialog for displaying messages and errors to users """
-    
-    def __init__(self, message, parent=None):
-        super(SimpleDialog, self).__init__(parent)
-        self.setupUi(self)
-        self.messageLabel.setText(message)
 
 def exception_hook(exception_type, exception_value, traceback_obj):
     # TODO: improve this

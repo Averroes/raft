@@ -31,6 +31,7 @@ from PyQt4.QtGui import *
 from ui import DiffDialog
 from dialogs.ProgressDialog import ProgressDialog
 from dialogs.DiffCustomDialog import DiffCustomDialog
+from dialogs.SimpleDialog import SimpleDialog
 from core.database.constants import ResponsesTable
 
 class DiffDialog(QDialog, DiffDialog.Ui_DiffDialog):
