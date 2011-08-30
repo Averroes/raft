@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'RaftMain.ui'
 #
-# Created: Tue Aug 16 13:03:54 2011
-#      by: PyQt4 UI code generator 4.8.3
+# Created: Tue Aug 30 12:09:31 2011
+#      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -1731,27 +1731,27 @@ class Ui_MainWindow(object):
         self.actionSave_As.setObjectName(_fromUtf8("actionSave_As"))
         self.actionButtonOpen = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8("images/open-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.On)
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/open-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionButtonOpen.setIcon(icon)
         self.actionButtonOpen.setObjectName(_fromUtf8("actionButtonOpen"))
         self.actionZoomIn = QtGui.QAction(MainWindow)
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(_fromUtf8("images/zoom-in-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.On)
+        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/zoom-in-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionZoomIn.setIcon(icon1)
         self.actionZoomIn.setObjectName(_fromUtf8("actionZoomIn"))
         self.actionZoomOut = QtGui.QAction(MainWindow)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(_fromUtf8("images/zoom-out-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/zoom-out-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionZoomOut.setIcon(icon2)
         self.actionZoomOut.setObjectName(_fromUtf8("actionZoomOut"))
         self.actionDiff = QtGui.QAction(MainWindow)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(_fromUtf8("images/diff-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/diff-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionDiff.setIcon(icon3)
         self.actionDiff.setObjectName(_fromUtf8("actionDiff"))
         self.actionAnalyze = QtGui.QAction(MainWindow)
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(_fromUtf8("images/analyze-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon4.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/analyze-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionAnalyze.setIcon(icon4)
         self.actionAnalyze.setObjectName(_fromUtf8("actionAnalyze"))
         self.actionConfiguration_BlackHoleNetwork = QtGui.QAction(MainWindow)
@@ -1766,25 +1766,25 @@ class Ui_MainWindow(object):
         self.actionConfig = QtGui.QAction(MainWindow)
         self.actionConfig.setEnabled(True)
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap(_fromUtf8("images/config-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon5.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/config-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionConfig.setIcon(icon5)
         self.actionConfig.setIconVisibleInMenu(True)
         self.actionConfig.setObjectName(_fromUtf8("actionConfig"))
         self.actionSequence = QtGui.QAction(MainWindow)
         icon6 = QtGui.QIcon()
-        icon6.addPixmap(QtGui.QPixmap(_fromUtf8("images/seq-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon6.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/seq-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionSequence.setIcon(icon6)
         self.actionSequence.setObjectName(_fromUtf8("actionSequence"))
         self.actionSearch = QtGui.QAction(MainWindow)
         icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(_fromUtf8("images/search-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon7.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/search-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionSearch.setIcon(icon7)
         self.actionSearch.setObjectName(_fromUtf8("actionSearch"))
         self.actionAnalysisConfiguration = QtGui.QAction(MainWindow)
         self.actionAnalysisConfiguration.setObjectName(_fromUtf8("actionAnalysisConfiguration"))
         self.actionBrowser = QtGui.QAction(MainWindow)
         icon8 = QtGui.QIcon()
-        icon8.addPixmap(QtGui.QPixmap(_fromUtf8("images/browser-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon8.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/browser-icon-32.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionBrowser.setIcon(icon8)
         self.actionBrowser.setObjectName(_fromUtf8("actionBrowser"))
         self.actionExport_Settings = QtGui.QAction(MainWindow)
@@ -2202,3 +2202,4 @@ class Ui_MainWindow(object):
         self.actionExport_Settings.setText(QtGui.QApplication.translate("MainWindow", "Export Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.actionImport_Settings.setText(QtGui.QApplication.translate("MainWindow", "Import Settings", None, QtGui.QApplication.UnicodeUTF8))
 
+import resources_rc

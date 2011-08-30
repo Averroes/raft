@@ -3671,9 +3671,8 @@ ${global_cookie_jar}</string>
   </action>
   <action name="actionButtonOpen">
    <property name="icon">
-    <iconset>
-     <normalon>images/open-icon-32.png</normalon>
-    </iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/open-icon-32.png</normaloff>:/images/open-icon-32.png</iconset>
    </property>
    <property name="text">
     <string>actionButtonOpen</string>
@@ -3684,9 +3683,8 @@ ${global_cookie_jar}</string>
   </action>
   <action name="actionZoomIn">
    <property name="icon">
-    <iconset>
-     <normalon>images/zoom-in-32.png</normalon>
-    </iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/zoom-in-32.png</normaloff>:/images/zoom-in-32.png</iconset>
    </property>
    <property name="text">
     <string>actionZoomIn</string>
@@ -3697,8 +3695,8 @@ ${global_cookie_jar}</string>
   </action>
   <action name="actionZoomOut">
    <property name="icon">
-    <iconset>
-     <normaloff>images/zoom-out-32.png</normaloff>images/zoom-out-32.png</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/zoom-out-32.png</normaloff>:/images/zoom-out-32.png</iconset>
    </property>
    <property name="text">
     <string>actionZoomOut</string>
@@ -3709,8 +3707,8 @@ ${global_cookie_jar}</string>
   </action>
   <action name="actionDiff">
    <property name="icon">
-    <iconset>
-     <normaloff>images/diff-icon-32.png</normaloff>images/diff-icon-32.png</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/diff-icon-32.png</normaloff>:/images/diff-icon-32.png</iconset>
    </property>
    <property name="text">
     <string>actionDiff</string>
@@ -3721,8 +3719,8 @@ ${global_cookie_jar}</string>
   </action>
   <action name="actionAnalyze">
    <property name="icon">
-    <iconset>
-     <normaloff>images/analyze-icon-32.png</normaloff>images/analyze-icon-32.png</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/analyze-icon-32.png</normaloff>:/images/analyze-icon-32.png</iconset>
    </property>
    <property name="text">
     <string>actionAnalyze</string>
@@ -3762,8 +3760,8 @@ ${global_cookie_jar}</string>
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
-     <normaloff>images/config-icon-32.png</normaloff>images/config-icon-32.png</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/config-icon-32.png</normaloff>:/images/config-icon-32.png</iconset>
    </property>
    <property name="text">
     <string>actionConfig</string>
@@ -3777,8 +3775,8 @@ ${global_cookie_jar}</string>
   </action>
   <action name="actionSequence">
    <property name="icon">
-    <iconset>
-     <normaloff>images/seq-icon-32.png</normaloff>images/seq-icon-32.png</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/seq-icon-32.png</normaloff>:/images/seq-icon-32.png</iconset>
    </property>
    <property name="text">
     <string>actionSequence</string>
@@ -3789,8 +3787,8 @@ ${global_cookie_jar}</string>
   </action>
   <action name="actionSearch">
    <property name="icon">
-    <iconset>
-     <normaloff>images/search-icon-32.png</normaloff>images/search-icon-32.png</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/search-icon-32.png</normaloff>:/images/search-icon-32.png</iconset>
    </property>
    <property name="text">
     <string>actionSearch</string>
@@ -3806,8 +3804,8 @@ ${global_cookie_jar}</string>
   </action>
   <action name="actionBrowser">
    <property name="icon">
-    <iconset>
-     <normaloff>images/browser-icon-32.png</normaloff>images/browser-icon-32.png</iconset>
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/browser-icon-32.png</normaloff>:/images/browser-icon-32.png</iconset>
    </property>
    <property name="text">
     <string>actionBrowser</string>
@@ -3827,7 +3825,9 @@ ${global_cookie_jar}</string>
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>actionQuit</sender>

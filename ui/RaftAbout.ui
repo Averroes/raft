@@ -37,7 +37,7 @@
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap>images/raft_image.png</pixmap>
+          <pixmap resource="resources.qrc">:/images/raft_image.png</pixmap>
          </property>
         </widget>
        </item>
@@ -305,7 +305,9 @@ p, li { white-space: pre-wrap; }
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>closeButton</sender>

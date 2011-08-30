@@ -22,8 +22,8 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset>
-         <normaloff>images/diff-icon-16.png</normaloff>images/diff-icon-16.png</iconset>
+        <iconset resource="resources.qrc">
+         <normaloff>:/images/diff-icon-16.png</normaloff>:/images/diff-icon-16.png</iconset>
        </property>
       </widget>
      </item>
@@ -125,7 +125,9 @@
    <header>QtWebKit/QWebView</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>closeButton</sender>

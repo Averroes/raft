@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'RaftAbout.ui'
 #
-# Created: Thu Jun 23 22:33:16 2011
+# Created: Tue Aug 30 11:56:05 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -28,7 +28,7 @@ class Ui_aboutDialog(object):
         self.horizontalLayout.addItem(spacerItem)
         self.label = QtGui.QLabel(aboutDialog)
         self.label.setText(_fromUtf8(""))
-        self.label.setPixmap(QtGui.QPixmap(_fromUtf8("images/raft_image.png")))
+        self.label.setPixmap(QtGui.QPixmap(_fromUtf8(":/images/raft_image.png")))
         self.label.setObjectName(_fromUtf8("label"))
         self.horizontalLayout.addWidget(self.label)
         spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -140,3 +140,4 @@ class Ui_aboutDialog(object):
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"http://code.google.com/p/raft\"><span style=\" font-size:14pt; font-weight:600; text-decoration: underline; color:#0000ff;\">http://code.google.com/p/raft</span></a></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.closeButton.setText(QtGui.QApplication.translate("aboutDialog", "Close", None, QtGui.QApplication.UnicodeUTF8))
 
+import resources_rc

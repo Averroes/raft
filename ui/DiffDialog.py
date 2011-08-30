@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'DiffDialog.ui'
 #
-# Created: Mon Jun 20 20:16:48 2011
+# Created: Tue Aug 30 12:04:37 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -24,7 +24,7 @@ class Ui_DiffDialog(object):
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
         self.customButton = QtGui.QToolButton(DiffDialog)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8("images/diff-icon-16.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/diff-icon-16.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.customButton.setIcon(icon)
         self.customButton.setObjectName(_fromUtf8("customButton"))
         self.horizontalLayout_2.addWidget(self.customButton)
@@ -72,3 +72,4 @@ class Ui_DiffDialog(object):
         self.closeButton.setText(QtGui.QApplication.translate("DiffDialog", "Close", None, QtGui.QApplication.UnicodeUTF8))
 
 from PyQt4 import QtWebKit
+import resources_rc
