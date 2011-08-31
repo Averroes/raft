@@ -24,10 +24,9 @@ import os
 class Payloads(object):
     """ Class that handles the identification and loading of payloads """
     
-    def __init__(self):
-        
-        # How's this going to work on Windows?
-        self.payloads_dir = "data/payloads/"
+    def __init__(self, framework):
+        self.framework = framework
+        self.payloads_dir = os.path.join(self.framework.get_data_dir(), 'payloads')
     
     def list_files(self):
         
@@ -37,7 +36,7 @@ class Payloads(object):
         
     def read_data(self, payload_file):
         
-        f = open(self.payloads_dir + payload_file, "rb")
+        f = open(os.path.join(self.payloads_dir, payload_file), "rb")
         vals = list()
         
         for item in f.readlines():

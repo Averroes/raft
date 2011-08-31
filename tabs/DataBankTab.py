@@ -41,7 +41,7 @@ class DataBankTab(QObject):
         self.mainWindow.pushButtonDataBankSave.clicked.connect(self.do_save_databank)
         self.mainWindow.dbankPayloadsBox.activated.connect(self.fill_fuzz_values)
         
-        self.Attacks = Payloads.Payloads()
+        self.Attacks = Payloads.Payloads(self.framework)
         self.fill_payload_combo_box()
 
         self.Data = None
@@ -194,7 +194,7 @@ class DataBankTab(QObject):
         # Clear the textedit
         self.mainWindow.dbankFuzzValuesEdit.clear()
         
-        values = self.Attacks.read_data(filename)
+        values = self.Attacks.read_data(str(filename))
         
         for item in values:
             self.mainWindow.dbankFuzzValuesEdit.appendPlainText(item)

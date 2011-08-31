@@ -89,7 +89,7 @@ class WebFuzzerTab(QObject):
         
         self.setup_fuzzer_tab()
         
-        self.Attacks = Payloads.Payloads()
+        self.Attacks = Payloads.Payloads(self.framework)
         self.Attacks.list_files()
         
         # Fill the payloads combo boxes on init

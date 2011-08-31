@@ -24,6 +24,7 @@
 
 import traceback
 import os
+import sys
 
 from PyQt4.QtCore import (Qt, SIGNAL, QObject, QThread, QMutex, QDir)
 from PyQt4.QtGui import QFont
@@ -54,6 +55,8 @@ class Framework(QObject):
         if not os.path.exists(self.raft_dir):
             os.mkdir(self.raft_dir)
         self.web_db_path = self.raft_dir
+        # TODO: there may be a Qt way to give executable path as well
+        self._executable_path = os.path.abspath(os.path.dirname(sys.argv[0]))
 
     def useragent(self):
         return 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1'
@@ -89,6 +92,9 @@ class Framework(QObject):
 
     def get_user_home_dir(self):
         return self.home_dir
+
+    def get_data_dir(self):
+        return os.path.join(self._executable_path, 'data')
 
     def getContentExtractor(self):
         return self._contentExtractor
