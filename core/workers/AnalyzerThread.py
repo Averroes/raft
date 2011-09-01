@@ -31,10 +31,6 @@ from cStringIO import StringIO
 
 from analysis.AnalyzerList import AnalyzerList
 from core.database.constants import ResponsesTable
-from core import RequestResponse
-
-
-
 
 class AnalyzerThread(QThread):
     def __init__(self, framework, parent = None):

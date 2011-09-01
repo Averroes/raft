@@ -183,7 +183,7 @@ class Tokenizer():
         self.comments = []
         self.strings = []
 
-    def reset(self, source, filename = '', lineno = 0):
+    def reset(self, source, filename = '', lineno = 0, reset_collections = False):
         self.cursor = 0
         self.source = source
         self.tokens = [None for m in range(4)]
@@ -193,6 +193,9 @@ class Tokenizer():
         self.scanOperand = True
         self.filename = filename
         self.lineno = lineno
+        if reset_collections:
+            self.comments = []
+            self.strings = []
         
     def script_input(self):
         return self.source[self.cursor:]
@@ -374,12 +377,18 @@ class Tokenizer():
             return '\\'
         else:
             try:
+                i = None
                 if 'u' == m[0] and 5 == len(m):
-                    return unichr(int(m[1:], 16))
+                    i = int(m[1:], 16)
                 elif 'x' == m[0] and 3 == len(m):
-                    return chr(int(m[1:], 16))
+                    i = int(m[1:], 16)
                 elif 3 == len(m) and self.re_octal_digits.match(m):
-                    return chr(int(m, 8))
+                    i = int(m, 8)
+                if i is not None:
+                    if i < 128:
+                        return chr(i)
+                    else:
+                        return unichr(i)
                 else:
                     return m
             except ValueError:
@@ -387,9 +396,11 @@ class Tokenizer():
 
     def parseString(self, value):
         if '\\' in value:
-            return self.re_escape_string.sub(self.interpretEscape, value[1:-1])
-        else:
-            return value[1:-1]
+            try:
+                return self.re_escape_string.sub(self.interpretEscape, value[1:-1])
+            except UnicodeDecodeError:
+                print('oops', value)
+        return value[1:-1]
 
     def parseRegexp(self, value, flags):
         return value + ',' + flags
@@ -1091,6 +1102,18 @@ class JSParser():
         try:
             context = CompilerContext(False)
             self.tokenizer.reset(source, filename, line)
+            node = Script(self.tokenizer, context)
+            if (not self.tokenizer.done()):
+                raise tokenizer.newSyntaxError("Syntax error")
+        except JsParseException, e:
+            import sys
+            sys.stderr.write('%s\n' % e)
+            pass
+
+    def parse_file(self, source, filename = '', line = 0):
+        try:
+            context = CompilerContext(False)
+            self.tokenizer.reset(source, filename, line, True)
             node = Script(self.tokenizer, context)
             if (not self.tokenizer.done()):
                 raise tokenizer.newSyntaxError("Syntax error")

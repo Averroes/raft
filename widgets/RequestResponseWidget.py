@@ -116,7 +116,7 @@ class RequestResponseWidget(QObject):
 
         self.scriptsView = QWidget(tabwidget)
         self.scriptsView.setObjectName(tabwidget.objectName()+'Scripts')
-        self.tabwidget.addTab(self.scriptsView, 'Scripts')
+        self.scriptsTabIndex = self.tabwidget.addTab(self.scriptsView, 'Scripts')
 
         self.commentsView = QWidget(tabwidget)
         self.commentsView.setObjectName(tabwidget.objectName()+'Comments')
@@ -216,7 +216,7 @@ class RequestResponseWidget(QObject):
         scintillaWidget.zoomTo(self.framework.get_zoom_size())
         # TOOD: set based on line numbers (size is in pixels)
         scintillaWidget.setMarginWidth(1, '1000')
-        self.attachLexer(scintillaWidget, contentType, '')
+        self.attachLexer(scintillaWidget, contentType)
         self.framework.subscribe_zoom_in(lambda: scintillaWidget.zoomIn())
         self.framework.subscribe_zoom_out(lambda: scintillaWidget.zoomOut())
         
@@ -330,6 +330,10 @@ class RequestResponseWidget(QObject):
         self.searchReCheckBox.setChecked(isRE)
 
     def fill(self, Id):
+        if self.requestResponse and self.requestResponse.Id == Id:
+            # already filled
+            return
+
         self.clear()
 
         if not Id:
@@ -339,32 +343,10 @@ class RequestResponseWidget(QObject):
         self.requestResponse = self.framework.get_request_response(Id)
         rr = self.requestResponse
 
-        #row = self.Data.read_responses_by_id(self.cursor, Id)
-        #if not row:
-        #    return
-
-        #responseItems = [m or '' for m in list(row)]
-
-        #self.responseUrl = str(responseItems[ResponsesTable.URL])
-
-        #reqHeaders = str(responseItems[ResponsesTable.REQ_HEADERS])
-        #reqData = str(responseItems[ResponsesTable.REQ_DATA])
-        #self.resHeaders = str(responseItems[ResponsesTable.RES_HEADERS])
-        #self.resData = str(responseItems[ResponsesTable.RES_DATA])
-        #self.contentType = str(responseItems[ResponsesTable.RES_CONTENT_TYPE])
-        #if not self.contentType:
-            # TODO: fix this to use better algorithm
-        #   self.contentType = 'text/html'
-        #self.charset = ContentHelper.getCharSet(self.contentType)
-        #notes = str(responseItems[ResponsesTable.NOTES])
-        #confirmed = str(responseItems[ResponsesTable.CONFIRMED])
         confirmedState = Qt.Unchecked
         if rr.confirmed and rr.confirmed.lower() in ['y', '1']:
             confirmedState = Qt.Checked
         self.confirmedButtonStateChanged(confirmedState)
-
-        #requestHeaders, requestBody, rawRequest = ContentHelper.combineRaw(reqHeaders, reqData)
-        #responseHeaders, responseBody, rawResponse = ContentHelper.combineRaw(self.resHeaders, self.resData, self.charset)
 
         self.requestScintilla.setText(rr.rawRequest)
 
@@ -375,29 +357,47 @@ class RequestResponseWidget(QObject):
         self.doRenderApply(self.tabwidget.currentIndex())
         self.generatedSourceWebView.fill_from_response(rr.responseUrl, rr.responseHeaders, rr.responseBody, rr.responseContentType)
 
-    def generateExtractorResults(self, body, url, charset, results = None):
+    def generateExtractorResults(self, body, url, charset):
+        rr = self.requestResponse
         scriptsIO, commentsIO, linksIO, formsIO = StringIO(), StringIO(), StringIO(), StringIO()
         try:
-            # TODO: this is hard-coded for HTML
-            if 'html' in self.requestResponse.responseContentType:
+            if 'html' == rr.baseType:
                 # Create content for parsing HTML
                 #results = self.htmlExtractor.process(body, url, charset, results)
 
-                for script in self.requestResponse.scripts:
-                    scriptsIO.write('%s\n\n' % str(script))
+                self.tabwidget.setTabText(self.scriptsTabIndex, 'Scripts')
+                for script in rr.results.scripts:
+                    scriptsIO.write('%s\n\n' % self.flat_str(script))
 
-                for comment in self.requestResponse.comments:
-                    commentsIO.write('<!-- %s -->\n\n' % str(comment))
+                self.attachLexer(self.commentsScintilla, 'html')
+                for comment in rr.results.comments:
+                    commentsIO.write('<!-- %s -->\n\n' % self.flat_str(comment))
 
-                for link in self.requestResponse.links:
-                    linksIO.write('%s\n' % str(link))
+                for link in rr.results.links:
+                    linksIO.write('%s\n' % self.flat_str(link))
 
-                for form in self.requestResponse.forms:
-                    formsIO.write('%s\n' % str(form))
+                for form in rr.results.forms:
+                    formsIO.write('%s\n' % self.flat_str(form))
 
-                for input in self.requestResponse.inputs:
-                    formsIO.write('%s\n' % str(input))
-                
+                for input in rr.results.other_inputs:
+                    formsIO.write('%s\n' % self.flat_str(input))
+
+            elif 'javascript' == rr.baseType:
+
+                self.tabwidget.setTabText(self.scriptsTabIndex, 'Strings')
+                for script_string in rr.results.strings:
+                    scriptsIO.write('%s\n' % self.flat_str(script_string))
+
+                self.attachLexer(self.commentsScintilla, 'javascript')
+                for comment in rr.results.comments:
+                    commentsIO.write('%s\n' % self.flat_str(comment))
+
+                for link in rr.results.links:
+                    linksIO.write('%s\n' % self.flat_str(link))
+
+                for link in rr.results.relative_links:
+                    linksIO.write('%s\n' % self.flat_str(link))
+
         except Exception, e:
             # TODO: log 
             print('FIXME:\n error when extracting content:\n %s' % (traceback.format_exc(e)))
@@ -406,10 +406,15 @@ class RequestResponseWidget(QObject):
         self.commentsScintilla.setText(commentsIO.getvalue())
         self.linksScintilla.setText(linksIO.getvalue())
         self.formsScintilla.setText(formsIO.getvalue())
-        
-        return results
 
-    def attachLexer(self, scintillaWidget, contentType, data):
+    def flat_str(self, u):
+        try:
+            s = str(u).encode('ascii')
+        except UnicodeEncodeError:
+            s = repr(unicode(u))[2:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
+        return s
+
+    def attachLexer(self, scintillaWidget, contentType, data = ''):
         lexer = self.getLexer(contentType, data)
         if lexer:
             lexerInstance = lexer(scintillaWidget)
@@ -439,7 +444,7 @@ class RequestResponseWidget(QObject):
             xhtml = webview.page().mainFrame().documentElement().toOuterXml()
             self.generatedSourceScintilla.setText(xhtml)
             body = str(xhtml.toUtf8())
-            self.contentResults = self.generateExtractorResults(body, self.requestResponse.responseUrl, self.requestResponse.charset, self.contentResults)
+            self.generateExtractorResults(body, self.requestResponse.responseUrl, self.requestResponse.charset)
 
     def getLexer(self, contentType, data):
         lexerContentType = self.inferContentType(contentType, data)

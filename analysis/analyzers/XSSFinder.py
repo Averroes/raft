@@ -20,11 +20,12 @@
 #
 
 import re
+import urllib2
 
 from ..AbstractAnalyzer import AbstractAnalyzer
 
 class XSSFinder(AbstractAnalyzer):
-    AlertRegex = re.compile("(alert\((.*?)\))",re.I)
+    AlertRegex = re.compile("(alert\((.+?)\))",re.I)
     
     def __init__(self):
         self.desc="Identification of successful XSS attacks."
@@ -33,10 +34,18 @@ class XSSFinder(AbstractAnalyzer):
     def analyzeTransaction(self, target, results):
         responseBody = target.responseBody
         rawRequest = target.rawRequest
-        
+        combined = None
         for found in self.AlertRegex.finditer(responseBody):
-            match = re.search(found.group(2),target.requestHeaders + target.requestBody)
-            if match is not None:
+            if not combined:
+                combined = target.requestHeaders + target.requestBody
+            alert_data = found.group(2)
+            matched = False
+            if alert_data in combined:
+                matched = True
+            else:
+                if urllib2.unquote(alert_data) in combined:
+                    matched = True
+            if matched:
                 results.addPageResult(pageid=target.responseId, 
                                 url=target.responseUrl,
                                 type=self.friendlyname,

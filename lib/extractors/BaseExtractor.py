@@ -23,30 +23,50 @@ from urllib2 import urlparse
 import re
 
 class BaseExtractor():
+
+    CONTENT_TYPE_MAPPING = {
+            # TODO: complete
+            'html' : 'html',
+            'javascript' : 'javascript',
+            'application/javascript': 'javascript',
+            'application/x-javascript': 'javascript',
+            'text/xml' : 'xml',
+            'text/html' : 'html',
+            'text/xhtml' : 'html',
+            'text/css' : 'css',
+            'text/plain' : 'text',
+            }
+
     def __init__(self):
-        self.host_spec = r'(?:https?:)?//(?:[-a-zA-Z0-9_]+\.)+[a-zA-Z]{2,}'
-        self.path_spec = r'[-a-zA-Z0-9%$_.!*\'(),/=:]+(?:\?[^#]*)?'
-        self.relative_spec = r'(?:^|\b)(?:\.\.[/]|\.[/]|[^:</][/])%s' % (self.path_spec)
+        self.host_spec = r'(?:[Hh][Tt][Tt][Pp][Ss]?:)?//(?:[-a-zA-Z0-9_]+\.)+[a-zA-Z]{2,}'
+        self.path_spec = r'(?:[-a-zA-Z0-9%$_.!*\'(),=:]*[-a-zA-Z0-9_.%/]+)+(?:\?[^#]*)?'
+        self.relative_spec = r'(?:\.\.[/]|\.[/]|(?<![:</])[/])%s' % (self.path_spec)
 
         self.re_full_url = re.compile('%s/(?:%s)?' % (self.host_spec, self.path_spec))
         self.re_relative_url = re.compile(self.relative_spec)
 
     def getBaseType(self, content_type):
         # TODO: improve
+        content_type = content_type.lower()
+        if self.CONTENT_TYPE_MAPPING.has_key(content_type):
+            return self.CONTENT_TYPE_MAPPING[content_type]
         if 'html' in content_type:
             return 'html'
+        elif 'javascript' in content_type:
+            return 'javascript'
         return content_type
 
     def getExtractor(self, content_type):
         import HtmlExtractor
         import PostDataExtractor
+        import JSExtractor
         base_type = self.getBaseType(content_type)
         if 'html' == content_type:
             return HtmlExtractor.HtmlExtractor()
         elif 'post-data' == content_type:
             return PostDataExtractor.PostDataExtractor()
-#        elif 'javascript' == content_type:
-#            return JSExtractor()
+        elif 'javascript' == content_type:
+            return JSExtractor.JSExtractor()
         else:
             raise Exception('Unknown extractor: %s' % content_type)
 

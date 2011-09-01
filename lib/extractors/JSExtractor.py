@@ -53,6 +53,9 @@ class JSParseResults():
                 self.comments.append(comment)
 
     def add_relative_uri(self, uri):
+        if '//' == uri:
+            # ignore comments
+            return
         if uri not in self.relative_links:
             self.relative_links.append(uri)
 
@@ -72,7 +75,7 @@ class JSExtractor(BaseExtractor):
         if results is None:
             results = JSParseResults(script, baseurl)
 
-        self.jsParser.parse(script, '', 0)
+        self.jsParser.parse_file(script, '', 0)
         comments = self.jsParser.comments()
         strings = self.jsParser.strings()
         results.add_comments(comments)
@@ -83,19 +86,22 @@ class JSExtractor(BaseExtractor):
                 match = self.re_full_url.search(line)
                 if match:
                     results.add_uri(match.group(0))
-                match = self.re_relative_url.search(line)
-                if match:
-                    results.add_relative_uri(match.group(0))
+                else:
+                    match = self.re_relative_url.search(line)
+                    if match:
+                        results.add_relative_uri(match.group(0))
 
         for comment in comments:
-            print(comment)
+            if comment.startswith('/*') or comment.startswith('//'):
+                comment = comment[2:]
             for line in comment.splitlines():
                 match = self.re_full_url.search(line)
                 if match:
                     results.add_uri(match.group(0))
-                match = self.re_relative_url.search(line)
-                if match:
-                    results.add_relative_uri(match.group(0))
+                else:
+                    match = self.re_relative_url.search(line)
+                    if match:
+                        results.add_relative_uri(match.group(0))
 
         return results
         

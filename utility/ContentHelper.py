@@ -21,6 +21,8 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import codecs
+
 def getContentType(contentType, data = ''):
     # TODO: implement
     return contentType
@@ -41,7 +43,12 @@ def decodeBody(data, charset):
     try:
         bodyText = None
         try:
-            bodyText = data.decode(charset)
+            if data.startswith(codecs.BOM_UTF16):
+                bodyText = data.decode('utf-16')
+            elif data.startswith(codecs.BOM_UTF8):
+                bodyText = data.replace(codecs.BOM_UTF8, '').decode('utf-8')
+            else:
+                bodyText = data.decode(charset)
         except UnicodeDecodeError:
             pass
         except UnicodeEncodeError:
@@ -62,7 +69,7 @@ def decodeBody(data, charset):
 def combineRaw(headers, data, charset = 'utf-8'):
     # TODO: this functionality needs to be at a higher level
     # TODO: expect ascii always?
-    headersText = headers.decode('ascii', 'replace')
+    headersText = headers.decode('ascii', 'ignore')
     if not (headersText.endswith('\r\n\r\n') or headersText.endswith('\n\n')):
         headersText += '\r\n'
 

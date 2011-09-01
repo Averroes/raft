@@ -225,13 +225,13 @@ class ResponsesContextMenuWidget(QObject):
             self.framework.send_response_id_to_sequence_builder(Id)
 
     def data_tree_copy_url(self):
-        list_io = StringIO()
+        url_list = []
         for index in self.treeViewSelectionModel.selectedRows():
             curUrl = interface.index_to_url(self.dataModel, index)
             if curUrl:
-                list_io.write('%s\n' % (str(curUrl)))
+                url_list.append('%s' % (str(curUrl)))
 
-        QApplication.clipboard().setText(list_io.getvalue())
+        QApplication.clipboard().setText('\n'.join(url_list))
 
     def make_data_tree_hide_item_action(self, msg, index):
         treeViewHideAction = QAction(msg, self)

@@ -117,6 +117,7 @@ from core.database import database
 from core.database.constants import ResponsesTable
 from core.data import ScopeController
 from core.crawler import SpiderConfig
+from core.responses import RequestResponseFactory
 
 # Import Analysis
 from analysis.AnalyzerList import AnalyzerList
@@ -298,6 +299,9 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.refresh_analysis_tab()
 
     def setup_others(self):
+
+        # set request response factory
+        self.framework.setRequestResponseFactory(RequestResponseFactory.RequestResponseFactory(self.framework, self))
 
         # scoping and spider
         self.framework.setScopeController(ScopeController.ScopeController(self.framework, self))

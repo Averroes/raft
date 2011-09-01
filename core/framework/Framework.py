@@ -31,7 +31,6 @@ from PyQt4.QtGui import QFont
 from PyQt4.QtNetwork import QNetworkCookieJar
 
 from core.network.InMemoryCookieJar import InMemoryCookieJar
-from core import RequestResponse
 
 class Framework(QObject):
 
@@ -45,6 +44,7 @@ class Framework(QObject):
         self._networkAccessManager = None
         self._scopeController = None
         self._scopeConfig = None
+        self._requestResponseFactory = None
         self.zoom_size = 0
         self.base_font = QFont()
         # Dictionary for RequestResponse objects loaded into cache
@@ -101,6 +101,12 @@ class Framework(QObject):
 
     def setContentExtractor(self, contentExtractor):
         self._contentExtractor = contentExtractor
+
+    def getRequestResponseFactory(self):
+        return self._requestResponseFactory
+
+    def setRequestResponseFactory(self, requestResponseFactory):
+        self._requestResponseFactory = requestResponseFactory
 
     def getScopeController(self):
         return self._scopeController
@@ -214,7 +220,7 @@ class Framework(QObject):
             if self.request_response_dict.has_key(response_id):
                 request_response = self.request_response_dict[response_id]
             else:
-                request_response = self.request_response_dict[response_id] = RequestResponse.RequestResponse(self, response_id)
+                request_response = self.request_response_dict[response_id] = self._requestResponseFactory.fill(response_id)
         finally:
             self.rrd_qlock.unlock()
         return request_response
