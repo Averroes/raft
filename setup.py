@@ -64,6 +64,7 @@ def get_datafiles():
     return data_files
 
 data_files = get_datafiles()
+data_files.append(('extras', [os.path.join('extras', f) for f in ('RaftCapture.dtd', 'RaftCaptureProcessor.py')]))
 
 if 'darwin' == sys.platform:
     import py2app
