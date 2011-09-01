@@ -26,6 +26,7 @@ from core.database.constants import *
 from core.fuzzer.RequestRunner import RequestRunner
 from core.network.InMemoryCookieJar import InMemoryCookieJar
 from core.crawler.FormFiller import FormFiller
+from core.crawler.SpiderRules import SpiderRules
 
 import re
 import urllib2
@@ -60,6 +61,7 @@ class SpiderThread(QThread):
         self.contentExtractor = self.framework.getContentExtractor()
         self.htmlExtractor = self.contentExtractor.getExtractor('html')
         self.spiderConfig = self.framework.getSpiderConfig()
+        self.spiderRules = SpiderRules(self.framework, self)
         self.formFiller = FormFiller(self.framework, self)
 
         self.re_location_header = re.compile(r'^Location:\s*(.+)$', re.I)
@@ -224,9 +226,9 @@ class SpiderThread(QThread):
             self.add_pending_spider_response_id(response_id, 'spider', depth)
             self.add_pending_spider_response_id(response_id, 'render', depth)
         else:
-            # TODO: implement other types
-            self.framework.log_warning('skipping unsupported type for response for [%s]: %s' % (response_id, content_type))
-            return
+            # TODO: implement other render types
+            self.add_pending_spider_response_id(response_id, 'spider', depth)
+            self.framework.log_warning('skipping unsupported type for render analysis for [%s]: %s' % (response_id, content_type))
 
     def add_pending_spider_response_id(self, response_id, request_type, depth):
         data_item = [response_id, request_type, depth, 'P']
@@ -519,7 +521,6 @@ class SpiderThread(QThread):
         else:
             # TODO: implement other types
             self.framework.log_warning('skipping unsupported type for request for [%s]: %s' % (url, content_type))
-            return []
 
         return self.filter_spider_requests(requests, depth)
 
@@ -543,7 +544,7 @@ class SpiderThread(QThread):
         return self.filter_spider_requests(requests, depth)
 
     def filter_spider_requests(self, requests, depth):
-        # make sure that request has already been retrieved
+        # make sure that request has not already been retrieved
         filtered_requests = []
         already_seen = {}
         found_response_id = None
@@ -573,7 +574,8 @@ class SpiderThread(QThread):
                         found = True
                         break
             if not found:
-                filtered_requests.append(request)
+                if self.spiderRules.should_include_url(base_url):
+                    filtered_requests.append(request)
             elif found_response_id:
                 if not self.Data.spider_pending_response_exists(self.read_cursor2, found_response_id, 'spider'):
                     self.add_pending_spider_response_id(found_response_id, 'spider', depth)
@@ -644,7 +646,7 @@ class SpiderThread(QThread):
             name, value = self.get_form_input_value(form.inputs[i])
             if 0 != i:
                 body_io.write('&')
-            if value:
+            if value is not None:
                 body_io.write('%s=%s' % (urllib2.quote(name), urllib2.quote(value)))
             else:
                 body_io.write('%s' % (urllib2.quote(name)))

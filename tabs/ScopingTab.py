@@ -34,6 +34,7 @@ class ScopingTab(QObject):
         self.configurationObject = {}
         self.mainWindow.scopingSaveButton.setEnabled(False)
         self.framework.subscribe_database_events(self.db_attach, self.db_detach)
+        self.framework.subscribe_raft_config_updated(self.raft_config_updated)
 
     def db_attach(self):
         self.fill_edit_boxes()
@@ -41,6 +42,11 @@ class ScopingTab(QObject):
 
     def db_detach(self):
         self.mainWindow.scopingSaveButton.setEnabled(False)
+
+    def raft_config_updated(self, config_name, config_value):
+        if 'SCOPING' == config_name:
+            # TODO: account for unsaved changes?
+            self.fill_edit_boxes()
 
     def fill_edit_boxes(self):
         configuration = self.framework.get_raft_config_value('SCOPING', str)

@@ -128,6 +128,9 @@ class SpiderPageController(QObject):
             base_url = str(frame.url().toEncoded()).encode('ascii', 'ignore')
         else:
             base_url = self.page_url_encoded
+
+###        print('got navigation -->', self.page_url, frame, link, navigationType)
+
         item = (link, base_url)
         if item not in self.url_links:
             self.url_links.append(item)

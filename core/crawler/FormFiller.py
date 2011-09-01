@@ -145,7 +145,8 @@ class FormFiller(QObject):
         return return_value
 
     def populate_form_value(self, name, Id, value, Type, Class, required, maxlength, accept, label):
-        if Type:
+        match = None
+        if Type and Type in ('telephone',): # TODO: complete HTML5 list
             match = self.get_match(Type)
         if not match and name:
             match = self.get_match(name)

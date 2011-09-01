@@ -254,6 +254,8 @@ console.log(__RAFTSCRIPT__);
                 if lname.startswith('on'):
 ###->                    print('             %s' % (attr_name[2:]))
                     webElement.evaluateJavaScript('this.%s();' % attr_name[2:])
+                    avalue = webElement.attribute(aname)
+                    webElement.evaluateJavaScript('%s' % avalue)
         for webElement in formElements:
             for aname in webElement.attributeNames():
                 lname = str(aname).lower()
