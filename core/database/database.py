@@ -28,6 +28,7 @@
 import os, hashlib, zlib, traceback
 import shutil
 import time,datetime
+import uuid
 import sqlite3
 from sqlite3 import dbapi2 as sqlite
 
@@ -118,6 +119,7 @@ class Db:
 
         cursor.execute(""" CREATE TABLE raft (Name TEXT PRIMAY KEY NOT NULL UNIQUE, Value TEXT NULL) """)
         cursor.execute("""INSERT INTO raft (Name, Value) values (?, ?)""", ['VERSION', version])
+        cursor.execute("""INSERT INTO raft (Name, Value) values (?, ?)""", ['UUID', uuid.uuid4().hex])
 
         cursor.execute(""" CREATE TABLE content_data (Hashval VARCHAR(64)  PRIMARY KEY NOT NULL UNIQUE, Data compressed) """)
 
@@ -407,24 +409,8 @@ class Db:
     def perform_upgrade(self, cursor, dbversion, version):
         print('upgrading %s to version %s from %s' % (self.filename, version, dbversion))
         while version != dbversion:
-            if '2011.6.2-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_6_3_alpha(cursor)
-            elif '2011.6.3-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_7_1_alpha(cursor)
-            elif '2011.7.1-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_7_8_alpha(cursor)
-            elif '2011.7.8-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_7_9_alpha(cursor)
-            elif '2011.7.9-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_7_10_alpha(cursor)
-            elif '2011.7.10-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_7_11_alpha(cursor)
-            elif '2011.7.11-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_7_12_alpha(cursor)
-            elif '2011.7.12-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_7_13_alpha(cursor)
-            elif '2011.7.13-alpha' == dbversion:
-                dbversion = self.upgrade_to_2011_7_14_alpha(cursor)
+            if '2011.7.14-alpha' == dbversion:
+                dbversion = self.upgrade_to_2011_8_31_alpha(cursor)
             else:
                 raise Exception('Implement upgrade from %s to %s' % (dbversion, version))
 
@@ -1564,6 +1550,23 @@ class Db:
         finally:
             self.qlock.unlock()
 
+    def get_db_uuid(self, in_cursor = None):
+        if in_cursor is None:
+            cursor = self.allocate_thread_cursor()
+        else:
+            cursor = in_cursor
+        self.qlock.lock()
+        try:
+            cursor.execute("""SELECT Value FROM raft where Name='UUID'""")
+            ret = cursor.fetchone()
+            if ret:
+                ret = str(ret[0])
+            return ret
+        finally:
+            self.qlock.unlock()
+            if in_cursor is None:
+                self.release_thread_cursor(cursor)
+            
     def allocate_thread_cursor(self):
         self.threadMutex.lock()
         try:
@@ -1602,255 +1605,11 @@ class Db:
         finally:
             self.qlock.unlock()
 
-    def upgrade_to_2011_6_3_alpha(self, cursor):
+    def upgrade_to_2011_8_31_alpha(self, cursor):
 
-        version = '2011.6.3-alpha'
-        cursor.execute("""CREATE TABLE requester_history (Response_Id INTEGER PRIMARY KEY)""")
-        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
-        self.conn.commit()
+        version = '2011.8.31-alpha'
 
-        return version
-
-
-    def upgrade_to_2011_7_1_alpha(self, cursor):
-
-        version = '2011.7.1-alpha'
-        cursor.execute("""CREATE TABLE sequences (
-                          Id INTEGER PRIMARY KEY  AUTOINCREMENT NOT NULL UNIQUE, 
-                          Name TEXT NOT NULL UNIQUE,
-                          Sequence_Type TEXT,
-                          Session_Detection BOOL NOT NULL,
-                          Include_Media BOOL NOT NULL,
-                          Use_Browser BOOL NOT NULL,
-                          InSession_Pattern TEXT,
-                          InSession_RE BOOL NOT NULL,
-                          OutOfSession_Pattern TEXT,
-                          OutOfSession_RE BOOL NOT NULL
-                          )""")
-
-        cursor.execute("""CREATE TABLE sequence_steps (
-                          Sequence_Id INTEGER NOT NULL, 
-                          StepNum INTEGER NOT NULL, 
-                          Response_Id INTEGER NOT NULL, 
-                          PRIMARY KEY (Sequence_Id, StepNum),
-                          FOREIGN KEY (Sequence_Id) REFERENCES sequences (Id),
-                          FOREIGN KEY (Response_Id) REFERENCES responses (Id)
-                          )""")
-
-        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
-        self.conn.commit()
-        return version
-
-    def upgrade_to_2011_7_8_alpha(self, cursor):
-        version = '2011.7.8-alpha'
-        cursor.execute("""CREATE TABLE AnalysisRuns (
-                                AnalysisRun_ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
-                                timeran TIMESTAMP
-                                );
-                            """)
-
-        cursor.execute("""CREATE TABLE AnalysisInstances (
-                               AnalysisInstance_ID INTEGER PRIMARY KEY  AUTOINCREMENT NOT NULL UNIQUE,
-                               friendlyName TEXT,
-                               desc TEXT,
-                               className TEXT,
-                               AnalysisRun INTEGER,
-                               FOREIGN KEY (AnalysisRun) REFERENCES AnalysisRuns (AnalysisRun_ID)
-                               );
-                            """)
-        cursor.execute("""CREATE INDEX IDX_FK_AnalysisRun ON AnalysisInstances(AnalysisRun);""")
-        
-        cursor.execute("""CREATE TABLE AnalysisResultSet (
-                                AnalysisResultSet_ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
-                                AnalysisInstance INTEGER,
-                                Response_analyzed INTEGER,
-                                isOverallResult BOOLEAN,
-                                context TEXT,
-                                FOREIGN KEY (AnalysisInstance) REFERENCES AnalysisInstances(AnalysisInstance_ID)
-                                --Can't make this an FK, is null sometimes.
-                                --FOREIGN KEY (Response_analyzed) REFERENCES responses(Id) NULL
-                                );
-                            """)  
-        cursor.execute("""CREATE INDEX IDX_FK_AnalysisInstance ON AnalysisResultSet(AnalysisInstance);""")
-        cursor.execute("""CREATE INDEX IDX_FK_Response_analyzed ON AnalysisResultSet(Response_analyzed);""")
-        
-        cursor.execute("""CREATE TABLE AnalysisStats (
-                               AnalysisStat_ID INTEGER PRIMARY KEY  AUTOINCREMENT NOT NULL UNIQUE,
-                               statName TEXT,
-                               statValue TEXT,
-                               AnalysisResultSet INTEGER,
-                               FOREIGN KEY (AnalysisResultSet) REFERENCES AnalysisResultSet (AnalysisResultSet_ID)
-                               );
-                            """)
-        cursor.execute("""CREATE INDEX IDX_FK_AnalysisResultSet ON AnalysisStats(AnalysisResultSet);""")
-        
-        cursor.execute("""CREATE TABLE AnalysisSingleResult (
-                               AnalysisSingleResult_ID INTEGER PRIMARY KEY  AUTOINCREMENT NOT NULL UNIQUE,
-                               severity TEXT,
-                               certainty TEXT,
-                               type TEXT,
-                               desc TEXT,
-                               data TEXT,
-                               spanstart INTEGER,
-                               spanend INTEGER,
-                               AnalysisResultSet INTEGER,
-                               FOREIGN KEY (AnalysisResultSet) REFERENCES AnalysisResultSet (AnalysisResultSet_ID)
-                               );
-                            """)
-        cursor.execute("""CREATE INDEX IDX_FK_AnalysisResultSetResult ON AnalysisSingleResult(AnalysisResultSet);""")
-
-        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
-        self.conn.commit()
-
-        return version
-
-    def upgrade_to_2011_7_9_alpha(self, cursor):
-        version = '2011.7.9-alpha'
-
-        cursor.execute("""CREATE TABLE sequence_manual_items (
-                          Response_Id INTEGER NOT NULL, 
-                          Time_Added INTEGER,
-                          PRIMARY KEY (Response_Id),
-                          FOREIGN KEY (Response_Id) REFERENCES responses (Id)
-                          )""")
-
-        cursor.execute("""ALTER TABLE sequences ADD Dynamic_Data BOOL""")
-        cursor.execute("""UPDATE sequences SET Dynamic_Data = 0""")
-
-        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
-        self.conn.commit()
-
-        return version
-
-    def upgrade_to_2011_7_10_alpha(self, cursor):
-        version = '2011.7.10-alpha'
-
-        cursor.execute("""DROP TABLE configuration""")
-
-        cursor.execute(""" CREATE TABLE configuration (
-                       Component TEXTNOT NULL,
-                       ConfigName TEXT, 
-                       ConfigValue compressed,
-                       PRIMARY KEY (Component, ConfigName)
-                       ) """)
-
-        cursor.execute("""INSERT INTO configuration (Component, ConfigName, ConfigValue) values (?, ?, ?)""", ['RAFT', 'black_hole_network', Compressed(str(True))])
-
-        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
-        self.conn.commit()
-
-        return version
-
-
-    def upgrade_to_2011_7_11_alpha(self, cursor):
-
-        version = '2011.7.11-alpha'
-
-        cursor.execute("""CREATE TABLE sequence_source_parameters (
-                          Sequence_Id INTEGER NOT NULL, 
-                          Response_Id INTEGER NOT NULL, 
-                          Input_Location TEXT NOT NULL,
-                          Input_Position INTEGER NOT NULL,
-                          Input_Name TEXT,
-                          Input_Type TEXT,
-                          Input_Value Compressed,
-                          Is_Dynamic BOOL NOT NULL,
-                          PRIMARY KEY (Sequence_Id, Response_Id, Input_Location, Input_Position, Input_Type, Input_Name),
-                          FOREIGN KEY (Sequence_Id) REFERENCES sequences (Id),
-                          FOREIGN KEY (Response_Id) REFERENCES responses (Id)
-                          )""")
-
-        cursor.execute("""CREATE TABLE sequence_target_parameters (
-                          Sequence_Id INTEGER NOT NULL, 
-                          Response_Id INTEGER NOT NULL, 
-                          Input_Location TEXT NOT NULL,
-                          Input_Position INTEGER NOT NULL,
-                          Input_Name TEXT,
-                          Input_Value Compressed,
-                          Is_Dynamic BOOL NOT NULL,
-                          PRIMARY KEY (Sequence_Id, Response_Id, Input_Location, Input_Position, Input_Name),
-                          FOREIGN KEY (Sequence_Id) REFERENCES sequences (Id),
-                          FOREIGN KEY (Response_Id) REFERENCES responses (Id)
-                          )""")
-
-        cursor.execute("""CREATE TABLE sequence_cookies (
-                          Sequence_Id INTEGER NOT NULL, 
-                          Cookie_Domain TEXT NOT NULL,
-                          Cookie_Name TEXT NOT NULL,
-                          Cookie_Raw_Value Compressed,
-                          Is_Dynamic BOOL NOT NULL,
-                          PRIMARY KEY (Sequence_Id, Cookie_Domain, Cookie_Name),
-                          FOREIGN KEY (Sequence_Id) REFERENCES sequences (Id)
-                          )""")
-
-        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
-        self.conn.commit()
-
-        return version
-
-    def upgrade_to_2011_7_12_alpha(self, cursor):
-
-        version = '2011.7.12-alpha'
-
-        cursor.execute("""ALTER table sequence_steps ADD Is_Enabled BOOL""")
-        cursor.execute("""ALTER table sequence_steps ADD Is_Hidden BOOL""")
-        cursor.execute("""UPDATE sequence_steps SET Is_Enabled=?, Is_Hidden=?""", [True, False])
-
-        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
-        self.conn.commit()
-
-        return version
-    
-    def upgrade_to_2011_7_13_alpha(self, cursor):
-
-        version = '2011.7.13-alpha'
-
-        cursor.execute("""ALTER table AnalysisInstances ADD resultclass TEXT""")
-        cursor.execute("""ALTER table AnalysisResultSet ADD resultclass TEXT""")
-        cursor.execute("""ALTER table AnalysisSingleResult ADD resultclass TEXT""")
-        cursor.execute("""UPDATE AnalysisInstances SET resultclass=''""")
-        cursor.execute("""UPDATE AnalysisResultSet SET resultclass=''""")
-        cursor.execute("""UPDATE AnalysisSingleResult SET resultclass=''""")
-        
-        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
-        self.conn.commit()
-
-        return version
-
-
-    def upgrade_to_2011_7_14_alpha(self, cursor):
-
-        version = '2011.7.14-alpha'
-
-        try:
-            cursor.execute("""DROP TABLE dom_fuzzer_queue""")
-        except:
-            pass
-
-        cursor.execute("""CREATE TABLE dom_fuzzer_queue (
-                          Id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, 
-                          Response_Id INTEGER NOT NULL,
-                          Url TEXT NOT NULL, 
-                          Target TEXT NOT NULL,
-                          Param TEXT NOT NULL,
-                          Test TEXT NOT NULL,
-                          Status TEXT NOT NULL,
-                          FOREIGN KEY (Response_Id) REFERENCES responses (Id)
-                          )
-                          """)
-
-        cursor.execute("""CREATE TABLE dom_fuzzer_results (
-                          Id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, 
-                          Response_Id INTEGER NOT NULL,
-                          Url TEXT NOT NULL, 
-                          Target TEXT NOT NULL,
-                          Param TEXT NOT NULL,
-                          Test TEXT NOT NULL,
-                          Confidence TEXT NOT NULL,
-                          Rendered_Data Compressed,
-                          FOREIGN KEY (Response_Id) REFERENCES responses (Id)
-                          )
-                          """)
+        cursor.execute("""INSERT INTO raft (Name, Value) values (?, ?)""", ['UUID', uuid.uuid4().hex])
         
         cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
         self.conn.commit()

@@ -51,12 +51,20 @@ class Framework(QObject):
         self.rrd_qlock = QMutex()
         self.request_response_dict = {}
         self.home_dir = str(QDir.toNativeSeparators(QDir.homePath()).toUtf8())
-        self.raft_dir = os.path.join(self.home_dir, '.raft')
-        if not os.path.exists(self.raft_dir):
-            os.mkdir(self.raft_dir)
-        self.web_db_path = self.raft_dir
+        self.raft_dir = self.create_raft_directory(self.home_dir, '.raft')
+        self.user_db_dir = self.create_raft_directory(self.raft_dir, 'db')
+        self.user_data_dir = self.create_raft_directory(self.raft_dir, 'data')
+        self.user_analyzer_dir = self.create_raft_directory(self.raft_dir, 'analyzers')
+        self.user_web_path = self.create_raft_directory(self.raft_dir, 'web')
+        self.web_db_path = self.user_web_path
         # TODO: there may be a Qt way to give executable path as well
         self._executable_path = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+    def create_raft_directory(self, basepath, dirname):
+        dirtarget = os.path.join(basepath, dirname)
+        if not os.path.exists(dirtarget):
+            os.mkdir(dirtarget)
+        return dirtarget
 
     def useragent(self):
         return 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1'
@@ -70,9 +78,8 @@ class Framework(QObject):
         if self._db is not None:
             raise Exception('database is already initialized')
         self._db = db
-        self.web_db_path = os.path.join(self.raft_dir, os.path.basename(dbname))
-        if not os.path.exists(self.web_db_path):
-            os.mkdir(self.web_db_path)
+        self._db_uuid = self._db.get_db_uuid()
+        self.web_db_path = self.create_raft_directory(self.user_web_path, self._db_uuid)
         self.emit(SIGNAL('raftConfigPopulated()'))
         self.emit(SIGNAL('databaseAttached()'))
 
@@ -86,6 +93,10 @@ class Framework(QObject):
         # if database is already available, invoke attach callback directly
         if self._db is not None:
             attach_callback()
+
+    def get_temp_db_filename(self):
+        # default filename is temp.raftdb
+        return os.path.join(self.user_db_dir, 'temp.raftdb')
 
     def get_web_db_path(self):
         return self.web_db_path

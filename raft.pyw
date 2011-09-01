@@ -160,7 +160,7 @@ try:
 except ImportError:
     MAC = False
     
-__version__ = "2011.7.14-alpha"
+__version__ = "2011.8.31-alpha"
     
 #ToDo: Create a global search through response content
 #ToDo: Auto-Highlight error conditions
@@ -177,14 +177,14 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.reqTabRawRequestTab.hide()
         self.reqTabRawRequestTab.setParent(None)
 
+        # initialize framework
+        self.framework = Framework(self)
+
         # default filename is temp.raftdb
         if dbfilename:
             self.dbfilename = dbfilename
         else:
-            self.dbfilename = "temp.raftdb"
-
-        # initialize framework
-        self.framework = Framework(self)
+            self.dbfilename = self.framework.get_temp_db_filename()
 
         # restore settings
         self.restore_settings()
