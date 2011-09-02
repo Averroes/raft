@@ -1628,7 +1628,7 @@ class Db:
             component = str(row[0])
             old_name = str(row[1])
             old_value = row[2]
-            new_name = old_name.replace('analayis.analyzers.', 'analyzers.')
+            new_name = old_name.replace('analysis.analyzers.', 'analyzers.')
             if new_name != old_name:
                 cursor.execute("""INSERT INTO configuration (Component, ConfigName, ConfigValue) values (?, ?, ?)""", [component, new_name, old_value])
                 cursor.execute("""DELETE FROM configuration WHERE Component=? and ConfigName=?""", [component, old_name])
