@@ -26,6 +26,7 @@
 import pkgutil
 import inspect
 import sys
+import os
 from AbstractAnalyzer import AbstractAnalyzer
 
 class AnalyzerList():
@@ -40,7 +41,11 @@ class AnalyzerList():
         try:
             analyzer_paths = self.framework.get_analyzer_paths()
             for p in analyzer_paths:
-                sys.path.insert(0, p)
+                if p not in sys.path:
+                    sys.path.insert(0, p)
+                parentpath = os.path.dirname(p)
+                if parentpath not in sys.path:
+                    sys.path.insert(0, parentpath)
             return self.import_analyzers(analyzer_paths)
         finally:
             sys.path = original_sys_path[:]
