@@ -27,8 +27,7 @@ import struct
 
 #from core.fuzzer import AttackPayloads
 
-from ...AbstractAnalyzer import AbstractAnalyzer
-
+from analysis.AbstractAnalyzer import AbstractAnalyzer
 
 class GIFComments(AbstractAnalyzer):
     

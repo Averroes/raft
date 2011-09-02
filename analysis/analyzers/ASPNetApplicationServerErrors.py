@@ -21,7 +21,7 @@
 #
 import re
 
-from ..AbstractAnalyzer import AbstractAnalyzer
+from analysis.AbstractAnalyzer import AbstractAnalyzer
 
 class ASPNETApplicationServerErrors(AbstractAnalyzer):
     

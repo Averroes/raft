@@ -22,7 +22,7 @@
 import re
 import urllib2
 
-from ..AbstractAnalyzer import AbstractAnalyzer
+from analysis.AbstractAnalyzer import AbstractAnalyzer
 
 class XSSFinder(AbstractAnalyzer):
     AlertRegex = re.compile("(alert\((.+?)\))",re.I)

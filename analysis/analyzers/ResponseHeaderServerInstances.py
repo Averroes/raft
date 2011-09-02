@@ -18,7 +18,7 @@
 #
 
 
-from ..AbstractAnalyzer import AbstractAnalyzer
+from analysis.AbstractAnalyzer import AbstractAnalyzer
 import re
 
 class ResponseHeaderServerInstances(AbstractAnalyzer):

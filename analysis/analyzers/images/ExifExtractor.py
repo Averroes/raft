@@ -24,9 +24,8 @@ import StringIO
 
 from thirdparty.lib import EXIF
 
-from ...AbstractAnalyzer import AbstractAnalyzer
-from ...resultsclasses import ExifExtractorSingleResult
-
+from analysis.AbstractAnalyzer import AbstractAnalyzer
+from analysis.resultsclasses import ExifExtractorSingleResult
 
 class ExifExtractor(AbstractAnalyzer):
     

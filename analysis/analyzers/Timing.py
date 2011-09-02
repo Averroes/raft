@@ -23,7 +23,7 @@ import re
 import pprint
 import time
 
-from ..AbstractAnalyzer import AbstractAnalyzer
+from analysis.AbstractAnalyzer import AbstractAnalyzer
 
 
 class Timing(AbstractAnalyzer):
