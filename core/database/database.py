@@ -411,6 +411,8 @@ class Db:
         while version != dbversion:
             if '2011.7.14-alpha' == dbversion:
                 dbversion = self.upgrade_to_2011_8_31_alpha(cursor)
+            elif '2011.8.31-alpha' == dbversion:
+                dbversion = self.upgrade_to_2011_9_1_alpha(cursor)
             else:
                 raise Exception('Implement upgrade from %s to %s' % (dbversion, version))
 
@@ -1610,6 +1612,26 @@ class Db:
         version = '2011.8.31-alpha'
 
         cursor.execute("""INSERT INTO raft (Name, Value) values (?, ?)""", ['UUID', uuid.uuid4().hex])
+        
+        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
+        self.conn.commit()
+
+        return version
+
+    def upgrade_to_2011_9_1_alpha(self, cursor):
+
+        version = '2011.9.1-alpha'
+
+        cursor.execute("""SELECT Component, ConfigName, ConfigValue from configuration where Component in ('ANALYSIS', 'ANALYSISENABLED')""")
+        rows = cursor.fetchall()
+        for row in rows:
+            component = str(row[0])
+            old_name = str(row[1])
+            old_value = row[2]
+            new_name = old_name.replace('analayis.analyzers.', 'analyzers.')
+            if new_name != old_name:
+                cursor.execute("""INSERT INTO configuration (Component, ConfigName, ConfigValue) values (?, ?, ?)""", [component, new_name, old_value])
+                cursor.execute("""DELETE FROM configuration WHERE Component=? and ConfigName=?""", [component, old_name])
         
         cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
         self.conn.commit()

@@ -70,11 +70,15 @@ class AbstractAnalyzer(object):
     def postanalysis(self,results):
         """Any post-test steps go here.  Called after all pages were analyzed."""
         pass
-    
+
     def getDefaultConfiguration(self):
         """Returns the default configuration dictionary for this analyzer.
            If your module is configurable at all, you must override this."""
         return {}
+
+    def defaultEnabled(self):
+        """Returns if the analyzer should be Enabled by default"""
+        return True
     
     #####################Special Functions
     #####################You shouldn't need to override these unless you're doing something very special

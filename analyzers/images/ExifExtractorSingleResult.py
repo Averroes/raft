@@ -19,7 +19,7 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import SingleResult
+from analysis.resultsclasses import SingleResult
 
 class ExifExtractorSingleResult(SingleResult.SingleResult):
     

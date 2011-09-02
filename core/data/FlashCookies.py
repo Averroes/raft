@@ -29,16 +29,23 @@ class FlashCookies:
         self.detect_platform()
 
     def detect_platform(self):
-        self.is_mac = False
-        self.is_windows = False
-        self.is_linux = False
-        if 'Darwin' == platform.system():
-            self.is_mac = True
-        elif 'Windows' == platform.system():
-            self.is_windows = True
-        else:
-            # assume mac
-            self.is_mac = True
+        attempt = 0
+        while attempt < 3:
+            try:
+                system_platform = platform.system()
+                self.is_mac = False
+                self.is_windows = False
+                self.is_linux = False
+                if 'Darwin' == system_platform:
+                    self.is_mac = True
+                elif 'Windows' == system_platform:
+                    self.is_windows = True
+                else:
+                    # assume mac
+                    self.is_mac = True
+                break
+            except IOError:
+                attempt += 1
 
     def visit_flashcookies_files(self, obj, dirname, entries):
         for entry in entries:

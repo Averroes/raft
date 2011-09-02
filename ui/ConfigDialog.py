@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'ConfigDialog.ui'
 #
-# Created: Tue Aug  2 19:35:33 2011
-#      by: PyQt4 UI code generator 4.8.3
+# Created: Thu Sep  1 11:20:58 2011
+#      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -21,6 +21,7 @@ class Ui_configDialog(object):
         self.verticalLayout = QtGui.QVBoxLayout(configDialog)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.configTab = QtGui.QTabWidget(configDialog)
+        self.configTab.setEnabled(True)
         self.configTab.setObjectName(_fromUtf8("configTab"))
         self.configGeneralTab = QtGui.QWidget()
         self.configGeneralTab.setObjectName(_fromUtf8("configGeneralTab"))
@@ -44,14 +45,16 @@ class Ui_configDialog(object):
         self.gridLayout.addWidget(self.label_2, 2, 1, 1, 1)
         self.confProxyEdit = QtGui.QLineEdit(self.groupBox)
         self.confProxyEdit.setEnabled(False)
+        self.confProxyEdit.setText(_fromUtf8(""))
         self.confProxyEdit.setObjectName(_fromUtf8("confProxyEdit"))
         self.gridLayout.addWidget(self.confProxyEdit, 3, 0, 1, 1)
         self.confProxyPort = QtGui.QLineEdit(self.groupBox)
         self.confProxyPort.setEnabled(False)
+        self.confProxyPort.setText(_fromUtf8(""))
         self.confProxyPort.setObjectName(_fromUtf8("confProxyPort"))
         self.gridLayout.addWidget(self.confProxyPort, 3, 1, 1, 1)
         self.groupBox_2 = QtGui.QGroupBox(self.configGeneralTab)
-        self.groupBox_2.setGeometry(QtCore.QRect(10, 160, 331, 191))
+        self.groupBox_2.setGeometry(QtCore.QRect(10, 160, 331, 251))
         self.groupBox_2.setObjectName(_fromUtf8("groupBox_2"))
         self.browserAutoLoadImagesCheckBox = QtGui.QCheckBox(self.groupBox_2)
         self.browserAutoLoadImagesCheckBox.setGeometry(QtCore.QRect(10, 150, 181, 20))
@@ -68,6 +71,16 @@ class Ui_configDialog(object):
         self.browserEnableJavaScriptCheckBox = QtGui.QCheckBox(self.groupBox_2)
         self.browserEnableJavaScriptCheckBox.setGeometry(QtCore.QRect(10, 30, 181, 20))
         self.browserEnableJavaScriptCheckBox.setObjectName(_fromUtf8("browserEnableJavaScriptCheckBox"))
+        self.browserUserAgentEdit = QtGui.QLineEdit(self.groupBox_2)
+        self.browserUserAgentEdit.setEnabled(False)
+        self.browserUserAgentEdit.setGeometry(QtCore.QRect(10, 210, 311, 22))
+        self.browserUserAgentEdit.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.browserUserAgentEdit.setText(_fromUtf8(""))
+        self.browserUserAgentEdit.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.browserUserAgentEdit.setObjectName(_fromUtf8("browserUserAgentEdit"))
+        self.browserCustomUserAgentCheckBox = QtGui.QCheckBox(self.groupBox_2)
+        self.browserCustomUserAgentCheckBox.setGeometry(QtCore.QRect(10, 180, 161, 20))
+        self.browserCustomUserAgentCheckBox.setObjectName(_fromUtf8("browserCustomUserAgentCheckBox"))
         self.configTab.addTab(self.configGeneralTab, _fromUtf8(""))
         self.configCrawlerTab = QtGui.QWidget()
         self.configCrawlerTab.setObjectName(_fromUtf8("configCrawlerTab"))
@@ -206,14 +219,16 @@ class Ui_configDialog(object):
         self.label.setText(QtGui.QApplication.translate("configDialog", "HTTP/HTTPS Proxy", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("configDialog", "Proxy Port", None, QtGui.QApplication.UnicodeUTF8))
         self.confProxyEdit.setToolTip(QtGui.QApplication.translate("configDialog", "Specifying a proxy is not available in this release", None, QtGui.QApplication.UnicodeUTF8))
-        self.confProxyEdit.setText(QtGui.QApplication.translate("configDialog", "localhost", None, QtGui.QApplication.UnicodeUTF8))
-        self.confProxyPort.setText(QtGui.QApplication.translate("configDialog", "8080", None, QtGui.QApplication.UnicodeUTF8))
+        self.confProxyEdit.setPlaceholderText(QtGui.QApplication.translate("configDialog", "localhost", None, QtGui.QApplication.UnicodeUTF8))
+        self.confProxyPort.setPlaceholderText(QtGui.QApplication.translate("configDialog", "8080", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox_2.setTitle(QtGui.QApplication.translate("configDialog", "Browser Configuration", None, QtGui.QApplication.UnicodeUTF8))
         self.browserAutoLoadImagesCheckBox.setText(QtGui.QApplication.translate("configDialog", "Auto Load Images?", None, QtGui.QApplication.UnicodeUTF8))
         self.browserEnablePluginsCheckBox.setText(QtGui.QApplication.translate("configDialog", "Enable Plugins?", None, QtGui.QApplication.UnicodeUTF8))
         self.browserEnableJavaCheckBox.setText(QtGui.QApplication.translate("configDialog", "Enable Java?", None, QtGui.QApplication.UnicodeUTF8))
         self.browserEnableWebStorageCheckBox.setText(QtGui.QApplication.translate("configDialog", "Enable Web Storage?", None, QtGui.QApplication.UnicodeUTF8))
         self.browserEnableJavaScriptCheckBox.setText(QtGui.QApplication.translate("configDialog", "Enable JavaScript?", None, QtGui.QApplication.UnicodeUTF8))
+        self.browserUserAgentEdit.setPlaceholderText(QtGui.QApplication.translate("configDialog", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1", None, QtGui.QApplication.UnicodeUTF8))
+        self.browserCustomUserAgentCheckBox.setText(QtGui.QApplication.translate("configDialog", "Custom User-Agent?", None, QtGui.QApplication.UnicodeUTF8))
         self.configTab.setTabText(self.configTab.indexOf(self.configGeneralTab), QtGui.QApplication.translate("configDialog", "General", None, QtGui.QApplication.UnicodeUTF8))
         self.spiderConfigGroupBox.setTitle(QtGui.QApplication.translate("configDialog", "Spider", None, QtGui.QApplication.UnicodeUTF8))
         self.spiderSubmitFormsCheckBox.setText(QtGui.QApplication.translate("configDialog", "Submit Forms", None, QtGui.QApplication.UnicodeUTF8))

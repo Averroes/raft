@@ -95,7 +95,7 @@ def recursive_generate_tree_widget_helper(currentsrcnode, currentdestnode):
             #currentdestnode.setFlags(Qt.ItemIsEditable|Qt.ItemIsEnabled|Qt.ItemIsSelectable)
         
             
-def obj_list_to_dict(objlist, valueattr=None):
+def obj_list_to_dict(objlist, valueattr=None, objdepth = 1):
     """
     Changes a list of objects into a dictionary organized by package.
     Output is suitable for use with generate_tree_widget()
@@ -106,7 +106,7 @@ def obj_list_to_dict(objlist, valueattr=None):
     for x in objlist:
         #Create a list of all parent packages.
         #exclude first two (so root becomes analyzers folder)
-        packagelist=list(x.__module__.split('.')[2:])
+        packagelist=list(x.__module__.split('.')[objdepth:])
 
         #This used to be needed to remove duplicates, but it appears to not be needed now?
         #if packagelist[-1]==x.__class__.__name__:
@@ -119,7 +119,7 @@ def obj_list_to_dict(objlist, valueattr=None):
     #print outdict
     return outdict
     
-def recursive_lists_to_nested_dict(list, dictionary, value=None, customdata=None):
+def recursive_lists_to_nested_dict(input_list, dictionary, value=None, customdata=None):
     """
         Adds a list of pathing information (such as a full path, package name, etc)
         to a hierarchial dictionary recursively.
@@ -139,17 +139,17 @@ def recursive_lists_to_nested_dict(list, dictionary, value=None, customdata=None
     """
         
 
-    if len(list) > 1:
-        #print list
+    if len(input_list) > 1:
+        #print input_list
         #print dictionary
-        branch = dictionary.setdefault(list[0], {})
-        recursive_lists_to_nested_dict(list[1:], branch, value, customdata)
-    else:
-        #print list
+        branch = dictionary.setdefault(input_list[0], {})
+        recursive_lists_to_nested_dict(input_list[1:], branch, value, customdata)
+    elif len(input_list) > 0:
+        #print input_list
         if customdata==None:
-            dictionary[list[0]] = value
+            dictionary[input_list[0]] = value
         else:
-            dictionary[list[0]] = (value,customdata)
+            dictionary[input_list[0]] = (value,customdata)
 
 def tree_widget_to_dict(treewidget):
     """Inverse of generate_tree_widget"""

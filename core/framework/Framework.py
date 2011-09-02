@@ -59,7 +59,9 @@ class Framework(QObject):
         self.web_db_path = self.user_web_path
         # TODO: there may be a Qt way to give executable path as well
         self._executable_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-
+        self._data_dir = os.path.join(self._executable_path, 'data')
+        self._analyzer_dir = os.path.join(self._executable_path, 'analyzers')
+        
     def create_raft_directory(self, basepath, dirname):
         dirtarget = os.path.join(basepath, dirname)
         if not os.path.exists(dirtarget):
@@ -104,8 +106,11 @@ class Framework(QObject):
     def get_user_home_dir(self):
         return self.home_dir
 
+    def get_analyzer_paths(self):
+        return [self._analyzer_dir, self.user_analyzer_dir]
+
     def get_data_dir(self):
-        return os.path.join(self._executable_path, 'data')
+        return self._data_dir
 
     def getContentExtractor(self):
         return self._contentExtractor
@@ -211,10 +216,10 @@ class Framework(QObject):
         cursor.close()
         self._db.release_thread_cursor(cursor)
 
-    def get_config_value(self, component, name, rtype = str):
+    def get_config_value(self, component, name, rtype = str, default_value = None):
         # TODO: implement config cache
         cursor = self._db.allocate_thread_cursor()
-        value = self._db.get_config_value(cursor, component, name, rtype)
+        value = self._db.get_config_value(cursor, component, name, rtype, default_value)
         cursor.close()
         self._db.release_thread_cursor(cursor)
         return value

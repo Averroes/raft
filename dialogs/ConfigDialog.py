@@ -40,6 +40,7 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.buttonBox.clicked.connect(self.handle_buttonBox_clicked)
 
         self.checkBoxUseProxy.stateChanged.connect(self.handle_useProxy_stateChanged)
+        self.browserCustomUserAgentCheckBox.stateChanged.connect(self.handle_browserCustomUserAgent_stateChanged)
         self.spiderExcludeDangerouPathCheckBox.stateChanged.connect(self.handle_spiderExcludeDangerouPath_stateChanged)
         self.framework.subscribe_raft_config_populated(self.configuration_populated)
 
@@ -98,6 +99,9 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
     def handle_spiderExcludeDangerouPath_stateChanged(self):
         self.spiderDangerousPathEdit.setEnabled(self.spiderExcludeDangerouPathCheckBox.isChecked())
 
+    def handle_browserCustomUserAgent_stateChanged(self):
+        self.browserUserAgentEdit.setEnabled(self.browserCustomUserAgentCheckBox.isChecked())
+
     def fill_spider_edits(self):
         configuration = self.framework.get_raft_config_value('SPIDER', str)
         if configuration:
@@ -146,6 +150,7 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.browserEnablePluginsCheckBox.setChecked(self.framework.get_raft_config_value('browser_plugins_enabled', bool, True))
         self.browserEnableJavaCheckBox.setChecked(self.framework.get_raft_config_value('browser_java_enabled', bool, True))
         self.browserAutoLoadImagesCheckBox.setChecked(self.framework.get_raft_config_value('browser_auto_load_images', bool, True))
+        self.browserCustomUserAgentCheckBox.setChecked(self.framework.get_raft_config_value('browser_custom_user_agent', bool, False))
     
     def save_browser_config(self):
         self.framework.set_raft_config_value('browser_javascript_enabled', self.browserEnableJavaScriptCheckBox.isChecked())
@@ -153,3 +158,4 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.framework.set_raft_config_value('browser_plugins_enabled', self.browserEnablePluginsCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_java_enabled', self.browserEnableJavaCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_auto_load_images', self.browserAutoLoadImagesCheckBox.isChecked())
+        self.framework.set_raft_config_value('browser_custom_user_agent', self.browserCustomUserAgentCheckBox.isChecked())

@@ -55,6 +55,7 @@ def get_datafiles():
     datalist = {}
     os.path.walk('thirdparty', walk_datalist, datalist)
     os.path.walk('data', walk_datalist, datalist)
+    os.path.walk('analyzers', walk_datalist, datalist)
     data_files = []
     keys = datalist.keys()
     keys.sort()

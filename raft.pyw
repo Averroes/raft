@@ -160,7 +160,7 @@ try:
 except ImportError:
     MAC = False
     
-__version__ = "2011.8.31-alpha"
+__version__ = "2011.9.1-alpha"
     
 #ToDo: Create a global search through response content
 #ToDo: Auto-Highlight error conditions
@@ -794,7 +794,7 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         
         #Instantiate all found analyzers
         self.analyzerlist.instantiate_analyzers(useallanalyzers=True)
-        analyzerdict=TreeWidgetTools.obj_list_to_dict(self.analyzerlist,valueattr='isenabled')
+        analyzerdict=TreeWidgetTools.obj_list_to_dict(self.analyzerlist, valueattr='isenabled')
         
         TreeWidgetTools.populate_tree_widget(dialog.analyzerList,analyzerdict)
         dialog.analyzerList.setSortingEnabled(True)
