@@ -38,7 +38,7 @@ class XSSFinder(AbstractAnalyzer):
         for found in self.AlertRegex.finditer(responseBody):
             if not combined:
                 combined = target.requestHeaders + target.requestBody
-            alert_data = found.group(2)
+            alert_data = found.group(1)
             matched = False
             if alert_data in combined:
                 matched = True
