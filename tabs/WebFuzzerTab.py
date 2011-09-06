@@ -60,26 +60,32 @@ class WebFuzzerTab(QObject):
         # Handle the toggling of payload mappings in the config tab
         self.mainWindow.wfPay1FuzzRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay1StaticRadio.toggled.connect(self.handle_payload_toggled)
+        self.mainWindow.wfPay1DynamicRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay2FuzzRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay2StaticRadio.toggled.connect(self.handle_payload_toggled)
+        self.mainWindow.wfPay2DynamicRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay3FuzzRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay3StaticRadio.toggled.connect(self.handle_payload_toggled)
+        self.mainWindow.wfPay3DynamicRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay4FuzzRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay4StaticRadio.toggled.connect(self.handle_payload_toggled)
+        self.mainWindow.wfPay4DynamicRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay5FuzzRadio.toggled.connect(self.handle_payload_toggled)
         self.mainWindow.wfPay5StaticRadio.toggled.connect(self.handle_payload_toggled)
+        self.mainWindow.wfPay5DynamicRadio.toggled.connect(self.handle_payload_toggled)
 
         self.mainWindow.fuzzerHistoryClearButton.clicked.connect(self.fuzzer_history_clear_button_clicked)
         
         # inserted to initially fill the sequences box.
         # ToDo: Need to do this better
-        self.mainWindow.mainTabWidget.currentChanged.connect(self.fill_sequences)
-        self.mainWindow.stdFuzzTab.currentChanged.connect(self.fill_sequences)
+        self.mainWindow.mainTabWidget.currentChanged.connect(self.handle_mainTabWidget_currentChanged)
+        self.mainWindow.stdFuzzTab.currentChanged.connect(self.handle_stdFuzzTab_currentChanged)
         # self.mainWindow.webFuzzTab.currentChanged.connect(self.fill_payloads)
         self.mainWindow.wfStdAddButton.clicked.connect(self.insert_payload_marker)
         self.mainWindow.wfStdStartButton.clicked.connect(self.start_fuzzing_clicked)
         
         self.framework.subscribe_populate_webfuzzer_response_id(self.webfuzzer_populate_response_id)
+        self.framework.subscribe_sequences_changed(self.fill_sequences)
         
         self.miniResponseRenderWidget = MiniResponseRenderWidget(self.framework, self.mainWindow.stdFuzzResultsTabWidget, self)
         
@@ -104,6 +110,7 @@ class WebFuzzerTab(QObject):
         self.Data = self.framework.getDB()
         self.cursor = self.Data.allocate_thread_cursor()
         self.fill_fuzzers()
+        self.fill_edits()
 
     def db_detach(self):
         self.close_cursor()
@@ -129,13 +136,35 @@ class WebFuzzerTab(QObject):
             response_item = [m or '' for m in row]
             history_items.append(response_item)
         self.fuzzerHistoryDataModel.append_data(history_items)
-        
+        self.fill_sequences()
+
+    def fill_edits(self):
+        self.mainWindow.wfStdUrlEdit.setText(self.framework.get_raft_config_value('WebFuzzer.Standard.RequestUrl'))
+        self.mainWindow.wfStdEdit.document().setHtml(self.framework.get_raft_config_value('WebFuzzer.Standard.TemplateHtml'))
+        index = self.mainWindow.stdFuzzerReqMethod.findText(self.framework.get_raft_config_value('WebFuzzer.Standard.Method'))
+        if index != -1:
+            self.mainWindow.stdFuzzerReqMethod.setCurrentIndex(index)
+
+        index = self.mainWindow.wfStdPreBox.findText(self.framework.get_raft_config_value('WebFuzzer.Standard.PreSequenceId'))
+        if index != -1:
+            self.mainWindow.wfStdPreBox.setCurrentIndex(index)
+
+        index = self.mainWindow.wfStdPostBox.findText(self.framework.get_raft_config_value('WebFuzzer.Standard.PostSequenceId'))
+        if index != -1:
+            self.mainWindow.wfStdPostBox.setCurrentIndex(index)
+
     def fuzzer_history_item_double_clicked(self, index):
         Id = interface.index_to_id(self.fuzzerHistoryDataModel, index)
         if Id:
             dialog = RequestResponseDetailDialog(self.framework, Id, self.mainWindow)
             dialog.show()
             dialog.exec_()
+
+    def handle_mainTabWidget_currentChanged(self):
+        self.save_configuration_values()
+
+    def handle_stdFuzzTab_currentChanged(self):
+        self.save_configuration_values()
             
     def fill_sequences(self):
         self.fill_sequences_combo_box(self.mainWindow.wfStdPreBox)
@@ -183,35 +212,47 @@ class WebFuzzerTab(QObject):
         # create payload map from configuration tab
         
         payload_mapping = {}
-        payloads = ["payload_1", "payload_2", "payload_3", "payload_4", "payload_5"]
-        
-        radioButtonList = [self.mainWindow.wfPay1FuzzRadio, self.mainWindow.wfPay2FuzzRadio, self.mainWindow.wfPay3FuzzRadio,
-                           self.mainWindow.wfPay4FuzzRadio, self.mainWindow.wfPay5FuzzRadio, self.mainWindow.wfPay1StaticRadio,
-                           self.mainWindow.wfPay2StaticRadio, self.mainWindow.wfPay3StaticRadio, self.mainWindow.wfPay4StaticRadio,
-                           self.mainWindow.wfPay5StaticRadio]
+
+        payload_config_items = (
+            ("payload_1", 
+             "fuzz", self.mainWindow.wfPay1FuzzRadio, self.mainWindow.wfPay1PayloadBox,
+             "static", self.mainWindow.wfPay1StaticRadio, self.mainWindow.wfPay1StaticEdit,
+             "dynamic", self.mainWindow.wfPay1DynamicRadio, self.mainWindow.wfPay1StaticEdit,
+             ),
+            ("payload_2", 
+             "fuzz", self.mainWindow.wfPay2FuzzRadio, self.mainWindow.wfPay2PayloadBox,
+             "static", self.mainWindow.wfPay2StaticRadio, self.mainWindow.wfPay2StaticEdit,
+             "dynamic", self.mainWindow.wfPay2DynamicRadio, self.mainWindow.wfPay2StaticEdit,
+             ),
+            ("payload_3", 
+             "fuzz", self.mainWindow.wfPay3FuzzRadio, self.mainWindow.wfPay3PayloadBox,
+             "static", self.mainWindow.wfPay3StaticRadio, self.mainWindow.wfPay3StaticEdit,
+             "dynamic", self.mainWindow.wfPay3DynamicRadio, self.mainWindow.wfPay3StaticEdit,
+             ),
+            ("payload_4", 
+             "fuzz", self.mainWindow.wfPay4FuzzRadio, self.mainWindow.wfPay4PayloadBox,
+             "static", self.mainWindow.wfPay4StaticRadio, self.mainWindow.wfPay4StaticEdit,
+             "dynamic", self.mainWindow.wfPay4DynamicRadio, self.mainWindow.wfPay4StaticEdit,
+             ),
+            ("payload_5", 
+             "fuzz", self.mainWindow.wfPay5FuzzRadio, self.mainWindow.wfPay5PayloadBox,
+             "static", self.mainWindow.wfPay5StaticRadio, self.mainWindow.wfPay5StaticEdit,
+             "dynamic", self.mainWindow.wfPay5DynamicRadio, self.mainWindow.wfPay5StaticEdit,
+             ),
+            )
         
         # Determine active payloads and map them
-        if self.mainWindow.wfPay1FuzzRadio.isChecked():
-            payload_mapping["payload_1"] = ("fuzz", str(self.mainWindow.wfPay1PayloadBox.currentText()))
-        if self.mainWindow.wfPay1StaticRadio.isChecked():
-            payload_mapping["payload_1"] = ("static", str(self.mainWindow.wfPay1StaticEdit.text()))
-        if self.mainWindow.wfPay2FuzzRadio.isChecked():
-            payload_mapping["payload_2"] = ("fuzz", str(self.mainWindow.wfPay2PayloadBox.currentText()))
-        if self.mainWindow.wfPay2StaticRadio.isChecked():
-            payload_mapping["payload_2"] = ("static", str(self.mainWindow.wfPay2StaticEdit.text()))
-        if self.mainWindow.wfPay3FuzzRadio.isChecked():
-            payload_mapping["payload_3"] = ("fuzz", str(self.mainWindow.wfPay3PayloadBox.currentText()))
-        if self.mainWindow.wfPay3StaticRadio.isChecked():
-            payload_mapping["payload_3"] = ("static", str(self.mainWindow.wfPay3StaticEdit.text()))
-        if self.mainWindow.wfPay4FuzzRadio.isChecked():
-            payload_mapping["payload_4"] = ("fuzz", str(self.mainWindow.wfPay4PayloadBox.currentText()))
-        if self.mainWindow.wfPay4StaticRadio.isChecked():
-            payload_mapping["payload_4"] = ("static", str(self.mainWindow.wfPay4StaticEdit.text()))
-        if self.mainWindow.wfPay5FuzzRadio.isChecked():
-            payload_mapping["payload_5"] = ("fuzz", str(self.mainWindow.wfPay5PayloadBox.currentText()))
-        if self.mainWindow.wfPay5StaticRadio.isChecked():
-            payload_mapping["payload_5"] = ("static", str(self.mainWindow.wfPay5StaticEdit.text()))
-            
+        for config_item in payload_config_items:
+            payload_item = config_item[0]
+            for offset in (1, 4, 7):
+                if config_item[offset+1].isChecked():
+                    payload_type = config_item[offset]
+                    if payload_type == "fuzz":
+                        payload_mapping[payload_item] = (payload_type, str(config_item[offset+2].currentText()))
+                    else:
+                        payload_mapping[payload_item] = (payload_type, str(config_item[offset+2].text()))
+                    break
+        
         return payload_mapping
         
     def set_combo_box_text(self, comboBox, selectedText):
@@ -233,15 +274,15 @@ class WebFuzzerTab(QObject):
         
     def handle_payload_toggled(self):
         self.mainWindow.wfPay1PayloadBox.setEnabled(self.mainWindow.wfPay1FuzzRadio.isChecked())
-        self.mainWindow.wfPay1StaticEdit.setEnabled(self.mainWindow.wfPay1StaticRadio.isChecked())
+        self.mainWindow.wfPay1StaticEdit.setEnabled(self.mainWindow.wfPay1StaticRadio.isChecked() or self.mainWindow.wfPay1DynamicRadio.isChecked())
         self.mainWindow.wfPay2PayloadBox.setEnabled(self.mainWindow.wfPay2FuzzRadio.isChecked())
-        self.mainWindow.wfPay2StaticEdit.setEnabled(self.mainWindow.wfPay2StaticRadio.isChecked())
+        self.mainWindow.wfPay2StaticEdit.setEnabled(self.mainWindow.wfPay2StaticRadio.isChecked() or self.mainWindow.wfPay2DynamicRadio.isChecked())
         self.mainWindow.wfPay3PayloadBox.setEnabled(self.mainWindow.wfPay3FuzzRadio.isChecked())
-        self.mainWindow.wfPay3StaticEdit.setEnabled(self.mainWindow.wfPay3StaticRadio.isChecked())
+        self.mainWindow.wfPay3StaticEdit.setEnabled(self.mainWindow.wfPay3StaticRadio.isChecked() or self.mainWindow.wfPay3DynamicRadio.isChecked())
         self.mainWindow.wfPay4PayloadBox.setEnabled(self.mainWindow.wfPay4FuzzRadio.isChecked())
-        self.mainWindow.wfPay4StaticEdit.setEnabled(self.mainWindow.wfPay4StaticRadio.isChecked())
+        self.mainWindow.wfPay4StaticEdit.setEnabled(self.mainWindow.wfPay4StaticRadio.isChecked() or self.mainWindow.wfPay4DynamicRadio.isChecked())
         self.mainWindow.wfPay5PayloadBox.setEnabled(self.mainWindow.wfPay5FuzzRadio.isChecked())
-        self.mainWindow.wfPay5StaticEdit.setEnabled(self.mainWindow.wfPay5StaticRadio.isChecked())
+        self.mainWindow.wfPay5StaticEdit.setEnabled(self.mainWindow.wfPay5StaticRadio.isChecked() or self.mainWindow.wfPay5DynamicRadio.isChecked())
 
     def handle_fuzzer_history_clicked(self):
         index = self.mainWindow.fuzzerHistoryTreeView.currentIndex()
@@ -311,6 +352,19 @@ class WebFuzzerTab(QObject):
         curPayload = str(self.mainWindow.stdFuzzPayloadBox.itemText(index))
         
         self.mainWindow.wfStdEdit.textCursor().insertHtml("<font color='red'>${%s}</font>" % curPayload)
+
+        self.save_configuration_values()
+
+    def save_configuration_values(self):
+        url = str(self.mainWindow.wfStdUrlEdit.text())
+        templateHtml = str(self.mainWindow.wfStdEdit.document().toHtml())
+        method = str(self.mainWindow.stdFuzzerReqMethod.currentText())
+
+        self.framework.set_raft_config_value('WebFuzzer.Standard.RequestUrl', url)
+        self.framework.set_raft_config_value('WebFuzzer.Standard.TemplateHtml', templateHtml)
+        self.framework.set_raft_config_value('WebFuzzer.Standard.Method', method)
+
+#        self.framework.set_raft_config_value('WebFuzzer.Standard.PreSequenceId', )
         
     def start_fuzzing_clicked(self):
         """ Start the fuzzing attack """
@@ -327,21 +381,23 @@ class WebFuzzerTab(QObject):
         self.pending_fuzz_requests = {}
         
         url = str(self.mainWindow.wfStdUrlEdit.text())
-        # Will this work?
-        self.framework.set_raft_config_value('wfStdUrlEdit', url)
         templateText = str(self.mainWindow.wfStdEdit.toPlainText())
         method = str(self.mainWindow.stdFuzzerReqMethod.currentText())
+
+        self.save_configuration_values()
         
         replacements = self.build_replacements(method, url)
 
         sequenceId = None
         if self.mainWindow.wfStdPreChk.isChecked():
             sequenceId = str(self.mainWindow.wfStdPreBox.itemData(self.mainWindow.wfStdPreBox.currentIndex()).toString())
+
+        postSequenceId = None
+        if self.mainWindow.wfStdPostChk.isChecked():
+            postSequenceId = str(self.mainWindow.wfStdPostBox.itemData(self.mainWindow.wfStdPostBox.currentIndex()).toString())
         
         # Fuzzing stuff
         payload_mapping = self.create_payload_map()
-
-        
         
         re_parameters = re.compile(r'(\$\{\w+\})')
         re_parameter_name = re.compile(r'^\$\{(\w+)\}$')
@@ -366,11 +422,16 @@ class WebFuzzerTab(QObject):
         fuzz_payloads = {}
         
         for item in payload_mapping:
-            if "fuzz" in payload_mapping[item]:
+            payload_type = payload_mapping[item][0]
+            if 'fuzz' == payload_type:
                 newitem = payload_mapping[item]
                 filename = newitem[1]
                 values = self.Attacks.read_data(filename)
                 fuzz_payloads[filename] = values
+            elif 'dynamic' == payload_type:
+                expression = payload_mapping[item][1]
+                eval_result = eval(expression)
+                fuzz_payloads[expression] = [str(v) for v in eval_result]
         
         test_slots = []
         counters = []
@@ -378,11 +439,13 @@ class WebFuzzerTab(QObject):
         total_tests = 1
         
         for name, payload_info in payload_mapping.iteritems():
-            origin, payload_value = payload_info
-            if 'static' == origin:
+            payload_type, payload_value = payload_info
+            if 'static' == payload_type:
                 # static payload value
                 payloads = [payload_value]
-            elif 'fuzz' == origin:
+            elif 'fuzz' == payload_type:
+                payloads = fuzz_payloads[payload_value]
+            elif 'dynamic' == payload_type:
                 payloads = fuzz_payloads[payload_value]
         
             total_tests *= len(payloads)
@@ -424,7 +487,7 @@ class WebFuzzerTab(QObject):
                     else:
                         self.fuzzRequesterCookieJar = InMemoryCookieJar(self.framework, self)
                     self.requestRunner = RequestRunner(self.framework, self)
-                    self.requestRunner.setup(self.fuzzer_response_received, self.fuzzRequesterCookieJar, sequenceId)
+                    self.requestRunner.setup(self.fuzzer_response_received, self.fuzzRequesterCookieJar, sequenceId, postSequenceId)
                     first = False
 
             self.pending_fuzz_requests[context] = self.requestRunner.queue_request(method, url, headers, body, context)

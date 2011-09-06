@@ -997,6 +997,13 @@ ${global_cookie_jar}</string>
                   </widget>
                  </item>
                  <item>
+                  <widget class="QRadioButton" name="wfPay1DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QComboBox" name="wfPay1PayloadBox">
                    <property name="enabled">
                     <bool>false</bool>
@@ -1051,6 +1058,13 @@ ${global_cookie_jar}</string>
                   <widget class="QRadioButton" name="wfPay2StaticRadio">
                    <property name="text">
                     <string>static</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay2DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
                    </property>
                   </widget>
                  </item>
@@ -1113,6 +1127,13 @@ ${global_cookie_jar}</string>
                   </widget>
                  </item>
                  <item>
+                  <widget class="QRadioButton" name="wfPay3DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QComboBox" name="wfPay3PayloadBox">
                    <property name="enabled">
                     <bool>false</bool>
@@ -1171,6 +1192,13 @@ ${global_cookie_jar}</string>
                   </widget>
                  </item>
                  <item>
+                  <widget class="QRadioButton" name="wfPay4DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QComboBox" name="wfPay4PayloadBox">
                    <property name="enabled">
                     <bool>false</bool>
@@ -1225,6 +1253,13 @@ ${global_cookie_jar}</string>
                   <widget class="QRadioButton" name="wfPay5StaticRadio">
                    <property name="text">
                     <string>static</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay5DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
                    </property>
                   </widget>
                  </item>

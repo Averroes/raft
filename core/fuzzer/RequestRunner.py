@@ -113,7 +113,7 @@ class RequestRunner(QObject):
 
             if 0 == len(self.inflight_list):
                 do_process = True
-            elif self.sequence_enabled: # TODO: this needs to modified to detect when a sequence is being run
+            elif (self.sequence_enabled or self.post_sequence_enabled): # TODO: this needs to modified to detect when a sequence is being run
                 do_process = False
             elif len(self.inflight_list) < self.max_concurrent:
                 do_process = True
@@ -192,6 +192,8 @@ class RequestRunner(QObject):
 
                 if self.sequence_enabled and not self.sequenceManager.has_session_detection():
                     single_step = True
+                elif  self.post_sequence_enabled:
+                    single_step = True
                 else:
                     single_step = False
 
@@ -226,7 +228,6 @@ class RequestRunner(QObject):
         for i in range(len(request_list), 0, -1):
             request = request_list[i-1]
             self.request_queue.appendleft(request)
-        print(self.request_queue)
 
     def setup_post_sequence_items(self):
         # this function must be called with lock
