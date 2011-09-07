@@ -35,13 +35,13 @@ class RequestInstance(QObject):
         # mutable
         self.sequence_needed = False
         self.cancelled = False
-        self.reqeust = None
+        self.request = None
         self.reply = None
 
     def __repr__(self):
         return ('<core.fuzzer.RequestInstance>: %s, %s, %s' % (self.method, self.url, self.context))
 
-    def set_request_reply(self, requst, reply):
+    def set_request_reply(self, request, reply):
         self.request = request
         self.reply = reply
 

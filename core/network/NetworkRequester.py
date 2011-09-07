@@ -72,13 +72,15 @@ class NetworkRequester(QObject):
             request.setRawHeader('Content-Encoding', 'application/x-www-form-urlencoded')
 
         if not body:
-            device = None
             if method in ('POST', 'PUT', 'CUSTOM'): # TODO: determine specific methods that expect content?
-                request.setRawHeader('Content-Length', '0')
+                body = ''
+            else:
+                device = None
         elif method in ('GET', 'HEAD', 'DELETE'):
             # can't have body, because not supported by Qt network logic
             device = None
-        else:
+
+        if body is not None:
             request.setRawHeader('Content-Length', str(len(body)))
             data = QByteArray(body)
             device = QBuffer(self)
