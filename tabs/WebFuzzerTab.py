@@ -79,6 +79,7 @@ class WebFuzzerTab(QObject):
         # inserted to initially fill the sequences box.
         # ToDo: Need to do this better
         self.mainWindow.mainTabWidget.currentChanged.connect(self.handle_mainTabWidget_currentChanged)
+        self.mainWindow.webFuzzTab.currentChanged.connect(self.handle_webFuzzTab_currentChanged)
         self.mainWindow.stdFuzzTab.currentChanged.connect(self.handle_stdFuzzTab_currentChanged)
         # self.mainWindow.webFuzzTab.currentChanged.connect(self.fill_payloads)
         self.mainWindow.wfStdAddButton.clicked.connect(self.insert_payload_marker)
@@ -110,7 +111,8 @@ class WebFuzzerTab(QObject):
         self.Data = self.framework.getDB()
         self.cursor = self.Data.allocate_thread_cursor()
         self.fill_fuzzers()
-        self.fill_edits()
+        self.fill_standard_edits()
+        self.fill_config_edits()
 
     def db_detach(self):
         self.close_cursor()
@@ -138,20 +140,38 @@ class WebFuzzerTab(QObject):
         self.fuzzerHistoryDataModel.append_data(history_items)
         self.fill_sequences()
 
-    def fill_edits(self):
+    def fill_standard_edits(self):
         self.mainWindow.wfStdUrlEdit.setText(self.framework.get_raft_config_value('WebFuzzer.Standard.RequestUrl'))
         self.mainWindow.wfStdEdit.document().setHtml(self.framework.get_raft_config_value('WebFuzzer.Standard.TemplateHtml'))
         index = self.mainWindow.stdFuzzerReqMethod.findText(self.framework.get_raft_config_value('WebFuzzer.Standard.Method'))
         if index != -1:
             self.mainWindow.stdFuzzerReqMethod.setCurrentIndex(index)
 
+        self.mainWindow.wfStdPreChk.setChecked(self.framework.get_raft_config_value('WebFuzzer.Standard.PreSequenceEnabled', bool))
         index = self.mainWindow.wfStdPreBox.findText(self.framework.get_raft_config_value('WebFuzzer.Standard.PreSequenceId'))
         if index != -1:
             self.mainWindow.wfStdPreBox.setCurrentIndex(index)
 
+        self.mainWindow.wfStdPostChk.setChecked(self.framework.get_raft_config_value('WebFuzzer.Standard.PostSequenceEnabled', bool))
         index = self.mainWindow.wfStdPostBox.findText(self.framework.get_raft_config_value('WebFuzzer.Standard.PostSequenceId'))
         if index != -1:
             self.mainWindow.wfStdPostBox.setCurrentIndex(index)
+
+    def fill_config_edits(self):
+        self.fill_config_edit_item('Payload1', self.mainWindow.wfPay1FuzzRadio, self.mainWindow.wfPay1PayloadBox, self.mainWindow.wfPay1StaticRadio, self.mainWindow.wfPay1DynamicRadio, self.mainWindow.wfPay1StaticEdit)
+        self.fill_config_edit_item('Payload2', self.mainWindow.wfPay2FuzzRadio, self.mainWindow.wfPay2PayloadBox, self.mainWindow.wfPay2StaticRadio, self.mainWindow.wfPay2DynamicRadio, self.mainWindow.wfPay2StaticEdit)
+        self.fill_config_edit_item('Payload3', self.mainWindow.wfPay3FuzzRadio, self.mainWindow.wfPay3PayloadBox, self.mainWindow.wfPay3StaticRadio, self.mainWindow.wfPay3DynamicRadio, self.mainWindow.wfPay3StaticEdit)
+        self.fill_config_edit_item('Payload4', self.mainWindow.wfPay4FuzzRadio, self.mainWindow.wfPay4PayloadBox, self.mainWindow.wfPay4StaticRadio, self.mainWindow.wfPay4DynamicRadio, self.mainWindow.wfPay4StaticEdit)
+        self.fill_config_edit_item('Payload5', self.mainWindow.wfPay5FuzzRadio, self.mainWindow.wfPay5PayloadBox, self.mainWindow.wfPay5StaticRadio, self.mainWindow.wfPay5DynamicRadio, self.mainWindow.wfPay5StaticEdit)
+        
+    def fill_config_edit_item(self, payload_item, fuzzRadio, payloadBox, staticRadio, dynamicRadio, staticEdit):
+        fuzzRadio.setChecked(self.framework.get_raft_config_value('WebFuzzer.Config.{0}FuzzSelected'.format(payload_item), bool))
+        index = payloadBox.findText(self.framework.get_raft_config_value('WebFuzzer.Config.{0}FuzzPayload'.format(payload_item)))
+        if index != -1:
+            payloadBox.setCurrentIndex(index)
+        staticRadio.setChecked(self.framework.get_raft_config_value('WebFuzzer.Config.{0}StaticSelected'.format(payload_item), bool))
+        dynamicRadio.setChecked(self.framework.get_raft_config_value('WebFuzzer.Config.{0}DynamicSelected'.format(payload_item), bool))
+        staticEdit.setText(self.framework.get_raft_config_value('WebFuzzer.Config.{0}StaticEdit'.format(payload_item)))
 
     def fuzzer_history_item_double_clicked(self, index):
         Id = interface.index_to_id(self.fuzzerHistoryDataModel, index)
@@ -161,10 +181,15 @@ class WebFuzzerTab(QObject):
             dialog.exec_()
 
     def handle_mainTabWidget_currentChanged(self):
-        self.save_configuration_values()
+        self.save_standard_configuration()
+        self.save_config_configuration()
 
     def handle_stdFuzzTab_currentChanged(self):
-        self.save_configuration_values()
+        self.save_standard_configuration()
+
+    def handle_webFuzzTab_currentChanged(self):
+        self.save_standard_configuration()
+        self.save_config_configuration()
             
     def fill_sequences(self):
         self.fill_sequences_combo_box(self.mainWindow.wfStdPreBox)
@@ -206,7 +231,6 @@ class WebFuzzerTab(QObject):
                 pass
             else:
                 comboBox.addItem(item)
-        
         
     def create_payload_map(self):
         # create payload map from configuration tab
@@ -355,7 +379,7 @@ class WebFuzzerTab(QObject):
 
         self.save_configuration_values()
 
-    def save_configuration_values(self):
+    def save_standard_configuration(self):
         url = str(self.mainWindow.wfStdUrlEdit.text())
         templateHtml = str(self.mainWindow.wfStdEdit.document().toHtml())
         method = str(self.mainWindow.stdFuzzerReqMethod.currentText())
@@ -364,7 +388,25 @@ class WebFuzzerTab(QObject):
         self.framework.set_raft_config_value('WebFuzzer.Standard.TemplateHtml', templateHtml)
         self.framework.set_raft_config_value('WebFuzzer.Standard.Method', method)
 
-#        self.framework.set_raft_config_value('WebFuzzer.Standard.PreSequenceId', )
+        self.framework.set_raft_config_value('WebFuzzer.Standard.PreSequenceEnabled', self.mainWindow.wfStdPreChk.isChecked())
+        self.framework.set_raft_config_value('WebFuzzer.Standard.PreSequenceId', str(self.mainWindow.wfStdPreBox.itemData(self.mainWindow.wfStdPreBox.currentIndex()).toString()))
+
+        self.framework.set_raft_config_value('WebFuzzer.Standard.PostSequenceEnabled', self.mainWindow.wfStdPostChk.isChecked())
+        self.framework.set_raft_config_value('WebFuzzer.Standard.PostSequenceId', str(self.mainWindow.wfStdPostBox.itemData(self.mainWindow.wfStdPostBox.currentIndex()).toString()))
+
+    def save_config_configuration(self):
+        self.save_config_configuration_item('Payload1', self.mainWindow.wfPay1FuzzRadio, self.mainWindow.wfPay1PayloadBox, self.mainWindow.wfPay1StaticRadio, self.mainWindow.wfPay1DynamicRadio, self.mainWindow.wfPay1StaticEdit)
+        self.save_config_configuration_item('Payload2', self.mainWindow.wfPay2FuzzRadio, self.mainWindow.wfPay2PayloadBox, self.mainWindow.wfPay2StaticRadio, self.mainWindow.wfPay2DynamicRadio, self.mainWindow.wfPay2StaticEdit)
+        self.save_config_configuration_item('Payload3', self.mainWindow.wfPay3FuzzRadio, self.mainWindow.wfPay3PayloadBox, self.mainWindow.wfPay3StaticRadio, self.mainWindow.wfPay3DynamicRadio, self.mainWindow.wfPay3StaticEdit)
+        self.save_config_configuration_item('Payload4', self.mainWindow.wfPay4FuzzRadio, self.mainWindow.wfPay4PayloadBox, self.mainWindow.wfPay4StaticRadio, self.mainWindow.wfPay4DynamicRadio, self.mainWindow.wfPay4StaticEdit)
+        self.save_config_configuration_item('Payload5', self.mainWindow.wfPay5FuzzRadio, self.mainWindow.wfPay5PayloadBox, self.mainWindow.wfPay5StaticRadio, self.mainWindow.wfPay5DynamicRadio, self.mainWindow.wfPay5StaticEdit)
+
+    def save_config_configuration_item(self, payload_item, fuzzRadio, payloadBox, staticRadio, dynamicRadio, staticEdit):
+        self.framework.set_raft_config_value('WebFuzzer.Config.{0}FuzzSelected'.format(payload_item), fuzzRadio.isChecked())
+        self.framework.set_raft_config_value('WebFuzzer.Config.{0}FuzzPayload'.format(payload_item), str(payloadBox.currentText()))
+        self.framework.set_raft_config_value('WebFuzzer.Config.{0}StaticSelected'.format(payload_item), staticRadio.isChecked())
+        self.framework.set_raft_config_value('WebFuzzer.Config.{0}DynamicSelected'.format(payload_item), dynamicRadio.isChecked())
+        self.framework.set_raft_config_value('WebFuzzer.Config.{0}StaticEdit'.format(payload_item), staticEdit.text())
         
     def start_fuzzing_clicked(self):
         """ Start the fuzzing attack """
@@ -384,7 +426,7 @@ class WebFuzzerTab(QObject):
         templateText = str(self.mainWindow.wfStdEdit.toPlainText())
         method = str(self.mainWindow.stdFuzzerReqMethod.currentText())
 
-        self.save_configuration_values()
+        self.save_standard_configuration()
         
         replacements = self.build_replacements(method, url)
 
