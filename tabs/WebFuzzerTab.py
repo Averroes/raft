@@ -47,6 +47,9 @@ from widgets.MiniResponseRenderWidget import MiniResponseRenderWidget
 from core.network.InMemoryCookieJar import InMemoryCookieJar
 from core.fuzzer import Payloads
 
+from core.fuzzer.TemplateDefinition import TemplateDefinition
+from core.fuzzer.TemplateItem import TemplateItem
+
 class WebFuzzerTab(QObject):
     def __init__(self, framework, mainWindow):
         QObject.__init__(self, mainWindow)
@@ -93,8 +96,11 @@ class WebFuzzerTab(QObject):
         self.re_request = re.compile(r'^(\S+)\s+((?:https?://(?:\S+\.)+\w+(?::\d+)?)?/.*)\s+HTTP/\d+\.\d+\s*$', re.I)
         self.re_request_cookie = re.compile(r'^Cookie:\s*(\S+)', re.I|re.M)
         self.re_replacement = re.compile(r'\$\{(\w+)\}')
-        
+
+
         self.setup_fuzzer_tab()
+
+        self.setup_functions_tab()
         
         self.Attacks = Payloads.Payloads(self.framework)
         self.Attacks.list_files()
@@ -131,6 +137,27 @@ class WebFuzzerTab(QObject):
         self.mainWindow.fuzzerHistoryTreeView.doubleClicked.connect(self.fuzzer_history_item_double_clicked)
         self.mainWindow.fuzzerHistoryTreeView.clicked.connect(self.handle_fuzzer_history_clicked)
         self.responsesContextMenu = ResponsesContextMenuWidget(self.framework, self.fuzzerHistoryDataModel, self.mainWindow.fuzzerHistoryTreeView, self)
+
+    def setup_functions_tab(self):
+        self.functionsLayout = self.mainWindow.wfFunctionsEditPlaceholder.layout()
+        if not self.functionsLayout:
+            self.functionsLayout = QVBoxLayout(self.mainWindow.wfFunctionsEditPlaceholder)
+        self.functionsEditScintilla = Qsci.QsciScintilla(self.mainWindow.wfFunctionsEditPlaceholder)
+        lexerInstance = Qsci.QsciLexerPython(self.functionsEditScintilla)
+        self.functionsEditScintilla.setLexer(lexerInstance)
+        self.functionsEditScintilla.setFont(self.framework.get_font())
+        self.functionsEditScintilla.setWrapMode(1)
+        self.functionsEditScintilla.setMarginWidth(1, '1000')
+        self.functionsLayout.addWidget(self.functionsEditScintilla)
+        self.functionsEditScintilla.zoomTo(self.framework.get_zoom_size()+5) # TODO: hack
+        self.framework.subscribe_zoom_in(self.edit_function_zoom_in)
+        self.framework.subscribe_zoom_out(self.edit_function_zoom_out)
+
+    def edit_function_zoom_in(self):
+        self.functionsEditScintilla.zoomIn()
+
+    def edit_function_zoom_out(self):
+        self.functionsEditScintilla.zoomOut()
 
     def fill_fuzzers(self):
         history_items = []
@@ -181,15 +208,13 @@ class WebFuzzerTab(QObject):
             dialog.exec_()
 
     def handle_mainTabWidget_currentChanged(self):
-        self.save_standard_configuration()
-        self.save_config_configuration()
+        self.save_configuration_values()
 
     def handle_stdFuzzTab_currentChanged(self):
         self.save_standard_configuration()
 
     def handle_webFuzzTab_currentChanged(self):
-        self.save_standard_configuration()
-        self.save_config_configuration()
+        self.save_configuration_values()
             
     def fill_sequences(self):
         self.fill_sequences_combo_box(self.mainWindow.wfStdPreBox)
@@ -268,6 +293,7 @@ class WebFuzzerTab(QObject):
         # Determine active payloads and map them
         for config_item in payload_config_items:
             payload_item = config_item[0]
+            payload_mapping[payload_item] = ('none', '')
             for offset in (1, 4, 7):
                 if config_item[offset+1].isChecked():
                     payload_type = config_item[offset]
@@ -278,6 +304,31 @@ class WebFuzzerTab(QObject):
                     break
         
         return payload_mapping
+
+    def create_functions(self):
+        self.global_ns = {}
+        self.local_ns = None
+        functions = [
+'''
+import urllib2
+import re
+import random
+
+def url_encode(input):
+   return urllib2.quote(input)
+
+re_alert_mangler = re.compile(r'alert\([^(]+\)', re.I)
+
+def randomize_alert_replace(m):
+   return 'alert(%d.%d)' % (random.randint(0,99999), random.randint(0,99999))
+
+def randomize_alert(input):
+   return re_alert_mangler.sub(randomize_alert_replace, input)
+'''
+]
+        for func_str in functions:
+            compiled = compile(func_str, '<string>', 'exec')
+            exec(compiled, self.global_ns, self.local_ns)
         
     def set_combo_box_text(self, comboBox, selectedText):
         index = comboBox.findText(selectedText)
@@ -379,6 +430,10 @@ class WebFuzzerTab(QObject):
 
         self.save_configuration_values()
 
+    def save_configuration_values(self):
+        self.save_standard_configuration()
+        self.save_config_configuration()
+
     def save_standard_configuration(self):
         url = str(self.mainWindow.wfStdUrlEdit.text())
         templateHtml = str(self.mainWindow.wfStdEdit.document().toHtml())
@@ -440,40 +495,32 @@ class WebFuzzerTab(QObject):
         
         # Fuzzing stuff
         payload_mapping = self.create_payload_map()
+
+        self.create_functions()
         
-        re_parameters = re.compile(r'(\$\{\w+\})')
-        re_parameter_name = re.compile(r'^\$\{(\w+)\}$')
-        
-        template_items = []
-        parameter_names = set()
-        for item in re_parameters.split(templateText):
-            m = re_parameter_name.match(item)
-            if m:
-                name = m.group(1)
-                if name in ["method", "request_uri", "global_cookie_jar", "user_agent", "host"]:
-                    template_items.append(('text', item))
-                else:
-                    parameter_names.add(name)
-                    template_items.append(('parameter', name)) # template item type and name
-            else:
-                template_items.append(('text', item)) # text replacement
+        template_definition = TemplateDefinition(templateText)
+
+        template_items = template_definition.template_items
+        parameter_names = template_definition.parameter_names
                 
-        store_template_items = json.dumps(template_items)
-        store_payload_mapping = json.dumps(payload_mapping)
-        
+        errors = []
         fuzz_payloads = {}
-        
-        for item in payload_mapping:
-            payload_type = payload_mapping[item][0]
-            if 'fuzz' == payload_type:
-                newitem = payload_mapping[item]
-                filename = newitem[1]
-                values = self.Attacks.read_data(filename)
-                fuzz_payloads[filename] = values
-            elif 'dynamic' == payload_type:
-                expression = payload_mapping[item][1]
-                eval_result = eval(expression)
-                fuzz_payloads[expression] = [str(v) for v in eval_result]
+        for name, payload_info in payload_mapping.iteritems():
+            if name in parameter_names:
+                payload_type, payload_value = payload_info
+                if 'fuzz' == payload_type:
+                    filename = payload_value
+                    values = self.Attacks.read_data(filename)
+                    fuzz_payloads[name] = values
+                elif 'dynamic' == payload_type:
+                    expression = payload_value
+                    eval_result = eval(expression, self.global_ns, self.local_ns)
+                    fuzz_payloads[name] = [str(v) for v in eval_result]
+                elif 'static' == payload_type:
+                    pass
+                elif 'none' == payload_type:
+                    # unconfigured payload
+                    errors.append(name)
         
         test_slots = []
         counters = []
@@ -481,19 +528,20 @@ class WebFuzzerTab(QObject):
         total_tests = 1
         
         for name, payload_info in payload_mapping.iteritems():
-            payload_type, payload_value = payload_info
-            if 'static' == payload_type:
-                # static payload value
-                payloads = [payload_value]
-            elif 'fuzz' == payload_type:
-                payloads = fuzz_payloads[payload_value]
-            elif 'dynamic' == payload_type:
-                payloads = fuzz_payloads[payload_value]
-        
-            total_tests *= len(payloads)
-            test_slots.append((name, payloads))
-            counters.append(0)
-            tests_count.append(len(payloads))
+            if name in parameter_names:
+                payload_type, payload_value = payload_info
+                if 'static' == payload_type:
+                    # static payload value
+                    payloads = [payload_value]
+                elif 'fuzz' == payload_type:
+                    payloads = fuzz_payloads[name]
+                elif 'dynamic' == payload_type:
+                    payloads = fuzz_payloads[name]
+
+                total_tests *= len(payloads)
+                test_slots.append((name, payloads))
+                counters.append(0)
+                tests_count.append(len(payloads))
             
         position_end = len(counters) - 1
         position = position_end
@@ -510,12 +558,7 @@ class WebFuzzerTab(QObject):
                 data[name] = payloads[counters[j]]
         
             template_io = StringIO()
-            for temp_type, temp_value in template_items:
-                if 'text' == temp_type:
-                    template_io.write(temp_value)
-                elif 'parameter' == temp_type:
-                    # assuming form encoding type with this hack
-                    template_io.write(data[temp_value].replace(' ', '+').replace('&','%26').replace('=','%3D'))
+            self.apply_template_parameters(template_io, data, template_items)
         
             templateText = template_io.getvalue()
             context = uuid.uuid4().hex
@@ -544,7 +587,25 @@ class WebFuzzerTab(QObject):
                 finished = True
             else:
                 position = position_end        
-        
+
+    def apply_template_parameters(self, template_io, data, template_items):
+
+        for item in template_items:
+            if item.is_text():
+                template_io.write(item.item_value)
+            elif item.is_builtin():
+                template_io.write('${'+item.item_value+'}')
+            elif item.is_payload():
+                template_io.write(data[item.item_value])
+            elif item.is_function():
+                temp_io = StringIO()
+                self.apply_template_parameters(temp_io, data, item.items)
+                temp_result = temp_io.getvalue()
+                temp_io = None
+                result = eval('%s(%s)' % (item.item_value, repr(temp_result)), self.global_ns, self.local_ns)
+                template_io.write(str(result))
+            else:
+                raise Exception('unsupported template parameters: ' + repr(item))
        
     def build_replacements(self, method, url):
         replacements = {}
@@ -596,7 +657,7 @@ class WebFuzzerTab(QObject):
         headers_dict = {}
         first = True
         for line in headers.splitlines():
-            print(line)
+#            print(line)
             if not line:
                 break
             if '$' in line:
