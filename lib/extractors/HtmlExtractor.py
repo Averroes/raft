@@ -20,7 +20,7 @@
 #
 
 from BaseExtractor import BaseExtractor
-from JSParser import JSParser
+from JSLiteParser import JSLiteParser
 from lxml import etree
 from cStringIO import StringIO
 from urllib2 import urlparse
@@ -723,7 +723,7 @@ class HtmlExtractor(BaseExtractor):
 
     def process(self, html, baseurl, encoding = 'utf-8', results = None):
         parser = etree.HTMLParser()
-        jsParser = JSParser()
+        jsParser = JSLiteParser()
 
         if results is None:
             results = HtmlParseResults(baseurl, encoding)

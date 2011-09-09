@@ -21,6 +21,7 @@
 
 from BaseExtractor import BaseExtractor
 from JSParser import JSParser
+from JSLiteParser import JSLiteParser
 from urllib2 import urlparse
 import re
 
@@ -68,7 +69,7 @@ class JSParseResults():
 class JSExtractor(BaseExtractor):
     def __init__(self):
         BaseExtractor.__init__(self)
-        self.jsParser = JSParser()
+        self.jsParser = JSLiteParser()
 
     def process(self, script, baseurl, encoding = 'utf-8', results = None):
 
