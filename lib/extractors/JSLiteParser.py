@@ -126,6 +126,7 @@ class JSLiteParser():
                         current_io.write(c)
                 elif self.S_STAR == state:
                     if '/' == c:
+                        current_io.write('*/')
                         self._comments.append(current_io.getvalue())
                         state = self.S_BEGIN
                         current_io = StringIO()
@@ -187,9 +188,11 @@ class JSLiteParser():
                     if '*' == c:
                         state = self.S_COMMENT
                         current_io = StringIO()
+                        current_io.write('/*')
                     elif '/' == c:
                         state = self.S_LINE_COMMENT
                         current_io = StringIO()
+                        current_io.write('//')
                     elif last_token:
     #                    print('checking token:' + last_token)
                         if self.re_fp.match(last_token) or self.re_integer.match(last_token):
