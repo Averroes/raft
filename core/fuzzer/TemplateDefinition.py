@@ -41,7 +41,7 @@ class TemplateDefinition(object):
         current_item = self.template_items
         current_io = StringIO()
         have_dollar, have_parameter, have_function, have_definition = False, False, False, False
-
+        paren_stack = []
         state_stack = []
         lineno = 0
 
@@ -80,13 +80,14 @@ class TemplateDefinition(object):
                     next_item = TemplateItem(current_value, TemplateItem.T_FUNCTION)
                     current_item.append(next_item)
                     current_io = StringIO()
-                    state_stack.append((current_item, current_io, have_dollar, have_parameter, have_function, have_definition))
+                    state_stack.append((current_item, current_io, have_dollar, have_parameter, have_function, have_definition, paren_stack))
+                    paren_stack = []
                     current_item = next_item
                     current_io = StringIO()
                     have_dollar, have_parameter, have_function = False, False, False
                     have_definition = True
                 else:
-                    raise Exception('invalid template parameter:' + c)
+                    raise Exception('invalid template parameter in function:' + c)
 
             elif have_dollar:
                 if '(' == c:
@@ -110,8 +111,18 @@ class TemplateDefinition(object):
                     current_io.write(c)
             elif '$' == c:
                 have_dollar = True
+            elif '(' == c and have_definition:
+                paren_stack.append(c)
+                current_io.write(c)
             elif ')' == c and have_definition:
-                current_item, current_io, have_dollar, have_parameter, have_function, have_definition = state_stack.pop()
+                if len(paren_stack) > 0:
+                    paren_stack.pop()
+                    current_io.write(c)
+                else:
+                    current_value = current_io.getvalue()
+                    if current_value:
+                        current_item.append(TemplateItem(current_value, TemplateItem.T_TEXT))
+                    current_item, current_io, have_dollar, have_parameter, have_function, have_definition, paren_stack = state_stack.pop()
             else:
                 current_io.write(c)
 

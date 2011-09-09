@@ -61,6 +61,7 @@ class Framework(QObject):
         self._executable_path = os.path.abspath(os.path.dirname(sys.argv[0]))
         self._data_dir = os.path.join(self._executable_path, 'data')
         self._analyzer_dir = os.path.join(self._executable_path, 'analyzers')
+        self._raft_config_cache = {}
         
     def create_raft_directory(self, basepath, dirname):
         dirtarget = os.path.join(basepath, dirname)
@@ -196,33 +197,49 @@ class Framework(QObject):
         QObject.connect(self, SIGNAL('raftConfigUpdated(QString, QVariant)'), callback, Qt.DirectConnection)
 
     def set_raft_config_value(self, name, value):
+        if self._raft_config_cache.has_key(name):
+            if str(value) == str(self._raft_config_cache[name]):
+                return
         cursor = self._db.allocate_thread_cursor()
         self._db.set_config_value(cursor, 'RAFT', name, value)
         cursor.close()
         self._db.release_thread_cursor(cursor)
+        self._raft_config_cache[name] = value
         self.emit(SIGNAL('raftConfigUpdated(QString, QVariant)'), name, value)
 
     def get_raft_config_value(self, name, rtype = str, default_value = None):
-        # TODO: implement config cache
+        if self._raft_config_cache.has_key(name):
+            value = self._raft_config_cache[name]
+            if value is not None:
+                return rtype(value)
+            else:
+                return default_value
         cursor = self._db.allocate_thread_cursor()
         value = self._db.get_config_value(cursor, 'RAFT', name, rtype, default_value)
         cursor.close()
         self._db.release_thread_cursor(cursor)
+        self._raft_config_cache[name] = value
         return value
 
     def set_config_value(self, component, name, value):
-        cursor = self._db.allocate_thread_cursor()
-        self._db.set_config_value(cursor, component, name, value)
-        cursor.close()
-        self._db.release_thread_cursor(cursor)
+        if 'RAFT' == component.upper():
+            self.set_raft_config_value(name, value)
+        else:
+            cursor = self._db.allocate_thread_cursor()
+            self._db.set_config_value(cursor, component, name, value)
+            cursor.close()
+            self._db.release_thread_cursor(cursor)
 
     def get_config_value(self, component, name, rtype = str, default_value = None):
         # TODO: implement config cache
-        cursor = self._db.allocate_thread_cursor()
-        value = self._db.get_config_value(cursor, component, name, rtype, default_value)
-        cursor.close()
-        self._db.release_thread_cursor(cursor)
-        return value
+        if 'RAFT' == component.upper():
+            return self.get_raft_config_value(name, rtype, default_value)
+        else:
+            cursor = self._db.allocate_thread_cursor()
+            value = self._db.get_config_value(cursor, component, name, rtype, default_value)
+            cursor.close()
+            self._db.release_thread_cursor(cursor)
+            return value
     
     def clear_config_value(self, component, name=None):
         cursor = self._db.allocate_thread_cursor()

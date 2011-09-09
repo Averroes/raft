@@ -501,6 +501,7 @@ def randomize_alert(input):
         template_definition = TemplateDefinition(templateText)
 
         template_items = template_definition.template_items
+###        print(template_items)
         parameter_names = template_definition.parameter_names
                 
         errors = []
@@ -547,6 +548,7 @@ def randomize_alert(input):
         position = position_end
 
         self.miniResponseRenderWidget.clear_response_render()
+        self.mainWindow.fuzzerStandardProgressBar.setValue(0)
         self.mainWindow.fuzzerStandardProgressBar.setMaximum(total_tests)
         
         finished = False

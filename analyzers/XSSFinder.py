@@ -25,7 +25,7 @@ import urllib2
 from analysis.AbstractAnalyzer import AbstractAnalyzer
 
 class XSSFinder(AbstractAnalyzer):
-    AlertRegex = re.compile("(alert\((.+?)\))",re.I)
+    AlertRegex = re.compile(r'(?<!&gt;)(?<!3[eE])(alert\((.+?)\))')
     
     def __init__(self):
         self.desc="Identification of successful XSS attacks."
@@ -42,9 +42,10 @@ class XSSFinder(AbstractAnalyzer):
             matched = False
             if alert_data in combined:
                 matched = True
-            else:
-                if urllib2.unquote(alert_data) in combined:
-                    matched = True
+            elif urllib2.quote(alert_data) in combined:
+                matched = True
+            elif urllib2.unquote(alert_data) in combined:
+                matched = True
             if matched:
                 results.addPageResult(pageid=target.responseId, 
                                 url=target.responseUrl,
@@ -52,4 +53,4 @@ class XSSFinder(AbstractAnalyzer):
                                 desc=self.desc,
                                 data={'Javascript Alert found':found.group(1)},
                                 span=found.span(),
-                                highlightdata=found.group(1))
+                                highlightdata=found.group(2))

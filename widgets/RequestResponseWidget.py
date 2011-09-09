@@ -457,13 +457,15 @@ class RequestResponseWidget(QObject):
                 return self.contentTypeMapping[comp]
         return 'text'
             
-    def set_search(self, tabname, searchtext):        
+    def set_search(self, tabname, searchText):
         if tabname == 'request':
-            targetwidget=self.requestScintilla
+            self.tabwidget.setCurrentIndex(0)
         elif tabname=='response':
-            targetwidget=self.responseScintilla
-        #TODO: Also add tab switch on first click
-        targetwidget.findFirst(searchtext, False, True, False, True)
+            self.tabwidget.setCurrentIndex(1)
+        self.searchLineEdit.setText(searchText)
+        self.requestScintilla.findFirst(searchText, False, True, False, True)
+        self.responseScintilla.findFirst(searchText, False, True, False, True)
+
          
         
   
