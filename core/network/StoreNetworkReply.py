@@ -128,7 +128,7 @@ class StoreNetworkReply(QNetworkReply):
             return 'DELETE'
         else:
             # CUSTOM
-            return str(self.__request.attribute(QNetworkAccessManager.CustomVerbAttribute).toString())
+            return str(self.__request.attribute(self.__request.CustomVerbAttribute).toString())
 
     def __attr__(self, name):
         self.debug_print('__attr__', name)
