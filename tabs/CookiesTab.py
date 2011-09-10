@@ -22,6 +22,7 @@
 import PyQt4
 from PyQt4.QtCore import Qt, QObject, SIGNAL, QDateTime
 from PyQt4.QtGui import *
+from PyQt4.QtNetwork import QNetworkCookie
 
 from core.data.LocalStorage import LocalStorage
 from core.data.FlashCookies import FlashCookies
