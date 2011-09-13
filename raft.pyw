@@ -98,7 +98,6 @@ from dialogs.RaftBrowserDialog import RaftBrowserDialog
 from dialogs.SimpleDialog import SimpleDialog
 
 from tabs import VulnerabilitiesTab
-from tabs import DataBankTab
 from tabs import CookiesTab
 from tabs import RequesterTab
 from tabs import WebFuzzerTab
@@ -313,7 +312,6 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
 
         # set up tabs
         self.vulnerabilitiesTab = VulnerabilitiesTab.VulnerabilitiesTab(self.framework, self)
-        self.dataBankTab = DataBankTab.DataBankTab(self.framework, self)
         self.cookiesTab = CookiesTab.CookiesTab(self.framework, self)
         self.requesterTab = RequesterTab.RequesterTab(self.framework, self)
         self.webfuzzerTab = WebFuzzerTab.WebFuzzerTab(self.framework, self)

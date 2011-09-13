@@ -38,7 +38,6 @@ class DataBankTab(QObject):
         self.formFillValues = FormFillValues()
         self.formFillPatterns = FormFillPatterns()
 
-        self.mainWindow.pushButtonDataBankSave.clicked.connect(self.do_save_databank)
         self.mainWindow.dbankPayloadsBox.activated.connect(self.fill_fuzz_values)
         
         self.Attacks = Payloads.Payloads(self.framework)

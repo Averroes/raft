@@ -26,6 +26,8 @@ from PyQt4.QtCore import (Qt, SIGNAL, QObject)
 from PyQt4.QtGui import *
 
 from ui import ConfigDialog
+from tabs import DataBankTab
+
 import json
 
 class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
@@ -44,6 +46,8 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.spiderExcludeDangerouPathCheckBox.stateChanged.connect(self.handle_spiderExcludeDangerouPath_stateChanged)
         self.framework.subscribe_raft_config_populated(self.configuration_populated)
 
+        self.dataBankTab = DataBankTab.DataBankTab(self.framework, self)
+
     def configuration_populated(self):
         self.fill_values()
 
@@ -60,6 +64,7 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         role = self.buttonBox.buttonRole(button)
         if role == QDialogButtonBox.AcceptRole:
             self.do_save_config()
+            self.dataBankTab.do_save_databank()
 
     def do_save_config(self):
         self.framework.set_raft_config_value('black_hole_network', bool(self.bhNetworkBox.isChecked()))
