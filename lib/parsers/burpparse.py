@@ -999,7 +999,7 @@ class burp_parse_xml():
     def __init__(self, burpfile):
 
         self.burpfile = burpfile
-        self.re_encoded = re.compile(r'&#[xX]([0-9a-f]{2});')
+        self.re_encoded = re.compile(r'&#[xX]([0-9a-fA-F]{2});')
         self.decode_entity = lambda m: '%c' % (int(m.group(1),16))
 
         self.source = burp_parse_xml.BurpBrokenXml(self.burpfile)
