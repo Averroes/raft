@@ -156,6 +156,7 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.browserEnableJavaCheckBox.setChecked(self.framework.get_raft_config_value('browser_java_enabled', bool, True))
         self.browserAutoLoadImagesCheckBox.setChecked(self.framework.get_raft_config_value('browser_auto_load_images', bool, True))
         self.browserCustomUserAgentCheckBox.setChecked(self.framework.get_raft_config_value('browser_custom_user_agent', bool, False))
+        self.browserUserAgentEdit.setText(str(self.framework.get_raft_config_value('browser_user_agent_value', str, self.framework.useragent())))
     
     def save_browser_config(self):
         self.framework.set_raft_config_value('browser_javascript_enabled', self.browserEnableJavaScriptCheckBox.isChecked())
@@ -164,3 +165,4 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.framework.set_raft_config_value('browser_java_enabled', self.browserEnableJavaCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_auto_load_images', self.browserAutoLoadImagesCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_custom_user_agent', self.browserCustomUserAgentCheckBox.isChecked())
+        self.framework.set_raft_config_value('browser_user_agent_value', self.browserUserAgentEdit.text().toUtf8())

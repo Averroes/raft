@@ -62,6 +62,8 @@ class Framework(QObject):
         self._data_dir = os.path.join(self._executable_path, 'data')
         self._analyzer_dir = os.path.join(self._executable_path, 'analyzers')
         self._raft_config_cache = {}
+        # configuration defaults
+        self._default_useragent = 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1'
         
     def create_raft_directory(self, basepath, dirname):
         dirtarget = os.path.join(basepath, dirname)
@@ -70,8 +72,16 @@ class Framework(QObject):
         return dirtarget
 
     def useragent(self):
-        return 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1'
+        if self._db is None:
+            return self._default_useragent
+        if self.get_raft_config_value('browser_custom_user_agent', bool, False):
+            return self.get_raft_config_value('browser_user_agent_value', str, self._default_useragent)
+        else:
+            return self._default_useragent
 
+    def default_useragent(self):
+        return self._default_useragent
+        
     def getDB(self):
         if self._db is None:
             raise Exception('database is not initialized')
