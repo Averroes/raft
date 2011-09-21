@@ -82,9 +82,6 @@
            <string>Specifying a proxy is not available in this release</string>
           </property>
           <property name="text">
-           <string/>
-          </property>
-          <property name="placeholderText">
            <string>localhost</string>
           </property>
          </widget>
@@ -95,9 +92,6 @@
            <bool>false</bool>
           </property>
           <property name="text">
-           <string/>
-          </property>
-          <property name="placeholderText">
            <string>8080</string>
           </property>
          </widget>
@@ -197,13 +191,10 @@
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-        </property>
-        <property name="placeholderText">
          <string>Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1</string>
+        </property>
+        <property name="cursorPosition">
+         <number>0</number>
         </property>
        </widget>
        <widget class="QCheckBox" name="browserCustomUserAgentCheckBox">

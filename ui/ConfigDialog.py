@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ConfigDialog.ui'
 #
-# Created: Mon Sep 12 20:35:53 2011
+# Created: Tue Sep 20 20:12:54 2011
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -53,14 +53,12 @@ class Ui_configDialog(object):
         self.confProxyEdit = QtGui.QLineEdit(self.groupBox)
         self.confProxyEdit.setEnabled(False)
         self.confProxyEdit.setToolTip(QtGui.QApplication.translate("configDialog", "Specifying a proxy is not available in this release", None, QtGui.QApplication.UnicodeUTF8))
-        self.confProxyEdit.setText(_fromUtf8(""))
-        self.confProxyEdit.setPlaceholderText(QtGui.QApplication.translate("configDialog", "localhost", None, QtGui.QApplication.UnicodeUTF8))
+        self.confProxyEdit.setText(QtGui.QApplication.translate("configDialog", "localhost", None, QtGui.QApplication.UnicodeUTF8))
         self.confProxyEdit.setObjectName(_fromUtf8("confProxyEdit"))
         self.gridLayout.addWidget(self.confProxyEdit, 3, 0, 1, 1)
         self.confProxyPort = QtGui.QLineEdit(self.groupBox)
         self.confProxyPort.setEnabled(False)
-        self.confProxyPort.setText(_fromUtf8(""))
-        self.confProxyPort.setPlaceholderText(QtGui.QApplication.translate("configDialog", "8080", None, QtGui.QApplication.UnicodeUTF8))
+        self.confProxyPort.setText(QtGui.QApplication.translate("configDialog", "8080", None, QtGui.QApplication.UnicodeUTF8))
         self.confProxyPort.setObjectName(_fromUtf8("confProxyPort"))
         self.gridLayout.addWidget(self.confProxyPort, 3, 1, 1, 1)
         self.groupBox_2 = QtGui.QGroupBox(self.configGeneralTab)
@@ -91,9 +89,8 @@ class Ui_configDialog(object):
         self.browserUserAgentEdit.setEnabled(False)
         self.browserUserAgentEdit.setGeometry(QtCore.QRect(10, 210, 311, 22))
         self.browserUserAgentEdit.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.browserUserAgentEdit.setText(_fromUtf8(""))
-        self.browserUserAgentEdit.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
-        self.browserUserAgentEdit.setPlaceholderText(QtGui.QApplication.translate("configDialog", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1", None, QtGui.QApplication.UnicodeUTF8))
+        self.browserUserAgentEdit.setText(QtGui.QApplication.translate("configDialog", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1", None, QtGui.QApplication.UnicodeUTF8))
+        self.browserUserAgentEdit.setCursorPosition(0)
         self.browserUserAgentEdit.setObjectName(_fromUtf8("browserUserAgentEdit"))
         self.browserCustomUserAgentCheckBox = QtGui.QCheckBox(self.groupBox_2)
         self.browserCustomUserAgentCheckBox.setGeometry(QtCore.QRect(10, 180, 161, 20))
