@@ -865,6 +865,16 @@ def main():
     sys.excepthook = exception_hook
 
     mainWindow = RaftMain(dbfilename)
+
+    # check screen layout and geometry
+    screenGeometry = app.desktop().screenGeometry()
+    frameGeometry = mainWindow.frameGeometry()
+    if frameGeometry.width() > screenGeometry.width() or frameGeometry.height() > screenGeometry.height():
+        mainWindow.setMaximumWidth(screenGeometry.width())
+        maxHeight = screenGeometry.height() - (frameGeometry.height() - mainWindow.geometry().height())
+        mainWindow.setMaximumHeight(maxHeight)
+        mainWindow.move(0, 0)
+        
     mainWindow.show()
     sys.exit(app.exec_())
 
