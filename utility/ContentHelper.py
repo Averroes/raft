@@ -57,6 +57,9 @@ def decodeBody(data, charset):
             pass
         if bodyText is None:
             bodyText = data.decode('utf-8')
+
+        if '\0' in bodyText:
+            bodyText = repr(bodyText)[1:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
     except UnicodeDecodeError:
         # TODO: handle binary content ???
         bodyText = repr(data)[1:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
