@@ -46,6 +46,8 @@ class RequestResponseWidget(QObject):
         self.standardPageFactory = StandardPageFactory(self.framework, None, self)
         self.headlessPageFactory = HeadlessPageFactory(self.framework, None, self)
 
+        self.qlock = QMutex()
+
         self.contentExtractor = self.framework.getContentExtractor()
         self.htmlExtractor = self.contentExtractor.getExtractor('html')
 
@@ -133,7 +135,7 @@ class RequestResponseWidget(QObject):
         self.renderView = QWidget(tabwidget)
         self.renderView.setObjectName(tabwidget.objectName()+'Render')
         self.renderTabIndex = self.tabwidget.addTab(self.renderView, 'Render')
-        self.tabwidget.currentChanged.connect(self.doRenderApply)
+        self.tabwidget.currentChanged.connect(self.handle_tab_currentChanged)
 
         self.generatedSourceView = QWidget(tabwidget)
         self.generatedSourceView.setObjectName(tabwidget.objectName()+'GeneratedSource')
@@ -187,7 +189,7 @@ class RequestResponseWidget(QObject):
         self.vlayout6 = QVBoxLayout(self.renderView)
         self.renderWebView = RenderingWebView(self.framework, self.standardPageFactory, self.renderView)
         self.renderWebView.page().setNetworkAccessManager(self.networkAccessManager)
-        self.renderWebView.loadFinished.connect(self.generatedSource_handle_loadFinished)
+        self.renderWebView.loadFinished.connect(self.render_handle_loadFinished)
         self.vlayout6.addWidget(self.renderWebView)
         self.tab_item_widgets.append(self.renderWebView)
 
@@ -334,6 +336,14 @@ class RequestResponseWidget(QObject):
             # already filled
             return
 
+        self.qlock.lock()
+        try:
+            self.fill_internal(Id)
+        finally:
+            self.qlock.unlock()
+
+    def fill_internal(self, Id):
+
         self.clear()
 
         if not Id:
@@ -354,8 +364,7 @@ class RequestResponseWidget(QObject):
         self.responseScintilla.setText(rr.rawResponse)
         self.contentResults = self.generateExtractorResults(rr.responseBody, rr.responseUrl, rr.charset)
         self.notesTextEdit.setText(rr.notes)
-        self.doRenderApply(self.tabwidget.currentIndex())
-        self.generatedSourceWebView.fill_from_response(rr.responseUrl, rr.responseHeaders, rr.responseBody, rr.responseContentType)
+        self.handle_tab_currentChanged(self.tabwidget.currentIndex())
 
     def generateExtractorResults(self, body, url, charset):
         rr = self.requestResponse
@@ -363,7 +372,7 @@ class RequestResponseWidget(QObject):
         try:
             if 'html' == rr.baseType:
                 # Create content for parsing HTML
-                #results = self.htmlExtractor.process(body, url, charset, results)
+                rr.results = self.htmlExtractor.process(body, url, charset, rr.results)
 
                 self.tabwidget.setTabText(self.scriptsTabIndex, 'Scripts')
                 for script in rr.results.scripts:
@@ -422,13 +431,26 @@ class RequestResponseWidget(QObject):
             scintillaWidget.setLexer(lexerInstance)
         else:
             scintillaWidget.setLexer(None)
-        
-    def doRenderApply(self, index):
-        rr = self.requestResponse
+
+    def handle_tab_currentChanged(self, index):
         if index == self.renderTabIndex:
-            if self.requestResponse.responseUrl:
-                self.renderWebView.fill_from_response(rr.responseUrl, rr.responseHeaders, rr.responseBody, rr.responseContentType)
-                return True
+            return self.doRenderApply()
+        elif index == self.generatedSourceTabIndex:
+            return self.doGeneratedSourceApply()
+        return False
+        
+    def doRenderApply(self):
+        rr = self.requestResponse
+        if rr.responseUrl:
+            self.renderWebView.fill_from_response(rr.responseUrl, rr.responseHeaders, rr.responseBody, rr.responseContentType)
+            return True
+        return False
+
+    def doGeneratedSourceApply(self):
+        rr = self.requestResponse
+        if rr.responseUrl and 'html' == rr.baseType:
+            self.generatedSourceWebView.fill_from_response(rr.responseUrl, rr.responseHeaders, rr.responseBody, rr.responseContentType)
+            return True
         return False
 
     def generatedSource_handle_loadFinished(self):
