@@ -139,6 +139,8 @@ class JSLiteParser():
                         self._comments.append(current_io.getvalue())
                         state = self.S_BEGIN
                         current_io = StringIO()
+                    elif '*' == c:
+                        current_io.write('*')
                     else:
                         current_io.write('*')
                         current_io.write(c)
