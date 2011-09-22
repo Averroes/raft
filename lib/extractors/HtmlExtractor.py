@@ -587,7 +587,7 @@ class HtmlExtractor(BaseExtractor):
     def process_comment(self, results, elem):
         comment = self.get_text_string(results, elem.text)
         if comment:
-            results.add_comment(comment)
+            results.add_comment('<!--%s-->' % (comment))
             self.match_uri_contents(results, comment)
 
     def process_anchor_uri(self, results, elem, uri):

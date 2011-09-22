@@ -371,7 +371,7 @@ class RequestResponseWidget(QObject):
 
                 self.attachLexer(self.commentsScintilla, 'html')
                 for comment in rr.results.comments:
-                    commentsIO.write('<!-- %s -->\n\n' % self.flat_str(comment))
+                    commentsIO.write('%s\n\n' % self.flat_str(comment))
 
                 for link in rr.results.links:
                     linksIO.write('%s\n' % self.flat_str(link))
