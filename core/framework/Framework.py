@@ -49,7 +49,7 @@ class Framework(QObject):
         self.base_font = QFont()
         # Dictionary for RequestResponse objects loaded into cache
         self.rrd_qlock = QMutex()
-        self.request_response_dict = {}
+        self._request_response_cache = {}
         self.home_dir = str(QDir.toNativeSeparators(QDir.homePath()).toUtf8())
         self.raft_dir = self.create_raft_directory(self.home_dir, '.raft')
         self.user_db_dir = self.create_raft_directory(self.raft_dir, 'db')
@@ -93,6 +93,8 @@ class Framework(QObject):
         self._db = db
         self._db_uuid = self._db.get_db_uuid()
         self.web_db_path = self.create_raft_directory(self.user_web_path, self._db_uuid)
+        self._raft_config_cache = {}
+        self._request_response_cache = {}
         self.emit(SIGNAL('raftConfigPopulated()'))
         self.emit(SIGNAL('databaseAttached()'))
 
@@ -257,13 +259,13 @@ class Framework(QObject):
         cursor.close()
         self._db.release_thread_cursor(cursor)
     
-    def get_request_response(self,response_id):
+    def get_request_response(self, response_id):
         self.rrd_qlock.lock()
         try:
-            if self.request_response_dict.has_key(response_id):
-                request_response = self.request_response_dict[response_id]
+            if self._request_response_cache.has_key(response_id):
+                request_response = self._request_response_cache[response_id]
             else:
-                request_response = self.request_response_dict[response_id] = self._requestResponseFactory.fill(response_id)
+                request_response = self._request_response_cache[response_id] = self._requestResponseFactory.fill(response_id)
         finally:
             self.rrd_qlock.unlock()
         return request_response
