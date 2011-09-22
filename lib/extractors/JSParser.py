@@ -403,6 +403,7 @@ class Tokenizer():
         return value[1:-1]
 
     def parseRegexp(self, value, flags):
+#        print('regex=', value)
         return value + ',' + flags
 
 class CompilerContext:

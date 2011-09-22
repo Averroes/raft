@@ -25,8 +25,7 @@ import re
 class JSLiteParser():
 
     S_BEGIN = 0
-    S_D_QUOTE = 1
-    S_S_QUOTE = 2
+    S_QUOTE = 1
     S_REGEXP = 3
     S_COMMENT = 4
     S_LINE_COMMENT = 5
@@ -39,9 +38,10 @@ class JSLiteParser():
         self._comments = []
         self.re_octal_digits = re.compile('[0-7]{3}')
         self.re_escape_string = re.compile(r'\\(?:[0-7]{3}|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)')
-        self.re_non_word = re.compile(r'\W')
-        self.re_fp = re.compile(r'^\d+\.\d*(?:[eE][-+]?\d+)?|^\d+(?:\.\d*)?[eE][-+]?\d+|^\.\d+(?:[eE][-+]?\d+)?')
-        self.re_integer = re.compile(r'^0[xX][\da-fA-F]+|^0[0-7]*|^\d+')
+        self.re_identifier = re.compile(r'^[$_a-zA-Z0-9.]+$')
+        self.re_keywords = re.compile(r'^(?:break|case|catch|const|continue|debugger|default|delete|do|else|enum|false|finally|for|function|if|in|instanceof|new|null|return|switch|this|throw|true|try|typeof|var|void|while|with)$')
+        self.re_no_regex_start = re.compile(r'[\]]')
+        self.re_space = re.compile(r'\s')
 
     def reset(self):
         self._strings = []
@@ -113,8 +113,17 @@ class JSLiteParser():
         state = self.S_BEGIN
         current_io = StringIO()
         escape_next = False
+        qchar = ''
         last_token = ''
-        for c in script:
+        regex_paren_level = 0
+        regex_use_heuristic = False
+        pos = 0
+        s_len = len(script)
+        rewind_pos = 0
+        last_was_identifier = False
+        while pos < s_len:
+            c = script[pos]
+            pos += 1
             try:
                 if escape_next:
                     current_io.write(c)
@@ -135,26 +144,21 @@ class JSLiteParser():
                         current_io.write(c)
                         state = self.S_COMMENT
                 elif '\n' == c:
-                    # newlines break everything escape multiline-comment
+                    # newlines break everything except multiline-comment
                     if self.S_LINE_COMMENT == state:
                         self._comments.append(current_io.getvalue())
-                    state = self.S_BEGIN
-                    current_io = StringIO()
-                elif self.S_D_QUOTE == state:
-                    if '\\' == c:
-                        current_io.write(c)
-                        escape_next = True
-                    elif '"' == c:
-                        self._strings.append(self.parseString(current_io.getvalue()))
+                    elif state in (self.S_REGEXP, self.S_REGEXP_CC):
+                        # invalid regex
+                        pos = rewind_pos
+                    if state != self.S_COMMENT:
                         state = self.S_BEGIN
                         current_io = StringIO()
-                    else:
-                        current_io.write(c)
-                elif self.S_S_QUOTE == state:
+                        last_token = None
+                elif self.S_QUOTE == state:
                     if '\\' == c:
                         current_io.write(c)
                         escape_next = True
-                    elif "'" == c:
+                    elif qchar == c:
                         self._strings.append(self.parseString(current_io.getvalue()))
                         state = self.S_BEGIN
                         current_io = StringIO()
@@ -167,12 +171,26 @@ class JSLiteParser():
                     elif '[' == c:
                         current_io.write(c)
                         state = self.S_REGEXP_CC
+                    elif ')' == c and 0 == regex_paren_level:
+                        # not valid
+                        pos = rewind_pos
+                        state = self.S_BEGIN
+                        current_io = StringIO()
+                    elif ';' == c and regex_use_heuristic and self.re_identifier.match(current_io.getvalue()):
+                        # probably not valid
+                        pos = rewind_pos
+                        state = self.S_BEGIN
+                        current_io = StringIO()
                     elif '/' == c:
-    #                    print('regex=',current_io.getvalue())
+#                        print('regex=',current_io.getvalue())
                         state = self.S_BEGIN
                         current_io = StringIO()
                     else:
                         current_io.write(c)
+                        if '(' == c:
+                            regex_paren_level += 1
+                        elif ')' == c:
+                            regex_paren_level -= 1
                 elif self.S_REGEXP_CC == state:
                     if '\\' == c:
                         current_io.write(c)
@@ -193,35 +211,81 @@ class JSLiteParser():
                         state = self.S_LINE_COMMENT
                         current_io = StringIO()
                         current_io.write('//')
-                    elif last_token:
-    #                    print('checking token:' + last_token)
-                        if self.re_fp.match(last_token) or self.re_integer.match(last_token):
-                            pass
+                        last_token = None
+                    else:
+                        if last_token:
+                            if self.re_identifier.match(last_token) and not self.re_keywords.match(last_token):
+                                is_re = False
+                            elif self.re_no_regex_start.match(last_token):
+                                is_re = False
+                            else:
+                                is_re = True
                         else:
+                            is_re = True
+                        if is_re:
+                            if ')' == last_token:
+                                regex_use_heuristic = True
+                            else:
+                                regex_use_heuristic = False
+                            regex_paren_level = 0
+                            rewind_pos = pos
                             if '[' == c:
                                 state = self.S_REGEXP_CC
                             else:
                                 state = self.S_REGEXP
+                                if '\\' == c:
+                                    escape_next = True
+                                elif '(' == c:
+                                    regex_paren_level += 1
                             current_io = StringIO()
                             current_io.write(c)
+                        else:
+                            current_io.write('/')
+                            current_io.write(c)
+                            state = self.S_BEGIN
                 elif self.S_BEGIN == state:
-                    if self.re_non_word.match(c):
-                        this_token = current_io.getvalue()
-                        if this_token:
-    #                        print('--->', this_token)
-                            last_token = this_token
-                            current_io = StringIO()
-                    else:
-                        current_io.write(c)
-
-                    if '"' == c:
-                        state = self.S_D_QUOTE
+                    if ';' == c:
+                        last_token = None
                         current_io = StringIO()
+                        last_was_identifier = False
+                    elif '"' == c:
+                        state = self.S_QUOTE
+                        qchar = c
+                        current_io = StringIO()
+                        last_token = '__string__'
+                        last_was_identifier = False
                     elif "'" == c:
-                        state = self.S_S_QUOTE
+                        state = self.S_QUOTE
+                        qchar = c
                         current_io = StringIO()
+                        last_token = '__string__'
+                        last_was_identifier = False
                     elif '/' == c:
                         state = self.S_SLASH
+                        this_token = current_io.getvalue()
+                        if this_token:
+                            last_token = this_token
+                            current_io = StringIO()
+                        last_was_identifier = False
+                    elif self.re_identifier.match(c):
+                        if not last_was_identifier:
+                            this_token = current_io.getvalue()
+                            if this_token:
+                                last_token = this_token
+                                current_io = StringIO()
+                        current_io.write(c)
+                        last_was_identifier = True
+                    else:
+                        this_token = current_io.getvalue()
+                        if this_token:
+                            last_token = this_token
+                            current_io = StringIO()
+                        if not self.re_space.match(c):
+                            current_io.write(c)
+                        last_was_identifier = False
+                else:
+                    raise Exception('unhandled state=' + state)
+
             except UnicodeEncodeError:
                 # TODO: do something with char
                 pass
@@ -234,4 +298,5 @@ if '__main__' == __name__:
         parser.parse(script)
         print('\n'.join([s.encode('ascii', 'ignore') for s in parser.strings()]))
 #        print(parser.comments())
+
 
