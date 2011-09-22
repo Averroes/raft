@@ -22,9 +22,7 @@
 from core.database.constants import ResponsesTable
 
 class RaftDbCapture():
-    def __init__(self, framework, Id):
-        Data = framework.getDB()
-        cursor = Data.allocate_thread_cursor()
+    def __init__(self, framework, Data, cursor, Id):
         row = Data.read_responses_by_id(cursor, Id)
         if row:
             dbrow = [m or '' for m in row]
@@ -47,6 +45,3 @@ class RaftDbCapture():
         else:
             raise Exception('unrecognized Id=%s' % (Id))
 
-        Data.release_thread_cursor(cursor)
-        cursor.close()
-        Data, cursor = None, None

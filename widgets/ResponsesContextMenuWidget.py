@@ -21,6 +21,7 @@
 #
 
 import time
+from urllib2 import urlparse
 
 from PyQt4.QtCore import Qt, SIGNAL, QObject, QModelIndex
 from PyQt4.QtGui import *
@@ -116,6 +117,10 @@ class ResponsesContextMenuWidget(QObject):
         responsesDataTreeShowAction.triggered.connect(self.data_tree_show_all)
         self.menu.addAction(responsesDataTreeShowAction)
 
+        self.saveResponseToFileAction = QAction("Save Response to File", self)
+        self.saveResponseToFileAction.triggered.connect(self.save_response_to_file)
+        self.menu.addAction(self.saveResponseToFileAction)
+
         action = QAction("Export to RAFT Capture", self)
         action.triggered.connect(self.export_to_raft_capture)
         self.menu.addAction(action)
@@ -153,20 +158,52 @@ class ResponsesContextMenuWidget(QObject):
                 fh = open(filename, 'wb')
             else:
                 raise Exception('unhandled file type: %s' % (filename))
-            fh.write('<raft version="1.0">\n')
-            for index in self.treeViewSelectionModel.selectedRows():
-                Id = interface.index_to_id(self.dataModel, index)
-                if Id:
-                    capture = RaftDbCapture(self.framework, Id)
-                    fh.write(adapter.format_as_xml(capture))
-            fh.write('</raft>')
-            fh.close()
+            Data = self.framework.getDB()
+            cursor = Data.allocate_thread_cursor()
+            try:
+                fh.write('<raft version="1.0">\n')
+                for index in self.treeViewSelectionModel.selectedRows():
+                    Id = interface.index_to_id(self.dataModel, index)
+                    if Id:
+                        capture = RaftDbCapture(self.framework, Data, cursor, Id)
+                        fh.write(adapter.format_as_xml(capture))
+                fh.write('</raft>')
+                fh.close()
+            finally:
+                cursor.close()
+                Data.release_thread_cursor(cursor)
+                Data, cursor = None, None
 
-    def send_response_data_to_requester(self):
+    def save_response_to_file(self):
         index = self.treeView.currentIndex()
         Id = interface.index_to_id(self.dataModel, index)
-        if Id:
-            self.framework.send_response_id_to_requester(Id)
+        curUrl = interface.index_to_url(self.dataModel, index)
+        if Id and curUrl:
+            splitted = urlparse.urlsplit(curUrl)
+            pos = splitted.path.rindex('/')
+            filename = ''
+            if pos > -1:
+                filename = splitted.path[pos+1:]
+            
+            file = QFileDialog.getSaveFileName(None, "Save to file", filename, "")
+            if file:
+                filename = str(file)
+                fh = open(filename, 'wb')
+                try:
+                    rr = self.framework.get_request_response(Id)
+                    fh.write(rr.responseBody)
+                finally:
+                    fh.close()
+
+    def send_response_data_to_requester(self):
+        id_list = []
+        for index in self.treeViewSelectionModel.selectedRows():
+            Id = interface.index_to_id(self.dataModel, index)
+            if Id:
+                id_list.append(Id)
+
+        if 1 == len(id_list):
+            self.framework.send_response_id_to_requester(id_list[0])
 
     def responses_data_context_menu(self, point):
         """ Display the context menu for the TreeView """
@@ -174,9 +211,11 @@ class ResponsesContextMenuWidget(QObject):
         if len(self.treeViewSelectionModel.selectedRows()) > 1:
             self.copyUrlAction.setText('Copy URLs')
             self.sendToRequesterAction.setText('Send to Bulk Requester')
+            self.saveResponseToFileAction.setEnabled(False)
         else:
             self.copyUrlAction.setText('Copy URL')
             self.sendToRequesterAction.setText('Send to Requester')
+            self.saveResponseToFileAction.setEnabled(True)
 
         self.menu.exec_(self.treeView.mapToGlobal(point))
 
