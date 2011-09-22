@@ -353,6 +353,7 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.responsesThread.start(QThread.LowPriority)
         self.connect(self, SIGNAL('fillResponsesFinished()'), self.fillResponsesFinishedHandler, Qt.QueuedConnection)
         self.responsesContextMenu = ResponsesContextMenuWidget(self.framework, self.responsesDataModel, self.responsesDataTree, self)
+        self.responsesContextMenu.set_currentChanged_callback(self.fill_bottom)
 
         #analysis results tab
         #add response widget to the bottom

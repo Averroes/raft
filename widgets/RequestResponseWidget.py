@@ -336,11 +336,11 @@ class RequestResponseWidget(QObject):
             # already filled
             return
 
-        self.qlock.lock()
-        try:
-            self.fill_internal(Id)
-        finally:
-            self.qlock.unlock()
+        if self.qlock.tryLock():
+            try:
+                self.fill_internal(Id)
+            finally:
+                self.qlock.unlock()
 
     def fill_internal(self, Id):
 
@@ -441,7 +441,7 @@ class RequestResponseWidget(QObject):
         
     def doRenderApply(self):
         rr = self.requestResponse
-        if rr.responseUrl:
+        if rr and rr.responseUrl:
             self.renderWebView.fill_from_response(rr.responseUrl, rr.responseHeaders, rr.responseBody, rr.responseContentType)
             return True
         return False

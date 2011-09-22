@@ -42,10 +42,14 @@ class ResponsesContextMenuWidget(QObject):
         self.dataModel = dataModel
         self.treeView = treeView
 
+        self.selectionChanged_callback = None
+        self.currentChanged_callback = None
+
         self.treeView.setSelectionMode(self.treeView.ExtendedSelection)
         self.treeViewSelectionModel = QItemSelectionModel(self.dataModel)
         self.treeView.setSelectionModel(self.treeViewSelectionModel)
         self.treeViewSelectionModel.selectionChanged.connect(self.handle_selectionChanged)
+        self.treeViewSelectionModel.currentChanged.connect(self.handle_currentChanged)
 
         self.treeView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.connect(self.treeView, SIGNAL("customContextMenuRequested(const QPoint&)"), self.responses_data_context_menu)
@@ -141,8 +145,19 @@ class ResponsesContextMenuWidget(QObject):
             self.Data.release_thread_cursor(self.cursor)
             self.cursor = None
 
-    def handle_selectionChanged(self,x):
-        pass
+    def set_selectionChanged_callback(self, callback):
+        self.selectionChanged_callback = callback
+
+    def set_currentChanged_callback(self, callback):
+        self.currentChanged_callback = callback
+
+    def handle_selectionChanged(self, index):
+        if self.selectionChanged_callback is not None:
+            self.selectionChanged_callback(index)
+
+    def handle_currentChanged(self, index):
+        if self.currentChanged_callback is not None:
+            self.currentChanged_callback(index)
 
     def export_to_raft_capture(self):
         # TODO: consider implementing a tasklet if this is the entire DB being exported

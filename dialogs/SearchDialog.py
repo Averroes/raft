@@ -64,6 +64,7 @@ class SearchDialog(QDialog, SearchDialog.Ui_SearchDialog):
         self.connect(self, SIGNAL('searchFinished()'), self.searchFinishedHandler, Qt.QueuedConnection)
         # Create context menu
         self.resultsContextMenu = ResponsesContextMenuWidget(self.framework, self.searchResultsModel, self.searchResultsTree, self)
+        self.resultsContextMenu.set_currentChanged_callback(self.fill_bottom)
 
     def response_item_double_clicked(self, index):
         Id = interface.index_to_id(self.searchResultsModel, index)
