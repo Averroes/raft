@@ -21,15 +21,21 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from PyQt4.QtCore import Qt, QVariant, QAbstractItemModel, QModelIndex, QAbstractTableModel
+from PyQt4.QtCore import Qt, SIGNAL, QVariant, QAbstractItemModel, QModelIndex, QAbstractTableModel
+import operator
+import bisect
 from collections import deque
 
 class DataTableDataModel(QAbstractTableModel):
     def __init__(self, framework, item_definition, parent = None):
         QAbstractItemModel.__init__(self, parent)
         self.framework = framework
-        self.rows = deque()
         self.item_definition = item_definition
+
+        self.rows = deque()
+        self._sort_keys = deque()
+        self._sort_column = 0
+        self._sort_order = Qt.AscendingOrder
 
         self.column_offset = []
         self.db_offset = {}
@@ -51,6 +57,7 @@ class DataTableDataModel(QAbstractTableModel):
         modelIndex = QModelIndex()
         self.beginRemoveRows(modelIndex, start, end)
         data = self.rows.pop()
+        self._sort_keys.pop()
         self.endRemoveRows()
         return data
 
@@ -60,7 +67,13 @@ class DataTableDataModel(QAbstractTableModel):
             return None
         modelIndex = QModelIndex()
         self.beginRemoveRows(modelIndex, 0, 0)
-        data = self.rows.popleft()
+        if 0 == self._sort_column:
+            data = self.rows.popleft()
+            self._sort_keys.popleft()
+        else:
+            data = self.rows[0]
+            self.rows = self.rows[1:]
+            self._sort_keys = self._sort_keys[1:]
         self.endRemoveRows()
         return data
 
@@ -68,6 +81,32 @@ class DataTableDataModel(QAbstractTableModel):
         size = len(new_rows)
         if 0 == size:
             return
+        if 0 == self._sort_column and Qt.AscendingOrder == self._sort_order:
+            self.insert_data(new_rows, size)
+        elif 0 == self._sort_column and Qt.DescendingOrder == self._sort_order:
+            self.insert_left_data(new_rows, size)
+        else:
+            self.insert_sorted_data(new_rows, size)
+
+    def appendleft_data(self, new_rows):
+        size = len(new_rows)
+        if 0 == size:
+            return
+        if 0 == self._sort_column and Qt.AscendingOrder == self._sort_order:
+            self.insert_left_data(new_rows, size)
+        elif 0 == self._sort_column and Qt.DescendingOrder == self._sort_order:
+            self.insert_data(new_rows, size)
+        else:
+            self.insert_sorted_data(new_rows, size)
+
+    def insert_left_data(self, new_rows, size):
+        modelIndex = QModelIndex()
+        self.beginInsertRows(modelIndex, 0, size - 1)
+        for row in new_rows:
+            self.rows.appendleft(row)
+        self.endInsertRows()
+
+    def insert_data(self, new_rows, size):
         modelIndex = QModelIndex()
         current_size = len(self.rows)
         start = current_size
@@ -77,21 +116,30 @@ class DataTableDataModel(QAbstractTableModel):
             self.rows.append(row)
         self.endInsertRows()
 
-    def appendleft_data(self, new_rows):
-        size = len(new_rows)
-        if 0 == size:
-            return
+    def insert_sorted_data(self, new_rows, size):
+        column = self._sort_column
         modelIndex = QModelIndex()
-        self.beginInsertRows(modelIndex, 0, size - 1)
+        # TODO: if sort order is descending, this algorithm fails 
         for row in new_rows:
-            self.rows.appendleft(row)
-        self.endInsertRows()
+            k = row[column]
+            start = bisect.bisect_right(self._sort_keys, k)
+            end = start
+            self.beginInsertRows(modelIndex, start, end)
+            self.rows.insert(start, row)
+            self._sort_keys.insert(start, k)
+            self.endInsertRows()
+
 
     def clearModel(self):
         self.beginResetModel()
         for row in self.rows:
             del(row)
-        self.rows = deque()
+        if 0 == self._sort_column:
+            self.rows = deque()
+            self._sort_keys = deque()
+        else:
+            self.rows = []
+            self._sort_keys = []
         self.endResetModel()
 
     def columnCount(self, parent = QModelIndex()):
@@ -134,3 +182,18 @@ class DataTableDataModel(QAbstractTableModel):
             return QVariant()
         except IndexError:
             return QVariant()
+
+    def sort(self, column, order):
+        # TODO: should lock rows before manipulating
+        self.emit(SIGNAL('layoutAboutToBeChanged()'))
+        column = self.column_offset[column]
+        if 0 == column:
+            self.rows = deque(sorted(self.rows, key=operator.itemgetter(column), reverse=(Qt.DescendingOrder == order)))
+            self._sort_keys = deque([r[column] for r in self.rows])
+        else:
+            self.rows = sorted(self.rows, key=operator.itemgetter(column), reverse=(Qt.DescendingOrder == order))
+            self._sort_keys = [r[column] for r in self.rows]
+        self._sort_column = column
+        self._sort_order = order
+        self.emit(SIGNAL('layoutChanged()'))
+        

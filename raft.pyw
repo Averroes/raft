@@ -199,11 +199,10 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         # Create actions for items
         self.responsesDataTree.doubleClicked.connect(self.response_item_double_clicked)
         self.fillingDataTree = False
-        # TODO: currentChanged no longer available 
         self.responsesDataTree.clicked.connect(self.fill_bottom)
         self.responsesDataTree.activated.connect(self.fill_bottom)
-        # TODO: Setup sorting for the responsesDataTree.  The following enables the QTreeView for sorting, but doesn't actually work.
-        #self.responsesDataTree.setSortingEnabled(True)
+        self.responsesDataTree.setSortingEnabled(True)
+        self.responsesDataTree.sortByColumn(0, Qt.AscendingOrder)
         
         #analysis tab connections
         self.mainAnalysisTreeWidget.clicked.connect(self.analysistree_handle_click)

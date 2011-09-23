@@ -56,6 +56,8 @@ class SearchDialog(QDialog, SearchDialog.Ui_SearchDialog):
         self.searchResultsTree.setModel(self.searchResultsModel)
         self.searchResultsTree.clicked.connect(self.fill_bottom)
         self.searchResultsTree.doubleClicked.connect(self.response_item_double_clicked)
+        self.searchResultsTree.setSortingEnabled(True)
+        self.searchResultsTree.sortByColumn(0, Qt.AscendingOrder)
 
         self.thread = SearchThread(self.framework, self.searchResultsModel)
         self.thread.start(QThread.LowestPriority)
