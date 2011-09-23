@@ -1136,3 +1136,4 @@ if '__main__' == __name__:
         source = open(a).read()
         node = parser.parse(source, a, 1)
         print('\n'.join([s.encode('ascii', 'ignore') for s in parser.strings()]))
+        print(parser.comments())
