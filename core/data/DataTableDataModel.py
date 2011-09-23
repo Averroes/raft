@@ -33,7 +33,7 @@ class DataTableDataModel(QAbstractTableModel):
         self.item_definition = item_definition
 
         self.rows = deque()
-        self._sort_keys = deque()
+        self._sort_keys = None
         self._sort_column = 0
         self._sort_order = Qt.AscendingOrder
 
@@ -57,7 +57,8 @@ class DataTableDataModel(QAbstractTableModel):
         modelIndex = QModelIndex()
         self.beginRemoveRows(modelIndex, start, end)
         data = self.rows.pop()
-        self._sort_keys.pop()
+        if 0 != self._sort_column:
+            self._sort_keys.pop()
         self.endRemoveRows()
         return data
 
@@ -69,7 +70,6 @@ class DataTableDataModel(QAbstractTableModel):
         self.beginRemoveRows(modelIndex, 0, 0)
         if 0 == self._sort_column:
             data = self.rows.popleft()
-            self._sort_keys.popleft()
         else:
             data = self.rows[0]
             self.rows = self.rows[1:]
@@ -189,7 +189,7 @@ class DataTableDataModel(QAbstractTableModel):
         column = self.column_offset[column]
         if 0 == column:
             self.rows = deque(sorted(self.rows, key=operator.itemgetter(column), reverse=(Qt.DescendingOrder == order)))
-            self._sort_keys = deque([r[column] for r in self.rows])
+            self._sort_keys = None
         else:
             self.rows = sorted(self.rows, key=operator.itemgetter(column), reverse=(Qt.DescendingOrder == order))
             self._sort_keys = [r[column] for r in self.rows]
