@@ -83,6 +83,17 @@ class ResponsesContextMenuWidget(QObject):
         action.triggered.connect(self.data_tree_copy_url)
         self.menu.addAction(action)
 
+        self.testerAction = QAction("Testing...", self)
+        self.testerSubMenu = QMenu(self.treeView)
+        self.testerAction.setMenu(self.testerSubMenu)
+        self.menu.addAction(self.testerAction)
+        action = QAction("Send to CSRF Tester", self)
+        action.triggered.connect(self.send_response_data_to_csrf_tester)
+        self.testerSubMenu.addAction(action)
+        action = QAction("Send to Click Jacking Tester", self)
+        action.triggered.connect(self.send_response_data_to_click_jacking_tester)
+        self.testerSubMenu.addAction(action)
+
         self.hideAction = QAction("Hide...", self)
         self.hideSubMenu = QMenu(self.treeView)
         self.hideAction.setMenu(self.hideSubMenu)
@@ -335,4 +346,16 @@ class ResponsesContextMenuWidget(QObject):
     def data_tree_show_all(self):
         for i in range(0, self.dataModel.rowCount()):
             self.treeView.setRowHidden(i, QModelIndex(), False)
+
+    def send_response_data_to_csrf_tester(self):
+        index = self.treeView.currentIndex()
+        Id = interface.index_to_id(self.dataModel, index)
+        if Id:
+            self.framework.send_to_tester_csrf(Id)
+
+    def send_response_data_to_click_jacking_tester(self):
+        index = self.treeView.currentIndex()
+        Id = interface.index_to_id(self.dataModel, index)
+        if Id:
+            self.framework.send_to_tester_click_jacking(Id)
 

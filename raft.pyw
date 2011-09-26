@@ -104,6 +104,7 @@ from tabs import WebFuzzerTab
 from tabs import DomFuzzerTab
 from tabs import CrawlerTab
 from tabs import ScopingTab
+from tabs import TesterTab
 
 # Import actions
 from actions import importers
@@ -317,6 +318,7 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.domFuzzerTab = DomFuzzerTab.DomFuzzerTab(self.framework, self)
         self.crawlerTab = CrawlerTab.CrawlerTab(self.framework, self)
         self.scopingTab = ScopingTab.ScopingTab(self.framework, self)
+        self.testerTab = TesterTab.TesterTab(self.framework, self)
 
         # sitemap
         self.siteMapRequestResponse = RequestResponseWidget(self.framework, self.sitemapTabPlaceholder, self.sitemapSearchControlPlaceholder, self)

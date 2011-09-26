@@ -1431,6 +1431,30 @@ ${global_cookie_jar}</string>
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tabMainTester">
+       <attribute name="title">
+        <string>Tester</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_33">
+        <item>
+         <widget class="QTabWidget" name="testerTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="testerCSRFTab">
+           <attribute name="title">
+            <string>CSRF</string>
+           </attribute>
+          </widget>
+          <widget class="QWidget" name="testerClickJackingTab">
+           <attribute name="title">
+            <string>Click Jacking</string>
+           </attribute>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="tabMainCrawler">
        <attribute name="title">
         <string>Crawler</string>

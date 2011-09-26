@@ -342,3 +342,15 @@ class Framework(QObject):
 
     def log_warning(self, msg):
         print('WARNING', msg)
+
+    def subscribe_populate_tester_csrf(self, callback):
+        QObject.connect(self, SIGNAL('testerPopulateCSRFResponseId(int)'), callback, Qt.DirectConnection)
+
+    def send_to_tester_csrf(self, Id):
+        self.emit(SIGNAL('testerPopulateCSRFResponseId(int)'), int(Id))
+
+    def subscribe_populate_tester_click_jacking(self, callback):
+        QObject.connect(self, SIGNAL('testerPopulateClickJackingResponseId(int)'), callback, Qt.DirectConnection)
+
+    def send_to_tester_click_jacking(self, Id):
+        self.emit(SIGNAL('testerPopulateClickJackingResponseId(int)'), int(Id))

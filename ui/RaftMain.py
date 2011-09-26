@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'RaftMain.ui'
 #
-# Created: Tue Sep 20 19:54:19 2011
+# Created: Sun Sep 25 21:12:19 2011
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -800,6 +800,20 @@ class Ui_MainWindow(object):
         self.domFuzzerTabWidget.addTab(self.domFuzzerFuzzWindowTab, _fromUtf8(""))
         self.verticalLayout_37.addWidget(self.domFuzzerTabWidget)
         self.mainTabWidget.addTab(self.tabMainDOMFuzzer, _fromUtf8(""))
+        self.tabMainTester = QtGui.QWidget()
+        self.tabMainTester.setObjectName(_fromUtf8("tabMainTester"))
+        self.verticalLayout_33 = QtGui.QVBoxLayout(self.tabMainTester)
+        self.verticalLayout_33.setObjectName(_fromUtf8("verticalLayout_33"))
+        self.testerTabWidget = QtGui.QTabWidget(self.tabMainTester)
+        self.testerTabWidget.setObjectName(_fromUtf8("testerTabWidget"))
+        self.testerCSRFTab = QtGui.QWidget()
+        self.testerCSRFTab.setObjectName(_fromUtf8("testerCSRFTab"))
+        self.testerTabWidget.addTab(self.testerCSRFTab, _fromUtf8(""))
+        self.testerClickJackingTab = QtGui.QWidget()
+        self.testerClickJackingTab.setObjectName(_fromUtf8("testerClickJackingTab"))
+        self.testerTabWidget.addTab(self.testerClickJackingTab, _fromUtf8(""))
+        self.verticalLayout_33.addWidget(self.testerTabWidget)
+        self.mainTabWidget.addTab(self.tabMainTester, _fromUtf8(""))
         self.tabMainCrawler = QtGui.QWidget()
         self.tabMainCrawler.setObjectName(_fromUtf8("tabMainCrawler"))
         self.verticalLayout_41 = QtGui.QVBoxLayout(self.tabMainCrawler)
@@ -1811,6 +1825,7 @@ class Ui_MainWindow(object):
         self.stdFuzzResultsTabWidget.setCurrentIndex(-1)
         self.domFuzzerTabWidget.setCurrentIndex(0)
         self.domFuzzerResultsTabWidget.setCurrentIndex(-1)
+        self.testerTabWidget.setCurrentIndex(0)
         self.crawlerTabWidget.setCurrentIndex(0)
         self.tabScoping.setCurrentIndex(0)
         self.cookiesTabWidget.setCurrentIndex(0)
@@ -1841,6 +1856,9 @@ class Ui_MainWindow(object):
         self.domFuzzerTabWidget.setTabText(self.domFuzzerTabWidget.indexOf(self.domFuzzerResultsTab), QtGui.QApplication.translate("MainWindow", "Results", None, QtGui.QApplication.UnicodeUTF8))
         self.domFuzzerTabWidget.setTabText(self.domFuzzerTabWidget.indexOf(self.domFuzzerFuzzWindowTab), QtGui.QApplication.translate("MainWindow", "Fuzz Window", None, QtGui.QApplication.UnicodeUTF8))
         self.mainTabWidget.setTabText(self.mainTabWidget.indexOf(self.tabMainDOMFuzzer), QtGui.QApplication.translate("MainWindow", "DOM Fuzzer", None, QtGui.QApplication.UnicodeUTF8))
+        self.testerTabWidget.setTabText(self.testerTabWidget.indexOf(self.testerCSRFTab), QtGui.QApplication.translate("MainWindow", "CSRF", None, QtGui.QApplication.UnicodeUTF8))
+        self.testerTabWidget.setTabText(self.testerTabWidget.indexOf(self.testerClickJackingTab), QtGui.QApplication.translate("MainWindow", "Click Jacking", None, QtGui.QApplication.UnicodeUTF8))
+        self.mainTabWidget.setTabText(self.mainTabWidget.indexOf(self.tabMainTester), QtGui.QApplication.translate("MainWindow", "Tester", None, QtGui.QApplication.UnicodeUTF8))
         self.crawlerTabWidget.setTabText(self.crawlerTabWidget.indexOf(self.crawlerSpiderQueueTab), QtGui.QApplication.translate("MainWindow", "Spider Queue", None, QtGui.QApplication.UnicodeUTF8))
         self.crawlerTabWidget.setTabText(self.crawlerTabWidget.indexOf(self.crawlerSpiderPendingResponsesTab), QtGui.QApplication.translate("MainWindow", "Spider Pending Responses", None, QtGui.QApplication.UnicodeUTF8))
         self.crawlerTabWidget.setTabText(self.crawlerTabWidget.indexOf(self.crawlerSpiderPendingAnalysisTab), QtGui.QApplication.translate("MainWindow", "Spider Pending Analysis", None, QtGui.QApplication.UnicodeUTF8))
