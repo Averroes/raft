@@ -52,6 +52,9 @@ class JSLiteParser():
     def comments(self):
         return self._comments
 
+    def parse_inline(self, script, filename = '', lineno = 0):
+        self.process(script)
+
     def parse(self, script, filename = '', lineno = 0):
         self.process(script)
 
@@ -276,7 +279,7 @@ if '__main__' == __name__:
     parser = JSLiteParser()
     for a in sys.argv[1:]:
         script=open(a).read()
-        parser.parse(script)
+        parser.parse_file(script)
         print('\n'.join([s.encode('ascii', 'ignore') for s in parser.strings()]))
         print(parser.comments())
 

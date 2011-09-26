@@ -1099,10 +1099,23 @@ class JSParser():
         for n in node:
             self.dumpnodes(n)
 
+    def reset(self):
+        self.tokenizer.reset(source, filename, line)
+
+    def parse_inline(self, source):
+        try:
+            context = CompilerContext(True)
+            node = Script(self.tokenizer, context)
+            if (not self.tokenizer.done()):
+                raise tokenizer.newSyntaxError("Syntax error")
+        except JsParseException, e:
+            import sys
+            sys.stderr.write('%s\n' % e)
+            pass
+
     def parse(self, source, filename = '', line = 0):
         try:
             context = CompilerContext(False)
-            self.tokenizer.reset(source, filename, line)
             node = Script(self.tokenizer, context)
             if (not self.tokenizer.done()):
                 raise tokenizer.newSyntaxError("Syntax error")
@@ -1134,6 +1147,6 @@ if '__main__' == __name__:
     for a in sys.argv[1:]:
         parser = JSParser()
         source = open(a).read()
-        node = parser.parse(source, a, 1)
+        node = parser.parse_file(source, a, 1)
         print('\n'.join([s.encode('ascii', 'ignore') for s in parser.strings()]))
         print(parser.comments())

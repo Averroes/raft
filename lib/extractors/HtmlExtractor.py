@@ -526,8 +526,7 @@ class HtmlExtractor(BaseExtractor):
         
     def process_inline_script(self, results, jsParser, script):
         if results.add_inline_script(script):
-            # TODO: fixme better ....
-            jsParser.parse('(function (){'+script+'})')
+            jsParser.parse_inline(script)
 
     def process_script_uri(self, results, uri):
         results.add_script_uri(uri)
@@ -749,19 +748,23 @@ class HtmlExtractor(BaseExtractor):
                 match = self.re_full_url.search(line)
                 if match:
                     results.add_uri(match.group(0))
-                match = self.re_relative_url.search(line)
-                if match:
-                    results.add_relative_uri(match.group(0))
+                else:
+                    match = self.re_relative_url.search(line)
+                    if match:
+                        results.add_relative_uri(match.group(0))
 
         for comment in js_comments:
             results.add_comment(comment)
+            if comment.startswith('/*') or comment.startswith('//'):
+                comment = comment[2:]
             for line in comment.splitlines():
                 match = self.re_full_url.search(line)
                 if match:
                     results.add_uri(match.group(0))
-                match = self.re_relative_url.search(line)
-                if match:
-                    results.add_relative_uri(match.group(0))
+                else:
+                    match = self.re_relative_url.search(line)
+                    if match:
+                        results.add_relative_uri(match.group(0))
 
         return results
 
