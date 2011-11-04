@@ -19,7 +19,8 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#import re
+import re
+import urllib2
 
 from analysis.AbstractAnalyzer import AbstractAnalyzer
 
@@ -28,6 +29,7 @@ class Redirect(AbstractAnalyzer):
     
     #Class variables shared across all instances
     data = {}
+    LocationRegex = re.compile('Location:\s+(\S+)',re.I)
     
     
     def __init__(self):
@@ -37,34 +39,24 @@ class Redirect(AbstractAnalyzer):
     def analyzeTransaction(self, target, results):
         status = target.responseStatus
         host = target.requestHost
-        if (status == "302"):
-            #print "Redirect Analysis engaged!"
-            hash = target.responseHash
-            try:
-                self.data[host]
-            except:
-                self.data[host] = {}
-            
-            try:
-                self.data[host][hash]
-            except:
-                self.data[host][hash] = {}
-                self.data[host][hash]['data'] = target.responseBody
-                self.data[host][hash]['count'] = 0
-                
-            self.data[host][hash]['count'] += 1
-
-    def postanalysis(self,results):
-        output = "The following redirect hashes were observed during analysis:\n"
-        for host in self.data.iterkeys():
-            output += " %s " % host
-            for hash in self.data[host].iterkeys():
-               output += "   %s  %10d" % (hash,self.data[host][hash]['count'])
-               
-            results.addOverallResult(type=self.friendlyname,
-                                     desc=self.desc,
-                                     data={host:output},
-                                     span=(0,0),
-                                     certainty=None,
-                                     context=host
-                                     )
+        if (target.responseStatus == "302"):
+            m = self.LocationRegex.search(target.responseHeaders)
+            if ( m != None ):
+                redirectLocation = m.group(1)
+                for k,val in target.requestParams.iteritems():
+                    v = urllib2.unquote(val)
+                    matched = False
+                    if redirectLocation in v:
+                        matched = True
+                    elif urllib2.quote(redirectLocation) in v:
+                        matched = True
+                    elif urllib2.unquote(redirectLocation) in v:
+                        matched = True
+                    if matched:
+                        results.addPageResult(pageid=target.responseId, 
+                                url=target.responseUrl,
+                                type=self.friendlyname,
+                                desc="Check the listed parameter for a possible open redirect",
+                                data={'Possible Unvalidated Redirect':k},
+                                span=m.span(),
+                                highlightdata=val)

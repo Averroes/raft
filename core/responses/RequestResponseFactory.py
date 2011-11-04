@@ -28,6 +28,8 @@ from core.database.constants import ResponsesTable
 from core.responses.RequestResponse import RequestResponse
 from utility import ContentHelper
 
+import re
+
 class RequestResponseFactory(QObject):
 
     def __init__(self, framework, parent):
@@ -85,6 +87,40 @@ class RequestResponseFactory(QObject):
             rr.requestDate = str(responseItems[ResponsesTable.REQDATE])
             rr.notes = str(responseItems[ResponsesTable.NOTES])
             rr.confirmed = str(responseItems[ResponsesTable.CONFIRMED])
+            rr.requestParams = {}
+            
+            if (len(rr.requestBody) > 0):
+                paramsSplit = rr.requestBody.split('&')
+                for pair in paramsSplit:
+                    n,v = pair.split('=',1)
+                    rr.requestParams[n] = v
+                    #print "[ %s = %s ]" % (n,v)
+            
+            getParamRegex = re.compile("[GET|POST]\s+\S+\?(.*)\s+HT")
+            m = getParamRegex.search(rr.requestHeaders)
+            if ( m != None ):
+                #print "getParams matched: %s" % m.group(1)
+                getParams = m.group(1)
+                if ( len(getParams) > 0 ):
+                    paramsSplit = getParams.split('&')
+                    for p in paramsSplit:
+                        if (len(p) > 0 ):
+                            n,v = p.split('=',1)
+                            rr.requestParams[n] = v
+                            
+            postParamRegex = re.compile("POST.*HTTP")
+            m = postParamRegex.search(rr.requestHeaders)
+            if ( m != None ):
+                #print "Parsing POST Params"
+                if (len(rr.requestBody) > 0 ):
+                    paramsSplit = rr.requestBody.split('&')
+                    for p in paramsSplit:
+                        if (len(p) > 0):
+                            n,v = p.split('=',1)
+                            rr.requestParams[n] = v
+            
+            
+            
 
             if not rr.responseContentType:
                 # TODO: fix this to use better algorithm
