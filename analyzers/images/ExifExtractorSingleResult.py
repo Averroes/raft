@@ -30,16 +30,17 @@ class ExifExtractorSingleResult(SingleResult.SingleResult):
         if self.span is not None:
             locationtext='%s to %s'%self.span
         
-        #try: 
+        try: 
         #datalist = ast.literal_eval(self.data)
-        dataoutput = '<ol><li>%s</li></ol>' % self.data
-        #for k in datalist:
-        #   dataoutput += "<li>%s: %s</li>" % (k,datalist[k])
-        #dataoutput += '</ol>'
-        #except ValueError:
-        #    print "ValueError: %s" % self.data
-        #except:
-        #    print "Error occurred on this data: %s" % self.data
+        #dataoutput = '<ol><li>%s</li></ol>' % self.data
+            dataoutput = "<ol>"
+            for k in self.data.iterkeys():
+                dataoutput += "<li>%s: %s</li>" % (k,self.data[k])
+            dataoutput += '</ol>'
+        except ValueError:
+            print "ValueError: %s" % self.data
+        except:
+            print "Error occurred on this data: %s" % self.data
 
         NiceOutput="""
         <h3>%s</h3><br>
