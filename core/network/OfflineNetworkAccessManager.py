@@ -79,7 +79,8 @@ class OfflineNetworkAccessManager(BaseNetworkAccessManager):
                     responses = []
                     for row in self.Data.read_responses_by_url(self.cursor, url):
                         responseItems = [m or '' for m in row]
-                        if responseItems[ResponsesTable.RES_LENGTH] and int(responseItems[ResponsesTable.RES_LENGTH]) > 0 and str(responseItems[ResponsesTable.STATUS]).startswith('2'):
+                        response_length = str(responseItems[ResponsesTable.RES_LENGTH])
+                        if response_length and int(response_length) > 0 and str(responseItems[ResponsesTable.STATUS]).startswith('2'):
                             responses.append(responseItems)
                         if len(responses) > 0:
                             url_response = responses[-1]
@@ -93,7 +94,8 @@ class OfflineNetworkAccessManager(BaseNetworkAccessManager):
                             base_url = url
                         for row in self.Data.read_responses_starting_with_url(self.cursor, base_url):
                             responseItems = [m or '' for m in row]
-                            if int(responseItems[ResponsesTable.RES_LENGTH]) > 0 and str(responseItems[ResponsesTable.STATUS]).startswith('2'):
+                            response_length = str(responseItems[ResponsesTable.RES_LENGTH])
+                            if response_length and int(response_length) > 0 and str(responseItems[ResponsesTable.STATUS]).startswith('2'):
                                 responses.append(responseItems)
                             if len(responses) > 0:
                                 url_response = responses[-1]

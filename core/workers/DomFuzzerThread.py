@@ -49,6 +49,7 @@ class DomFuzzerThread(QThread):
         self.re_unique_marker_base = re.compile(re.escape(self.UNIQUE_MARKER_BASE), re.I)
         self.pending_fuzz_response_ids = deque()
         self.analysis_queue = deque()
+        self.processed_urls = {}
 
         self.Data = None
         self.read_cursor = None
@@ -122,6 +123,7 @@ class DomFuzzerThread(QThread):
     def do_startFuzzing(self):
         print('do_startFuzzing')
         self.keep_fuzzing = True
+        self.processed_urls = {}
         self.dispatch_next_fuzz_item()
 
     def do_fuzzItemFinished(self):
@@ -183,7 +185,10 @@ class DomFuzzerThread(QThread):
             if fuzz_item:
                 QObject.emit(self.fuzz_callback, SIGNAL('fuzzItemAvailable(int, QString, QUrl)'), fuzz_item[0], fuzz_item[1], fuzz_item[2])
             else:
+                self.processed_urls = {}
                 QObject.emit(self.fuzz_callback, SIGNAL('fuzzRunFinished()'))
+        else:
+            self.processed_urls = {}
 
     def get_next_fuzz_item(self):
         self.qlock.lock()
@@ -234,6 +239,12 @@ class DomFuzzerThread(QThread):
         contentType = str(responseItems[ResponsesTable.RES_CONTENT_TYPE])
         responseBody = str(responseItems[ResponsesTable.RES_DATA])
 
+        if self.processed_urls.has_key(url):
+            self.framework.log_warning('skipping already scanned url [%s] for now' % (url))
+            return
+        else:
+            self.processed_urls[url] = True
+
         # TODO: need better content type
         if 'html' not in contentType:
             if '<html' not in responseBody.lower():
@@ -263,9 +274,45 @@ class DomFuzzerThread(QThread):
         self.qlock.lock()
         try:
             rows = []
+            dup_rows = []
+            already_seen = {}
             for row in self.Data.get_dom_fuzzer_queue_items(self.read_cursor, 'P'):
-                rows.append([m or '' for m in row])
+                data_item = [m or '' for m in row]
+                # check for duplicates and prioritize uniques first
+                url = data_item[DomFuzzerQueueTable.URL]
+                target = data_item[DomFuzzerQueueTable.TARGET]
+                param = data_item[DomFuzzerQueueTable.PARAM]
+                test = data_item[DomFuzzerQueueTable.TEST]
+
+                # TODO: remove this
+                if 'fragment' == target or '#' == url[-1]:
+                    dup_rows.append(data_item)
+                    continue
+
+                splitted = urlparse.urlsplit(url)
+                if 'url' == target:
+                    dupcheck = urlparse.urlunsplit((splitted.scheme, splitted.netloc, splitted.path, '', ''))
+                else:
+                    qs_values = None
+                    if 'query' == target and splitted.query:
+                        qs_values = urlparse.parse_qs(splitted.query, True)
+                        dupcheck = urlparse.urlunsplit((splitted.scheme, splitted.netloc, splitted.path, '&'.join(qs_values.keys()), splitted.fragment))
+                    elif 'fragment' == target and splitted.fragment:
+                        qs_values = urlparse.parse_qs(splitted.fragment, True)
+                        dupcheck = urlparse.urlunsplit((splitted.scheme, splitted.netloc, splitted.path, splitted.query, '&'.join(qs_values.keys())))
+                    else:
+                        dupcheck = url
+
+                dupcheck = '%s||%s||%s' % (dupcheck, param, test)
+
+                if not already_seen.has_key(dupcheck):
+                    rows.append(data_item)
+                    already_seen[dupcheck] = True
+                else:
+                    dup_rows.append(data_item)
+
             self.queueDataModel.append_data(rows)
+            self.queueDataModel.append_data(dup_rows)
             rows = []
             for row in self.Data.read_dom_fuzzer_results_info(self.read_cursor):
                 rows.append([m or '' for m in row])
@@ -307,7 +354,10 @@ class DomFuzzerThread(QThread):
         payloads = []
 
         for test in self.STANDARD_TESTS:
-            payloads.append((url, target, '', test))
+            if '&' in url:
+                payloads.append((url+'&__', target, '', test + '=1'))
+            else:
+                payloads.append((url, target, '', test))
 
         if url_field:
             pairs = self.re_delim.split(url_field)
@@ -347,11 +397,12 @@ class DomFuzzerThread(QThread):
             raise Exception('unsupported target: %s' % (target))
 
         if not url_field:
-            pass
+            raise Exception('missing URL field in url: %s' % (url))
         else:
             # TODO: this duplicates previous work, so could consider pre-storing target urls?
             url_io = StringIO()
             pairs = self.re_delim.split(url_field)
+            found = False
             for offset in range(0, len(pairs)):
                 values = pairs[offset]
                 if values == ';' or values == '&':
@@ -366,10 +417,14 @@ class DomFuzzerThread(QThread):
 
                 if name == param:
                     value += test
+                    found = True
 
                 url_io.write(name)
                 url_io.write(separator)
                 url_io.write(value)
+
+            if not found:
+                url_io.write(test)
                 
         if 'fragment' == target:
             target_url = urlparse.urlunsplit((splitted.scheme, splitted.netloc, splitted.path, splitted.query, url_io.getvalue()))

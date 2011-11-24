@@ -372,6 +372,7 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.domFuzzerThread = DomFuzzerThread.DomFuzzerThread(self.framework, self.domFuzzerQueueDataModel, self.domFuzzerResultsDataModel,  self)
         self.domFuzzerThread.start(QThread.LowestPriority)
         self.domFuzzerTab.set_fuzzer_thread(self.domFuzzerThread)
+        self.domFuzzerTab.setup_fuzzer_results_treeview()
 
         # spider thread
         self.spiderQueueDataModel = SpiderQueueDataModel.SpiderQueueDataModel(self.framework, self)

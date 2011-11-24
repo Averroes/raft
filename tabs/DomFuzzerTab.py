@@ -55,8 +55,6 @@ class DomFuzzerTab(QObject):
         self.mainWindow.domFuzzerStopButton.setEnabled(False)
 
         self.miniResponseRenderWidget = MiniResponseRenderWidget(self.framework, self.mainWindow.domFuzzerResultsTabWidget, self)
-        self.mainWindow.domFuzzerResultsTreeView.clicked.connect(self.handle_resultsTreeView_clicked)
-
         self.setup_fuzz_window()
 
         self.Data = None
@@ -89,6 +87,47 @@ class DomFuzzerTab(QObject):
 
     def handle_fuzzerClearQueue_clicked(self):
         self.domFuzzerThread.clearFuzzQueue()
+
+    def setup_fuzzer_results_treeview(self):
+        treeView = self.mainWindow.domFuzzerResultsTreeView
+        treeView.setSelectionMode(treeView.ExtendedSelection)
+        self.resultsTreeViewSelectionModel = QItemSelectionModel(treeView.model())
+        treeView.setSelectionModel(self.resultsTreeViewSelectionModel)
+
+        treeView.clicked.connect(self.handle_resultsTreeView_clicked)
+
+        treeView.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.connect(treeView, SIGNAL("customContextMenuRequested(const QPoint&)"), self.fuzzer_results_context_menu)
+        self.resultsMenu = QMenu(treeView)
+        self.copyUrlAction = action = QAction("Copy URL", self)
+        action.triggered.connect(self.fuzzer_results_copy_url)
+        self.resultsMenu.addAction(action)
+
+    def fuzzer_results_context_menu(self, point):
+        if len(self.resultsTreeViewSelectionModel.selectedRows()) > 1:
+            self.copyUrlAction.setText('Copy URLs')
+        else:
+            self.copyUrlAction.setText('Copy URL')
+        self.resultsMenu.exec_(self.mainWindow.domFuzzerResultsTreeView.mapToGlobal(point))
+
+    def fuzzer_results_index_to_url(self, dataModel, index):
+        index = dataModel.index(index.row(), 5) # TODO: use constant
+        if index.isValid():
+            currentItem = dataModel.data(index)
+            if currentItem.isValid():
+                url = str(currentItem.toString())
+                return url
+        return None
+
+    def fuzzer_results_copy_url(self):
+        url_list = []
+        dataModel = self.mainWindow.domFuzzerResultsTreeView.model()
+        for index in self.resultsTreeViewSelectionModel.selectedRows():
+            curUrl = self.fuzzer_results_index_to_url(dataModel, index)
+            if curUrl:
+                url_list.append('%s' % (str(curUrl)))
+
+        QApplication.clipboard().setText('\n'.join(url_list))
 
     def setup_fuzz_window(self):
         self.callbackLogger = self.CallbackLogger()
