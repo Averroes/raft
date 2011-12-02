@@ -1049,11 +1049,11 @@ class burp_parse_xml():
                 ('end', 'method', self.xml_element_end),
                 ('end', 'path', self.xml_element_end),
                 ('end', 'extension', self.xml_element_end),
-                ('end', 'request', self.xml_element_end),
+                ('end', 'request', self.xml_element_end_base64),
                 ('end', 'status', self.xml_element_end),
                 ('end', 'responselength', self.xml_element_end),
                 ('end', 'mimetype', self.xml_element_end),
-                ('end', 'response', self.xml_element_end),
+                ('end', 'response', self.xml_element_end_base64),
                 ('end', 'comment', self.xml_element_end),
                 ),
             }
@@ -1127,6 +1127,13 @@ class burp_parse_xml():
         self.current[elem.tag] = self.re_encoded.sub(self.decode_entity, str(elem.text))
         self.states.pop()
 
+    def xml_element_end_base64(self, elem):
+        if elem.attrib.has_key('base64') and 'true' == elem.attrib['base64']:
+            self.current[elem.tag] = str(elem.text).decode('base64')
+        else:
+            self.current[elem.tag] = self.re_encoded.sub(self.decode_entity, str(elem.text))
+        self.states.pop()
+            
     def __iter__(self):
         return self
 
