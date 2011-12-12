@@ -29,6 +29,8 @@ from core.responses.RequestResponse import RequestResponse
 from utility import ContentHelper
 
 import re
+from urllib2 import urlparse
+import cgi
 
 class RequestResponseFactory(QObject):
 
@@ -40,10 +42,11 @@ class RequestResponseFactory(QObject):
         self.Data = None
         self.cursor = None
         self.framework.subscribe_database_events(self.db_attach, self.db_detach)
-        
+
         self.contentExtractor = self.framework.getContentExtractor()
         self.htmlExtractor = self.contentExtractor.getExtractor('html')
         self.jsExtractor = self.contentExtractor.getExtractor('javascript')
+        self.postDataExtractor = self.contentExtractor.getExtractor('post-data')
 
     def db_attach(self):
         self.Data = self.framework.getDB()
@@ -88,39 +91,17 @@ class RequestResponseFactory(QObject):
             rr.notes = str(responseItems[ResponsesTable.NOTES])
             rr.confirmed = str(responseItems[ResponsesTable.CONFIRMED])
             rr.requestParams = {}
-            
-            if (len(rr.requestBody) > 0):
-                paramsSplit = rr.requestBody.split('&')
-                for pair in paramsSplit:
-                    n,v = pair.split('=',1)
-                    rr.requestParams[n] = v
-                    #print "[ %s = %s ]" % (n,v)
-            
-            getParamRegex = re.compile("[GET|POST]\s+\S+\?(.*)\s+HT")
-            m = getParamRegex.search(rr.requestHeaders)
-            if ( m != None ):
-                #print "getParams matched: %s" % m.group(1)
-                getParams = m.group(1)
-                if ( len(getParams) > 0 ):
-                    paramsSplit = getParams.split('&')
-                    for p in paramsSplit:
-                        if (len(p) > 0 ):
-                            n,v = p.split('=',1)
-                            rr.requestParams[n] = v
-                            
-            postParamRegex = re.compile("POST.*HTTP")
-            m = postParamRegex.search(rr.requestHeaders)
-            if ( m != None ):
-                #print "Parsing POST Params"
-                if (len(rr.requestBody) > 0 ):
-                    paramsSplit = rr.requestBody.split('&')
-                    for p in paramsSplit:
-                        if (len(p) > 0):
-                            n,v = p.split('=',1)
-                            rr.requestParams[n] = v
-            
-            
-            
+
+            # extract request parameters
+            # TODO: repeated parameters clobber earlier values
+            splitted = urlparse.urlsplit(rr.responseUrl)
+            if splitted.query:
+                qs_values = urlparse.parse_qs(splitted.query, True)
+                for name, value in qs_values.iteritems():
+                    rr.requestParams[name] = value
+            postDataResults = self.postDataExtractor.process_request(rr.requestHeaders, rr.requestBody)
+            for name, value in postDataResults.name_values_dictionary.iteritems():
+                rr.requestParams[name] = value
 
             if not rr.responseContentType:
                 # TODO: fix this to use better algorithm
@@ -140,6 +121,7 @@ class RequestResponseFactory(QObject):
             else:
                 # TODO: implement more types
                 pass
+
 
         finally:
             self.qlock.unlock()
