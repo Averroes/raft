@@ -169,9 +169,9 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
     """ Reimplementation of the imported Ui_MainWindow class """
     def __init__(self, dbfilename = '', parent=None):
         super(RaftMain, self).__init__(parent)
-        self.setupUi(self)
         if MAC:
             qt_mac_set_native_menubar(False)
+        self.setupUi(self)
 
         # hide currently unimplemented features
         self.reqTabRawRequestTab.hide()
