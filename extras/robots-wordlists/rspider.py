@@ -52,7 +52,7 @@ class Client:
     re_status_line = re.compile(r'^HTTP/\d\.\d\s+\d{3}(?:\s+.*)?$')
     re_ipaddr = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
-    def __init__(self, method, useragent, append_headers, quiet):
+    def __init__(self, method, useragent, append_headers, quiet, statuscodes):
         self.csock = None
         self.tsock = None
         self.method = method
@@ -62,6 +62,11 @@ class Client:
         self.state = self.S_DISCONNECTED
         self.use_ssl = False
         self.reset_values()
+        if 0 == len(statuscodes):
+            statuscodes_pattern = '.*'
+        else:
+            statuscodes_pattern = '|'.join(statuscodes)
+        self.re_statuscodes = re.compile(statuscodes_pattern)
 
     def reset_values(self):
         self.request = None
@@ -271,7 +276,7 @@ class Client:
                     sys.stderr.write('warn: failed request [%s] %s\n' % (self.host, e))
 
         if not finished:
-            return finished, None
+            return finished, None, False
             
         self.close()
 
@@ -301,10 +306,10 @@ class Client:
         results.write('</request>\n')
 
         redirect = None
+        version, status, reason = '', '', ''
         if response:
             headers = response
             body = ''
-            version, status, reason = '', '', ''
             content_length = -1
             content_type = ''
             content_encoding = ''
@@ -387,36 +392,41 @@ class Client:
             if self.MAX_CONTENT_SIZE != -1 and len(body) > self.MAX_CONTENT_SIZE:
                 body = body[0:self.MAX_CONTENT_SIZE]
 
-            results.write('<response>\n')
-            if status and not self.re_nonprintable.search(status):
-                results.write('<status>%s</status>\n' % escape(status))
-            if content_type and not self.re_nonprintable.search(content_type):
-                results.write('<content_type>%s</content_type>\n' % escape(content_type))
-            results.write('<content_length>%s</content_length>\n' % content_length)
-            results.write('<elapsed>%d</elapsed>\n' % int((time.time() - self.start_time)*1000))
-            
-            if self.do_encode(headers):
-                results.write('<headers encoding="base64">')
-                results.write(headers.encode('base64'))
-                results.write('</headers>\n')
-            else:
-                results.write('<headers>')
-                results.write(escape(headers))
-                results.write('</headers>\n')
+            if self.re_statuscodes.match(status):
+                results.write('<response>\n')
+                if status and not self.re_nonprintable.search(status):
+                    results.write('<status>%s</status>\n' % escape(status))
+                if content_type and not self.re_nonprintable.search(content_type):
+                    results.write('<content_type>%s</content_type>\n' % escape(content_type))
+                results.write('<content_length>%s</content_length>\n' % content_length)
+                results.write('<elapsed>%d</elapsed>\n' % int((time.time() - self.start_time)*1000))
 
-            if self.do_encode(body):
-                results.write('<body encoding="base64">')
-                results.write(body.encode('base64'))
-                results.write('</body>\n')
-            else:
-                results.write('<body>')
-                results.write(escape(body))
-                results.write('</body>\n')
+                if self.do_encode(headers):
+                    results.write('<headers encoding="base64">')
+                    results.write(headers.encode('base64'))
+                    results.write('</headers>\n')
+                else:
+                    results.write('<headers>')
+                    results.write(escape(headers))
+                    results.write('</headers>\n')
 
-            results.write('</response>\n')
+                if self.do_encode(body):
+                    results.write('<body encoding="base64">')
+                    results.write(body.encode('base64'))
+                    results.write('</body>\n')
+                else:
+                    results.write('<body>')
+                    results.write(escape(body))
+                    results.write('</body>\n')
+
+                results.write('</response>\n')
 
         results.write('</capture>\n')
-        output.write(results.getvalue())
+        if self.re_statuscodes.match(status):
+            output.write(results.getvalue())
+            wrote_output = True
+        else:
+            wrote_output = False
         results.close()
 
         # TODO: this is ghetto to check for redirect request here
@@ -429,7 +439,7 @@ class Client:
             else:
                 redirect = None
 
-        return finished, redirect
+        return finished, redirect, wrote_output
 
 class BatchedReader:
 
@@ -484,7 +494,7 @@ class BatchedReader:
 
 class RSpider:
 
-    def __init__(self, hostfile, total_count, skip_count, method, path, useragent, append_headers, noredirects, nossl, timeout, clients, quiet):
+    def __init__(self, hostfile, total_count, skip_count, method, path, useragent, append_headers, noredirects, nossl, timeout, clients, quiet, statuscodes):
 
         self.hostfile = hostfile
         self.total_count = total_count
@@ -503,6 +513,7 @@ class RSpider:
         self.numclients = clients
         self.batch_count = self.numclients
         self.quiet = quiet
+        self.statuscodes = statuscodes
 
         self.re_ipaddr = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
         self.cut_count = 10000
@@ -535,7 +546,7 @@ class RSpider:
 
         self.clients = []
         for i in range(0, self.numclients):
-            self.clients.append(Client(self.method, self.useragent, self.append_headers, self.quiet))
+            self.clients.append(Client(self.method, self.useragent, self.append_headers, self.quiet, self.statuscodes))
 
 
     def process_line(self, line):
@@ -678,6 +689,7 @@ class RSpider:
         url = ''
         rcount = 0
         wcount = 0
+        ocount = 0
         while True:
             try:
                 if self.outstanding_requests() < self.numclients:
@@ -758,7 +770,7 @@ class RSpider:
                                 sys.stderr.write('failed during handshake for [%s]\n' % client_fileno)
                             client.close()
                     elif client_fileno in rlist:
-                        finished, redirect = client.read_response(self.results)
+                        finished, redirect, wrote_output = client.read_response(self.results)
                         if finished:
                             url, ip_address = inflight_list.pop(client_fileno)
                             if redirect and not self.noredirects:
@@ -788,9 +800,11 @@ class RSpider:
                                 if redirect_list.has_key(splitted.hostname):
                                     redirect_list.pop(splitted.hostname)
                             rcount += 1
-                            if 0 == (rcount % self.cut_count):
-                                self.close_results()
-                                self.open_results()
+                            if wrote_output:
+                                ocount += 1
+                                if 0 == (ocount % self.cut_count):
+                                    self.close_results()
+                                    self.open_results()
                     elif client_fileno in wlist:
                         url, ip_address = dispatch_list[client_fileno]
                         sent, ok = client.send_request(url)
@@ -826,6 +840,7 @@ if '__main__' == __name__:
     parser.add_argument('-p', '--path', dest='path', type=str, action='store', default='/robots.txt')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_true')
     parser.add_argument('-H', '--header', dest='headers', type=str, action='append')
+    parser.add_argument('-sC', '--status-code', dest='statuscodes', type=str, action='append', default=[])
     parser.add_argument('-nR', '--no-redirects', action='store_true', dest='noredirects')
     parser.add_argument('-nS', '--no-ssl', action='store_true', dest='nossl')
     parser.add_argument('--timeout', dest='timeout', type=int, action='store', default=10)
@@ -840,5 +855,5 @@ if '__main__' == __name__:
         print('\nNeed hostfile\n')
         sys.exit(1)
     
-    rspider = RSpider(args.hostfile, args.totalcount, args.skipcount, args.method, args.path, args.useragent, args.headers, args.noredirects, args.nossl, args.timeout, args.clients, args.quiet)
+    rspider = RSpider(args.hostfile, args.totalcount, args.skipcount, args.method, args.path, args.useragent, args.headers, args.noredirects, args.nossl, args.timeout, args.clients, args.quiet, args.statuscodes)
     rspider.process()
