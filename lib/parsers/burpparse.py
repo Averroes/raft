@@ -90,6 +90,7 @@ class burp_parse_state():
     T_BOOL = 2
     T_STRING = 3
     T_BINSTR = 4
+    T_UNKNOWN_5 = 5
     T_TAG = 256
 
     def __init__(self, burpfile):
@@ -178,6 +179,8 @@ class burp_parse_state():
                 datalen = struct.unpack('>L', data)[0]
                 datavalue = self.__read_data(datalen)
                 return (datatype, datavalue)
+            elif self.T_UNKNOWN_5 == datatype: # not known, maybe empty data/emptry string?
+                return (datatype, '')
             else:
                 raise(Exception('unhandled datatype: %d (%s)' % (datatype, token)))
 
