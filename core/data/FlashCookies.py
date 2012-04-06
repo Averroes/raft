@@ -26,9 +26,11 @@ import platform
 class FlashCookies:
     def __init__(self, framework):
         self.framework = framework
-        self.detect_platform()
+        self.detected_platform = False
 
     def detect_platform(self):
+        if self.detected_platform:
+            return
         attempt = 0
         while attempt < 3:
             try:
@@ -41,8 +43,9 @@ class FlashCookies:
                 elif 'Windows' == system_platform:
                     self.is_windows = True
                 else:
-                    # assume mac
-                    self.is_mac = True
+                    # assume linux or similar
+                    self.is_linux = True
+                self.detected_platform = True
                 break
             except IOError:
                 attempt += 1
@@ -56,13 +59,14 @@ class FlashCookies:
                 self.flashcookies_files.append((dirname, entry))
 
     def get_base_path(self):
+        self.detect_platform()
         if self.is_mac:
             base_path = os.path.join(self.framework.get_user_home_dir(), 'Library/Preferences/Macromedia/Flash Player/#SharedObjects/')
         elif self.is_windows:
             base_path = os.path.join(self.framework.get_user_home_dir(), 'Application Data\\Macromedia\\Flash Player\\#SharedObjects\\')
         else:
             # assume linux or similar
-            base_path = os.path.join(self.framework_get_user_home_dir(), '.macromedia/Flash_Player/#SharedObjects/')
+            base_path = os.path.join(self.framework.get_user_home_dir(), '.macromedia/Flash_Player/#SharedObjects/')
 
         return base_path
 
