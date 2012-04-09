@@ -114,10 +114,12 @@ class SequenceBuilderFormCapture(QObject):
             self.process_url(url, self.target_parameters[response_id])
 
             results = self.postDataExtractor.process_request(request_headers, request_body)
-            position = 0
-            for name, value, Type in results.name_values:
-                position += 1
-                self.target_parameters[response_id][SequenceParameter(url, method, name, Type, position)] = value
+            if results:
+                position = 0
+                # TODO: support non-name/value pair types
+                for name, value, Type in results.name_values:
+                    position += 1
+                    self.target_parameters[response_id][SequenceParameter(url, method, name, Type, position)] = value
         finally:
             self.qlock.unlock()
 

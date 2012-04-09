@@ -100,8 +100,10 @@ class RequestResponseFactory(QObject):
                 for name, value in qs_values.iteritems():
                     rr.requestParams[name] = value
             postDataResults = self.postDataExtractor.process_request(rr.requestHeaders, rr.requestBody)
-            for name, value in postDataResults.name_values_dictionary.iteritems():
-                rr.requestParams[name] = value
+            if postDataResults:
+                # TODO: support non-name/value pair types
+                for name, value in postDataResults.name_values_dictionary.iteritems():
+                    rr.requestParams[name] = value
 
             if not rr.responseContentType:
                 # TODO: fix this to use better algorithm
@@ -120,6 +122,7 @@ class RequestResponseFactory(QObject):
                 rr.results = self.jsExtractor.process(rr.responseASCIIBody, rr.responseUrl, rr.charset, None)
             else:
                 # TODO: implement more types
+                rr.results = None
                 pass
 
 

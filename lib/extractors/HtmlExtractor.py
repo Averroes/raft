@@ -83,7 +83,11 @@ class HtmlForm():
         s = StringIO()
         s.write(self.make_form_string_start())
         for input in self.inputs:
-            s.write(str(input))
+            if isinstance(input, HtmlInput):
+                tmp = input.make_input_string().encode('utf-8')
+            else:
+                tmp = str(input)
+            s.write(tmp)
         s.write('</form>\n')
         return s.getvalue()
         

@@ -25,6 +25,7 @@ from BaseExtractor import BaseExtractor
 from cStringIO import StringIO
 from urllib2 import urlparse
 import cgi
+import sys
 
 class PostDataResults():
     def __init__(self):
@@ -85,7 +86,9 @@ class PostDataExtractor(BaseExtractor):
             for name, value in qs_values.iteritems():
                 results.add_name_value(name, value)
         else:
-            raise Exception('unsupport content_type: %s' % (content_type))
+            # TODO: should support more types instead of just name/value pairs
+            sys.stderr.write('TODO: unsupport content_type: %s\n' % (content_type))
+            return None
 
         return results
 
