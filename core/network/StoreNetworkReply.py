@@ -46,6 +46,7 @@ class StoreNetworkReply(QNetworkReply):
         self.is_finished = False
         self.requestId = ''
         self.xrefId = ''
+        self.pendingData = ''
 
         self.__populate_request_info(operation, cookieJar)
 
@@ -57,7 +58,7 @@ class StoreNetworkReply(QNetworkReply):
         QObject.connect(self.__reply, SIGNAL('metaDataChanged()'), self.handle_metaDataChanged)
         QObject.connect(self.__reply, SIGNAL('finished()'), self.handle_finished)
 
-        self.debug_print('__init__')
+        ### self.debug_print('__init__')
         self.setOperation(self.__reply.operation())
         self.setReadBufferSize(self.__reply.readBufferSize())
         self.setRequest(self.__reply.request())
@@ -131,13 +132,12 @@ class StoreNetworkReply(QNetworkReply):
             return str(self.__request.attribute(self.__request.CustomVerbAttribute).toString())
 
     def __attr__(self, name):
-        self.debug_print('__attr__', name)
+        ### self.debug_print('__attr__', name)
         r = attr(self.__reply, name)
         return r
 
     def debug_print(self, *args):
-#        print(args, self.__url)
-        pass
+        print(args, self.__url)
 
     def manager(self):
         return self.__reply.manager()
@@ -149,28 +149,28 @@ class StoreNetworkReply(QNetworkReply):
         return not self.is_finished
 
     def handle_errors(self, code):
-        self.debug_print('error: %d' % (code))
+        ### self.debug_print('error: %d' % (code))
         self.emit(SIGNAL('error(QNetworkReply::NetworkError)'), code)
 
     def handle_sslErrors(self, list):
         # TODO: should check
-        self.debug_print('ignoring ssl errors', list)
+        ### self.debug_print('ignoring ssl errors', list)
         self.__reply.ignoreSslErrors()
         self.setSslConfiguration(self.__reply.sslConfiguration())
         self.emit(SIGNAL('sslErrors(const QList<QSslError> &)'), list)
 
     def handle_readyRead(self):
-        self.debug_print('handling read ready', self.__reply.bytesAvailable())
+        ### self.debug_print('handling read ready', self.__reply.bytesAvailable())
         self.emit(SIGNAL('readyRead()'))
 
     def handle_metaDataChanged(self):
-        self.debug_print('handling meta data changed')
+        ### self.debug_print('handling meta data changed')
 
         # initialize our state based on child reply
 
         redirectTarget = self.__reply.attribute(QNetworkRequest.RedirectionTargetAttribute)
         if redirectTarget is not None and redirectTarget.isValid() and redirectTarget.type() == QMetaType.QUrl:
-            self.debug_print('redirectTarget received', redirectTarget.toUrl().toEncoded())
+            ### self.debug_print('redirectTarget received', redirectTarget.toUrl().toEncoded())
             # TODO: validate we want to do this
             self.setAttribute(QNetworkRequest.RedirectionTargetAttribute, redirectTarget)
 
@@ -209,21 +209,30 @@ class StoreNetworkReply(QNetworkReply):
         self.emit(SIGNAL('metaDataChanged()'))
 
     def handle_uploadProgress(self, bytesSent, bytesTotal):
-        self.debug_print('handling uploadProgress', bytesSent, bytesTotal)
+        ### self.debug_print('handling uploadProgress', bytesSent, bytesTotal)
         self.emit(SIGNAL('uploadProgress(qint64, qint64)'), bytesSent, bytesTotal)
 
     def handle_downloadProgress(self, bytesReceived, bytesTotal):
-        self.debug_print('handling downloadProgress', bytesReceived, bytesTotal)
+        ### self.debug_print('handling downloadProgress', bytesReceived, bytesTotal)
         self.emit(SIGNAL('downloadProgress(qint64, qint64)'), bytesReceived, bytesTotal)
 
     def calculate_redirect(self, redirectTarget):
         pass
 
     def handle_finished(self):
-        self.debug_print('handling finished', self.__url)
+        ### self.debug_print('handling finished', self.__url)
 
         finishTime = time.time()
         elapsed = int((finishTime - self.requestTime)*1000) # TODO: verify
+
+        available = self.__reply.bytesAvailable()
+        while available > 0:
+            data = self.__reply.read(available)
+            if not data:
+                break
+            self.pendingData += data
+            self.data_io.write(data)
+            available = self.__reply.bytesAvailable()
 
         bytes = self.data_io.getvalue()
         if 0 == len(bytes):
@@ -278,11 +287,13 @@ class StoreNetworkReply(QNetworkReply):
             self.framework.signal_response_data_added()
         
         self.is_finished = True
-        QTimer.singleShot(0, self, SIGNAL("finished()"))
+        self.emit(SIGNAL("readyRead()"))
+        self.emit(SIGNAL("finished()"))
+#        QTimer.singleShot(0, self, SIGNAL("finished()"))
 
     def abort(self):
         try:
-            self.debug_print('abort')
+            ### self.debug_print('abort')
             self.__reply.abort()
         except AttributeError, e:
             # TODO: determine where corruption is occuring
@@ -294,23 +305,34 @@ class StoreNetworkReply(QNetworkReply):
 
     def bytesAvailable(self):
         try:
-            available = self.__reply.bytesAvailable()
-            self.debug_print('bytes available', available)
+            if self.is_finished and self.pendingData:
+                available = len(self.pendingData)
+            else:
+                available = self.__reply.bytesAvailable()
+            ### self.debug_print('bytes available', available)
             return available
         except AttributeError, e:
             # TODO: determine where corruption is occuring
-            self.debug_print('bytesAvailable', e)
+            self.debug_print('bytesAvailable failed', e)
             return 0
 
     def canReadLine(self):
-        self.debug_print('canReadLine', self.__reply.canReadLine())
+        ### self.debug_print('canReadLine', self.__reply.canReadLine())
         return self.__reply.canReadLine()
 
     def readData(self, maxSize):
-        self.debug_print('readData', maxSize)
-        data = self.__reply.read(maxSize)
-        if data:
-            self.data_io.write(data)
+        ### self.debug_print('readData', maxSize)
+        if self.is_finished and self.pendingData:
+            if len(self.pendingData) > maxSize:
+                data = self.pendingData[0:maxSize]
+                self.pendingData = self.pendingData[maxSize:]
+            else:
+                data = self.pendingData
+                self.pendingData = ''
+        else:
+            data = self.__reply.read(maxSize)
+            if data:
+                self.data_io.write(data)
         return data
     
     def readAll(self):
