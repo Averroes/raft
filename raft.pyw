@@ -8,7 +8,7 @@
 #          Justin Engler
 #          Seth Law
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2012, RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -860,9 +860,12 @@ def main():
     arguments = app.arguments()
 
     dbfilename = None
+    newfile = False
     for argument in arguments:
         arg = str(argument)
-        if arg.endswith(".raftdb") and os.path.isfile(arg):
+        if arg.startswith('-new'):
+            newfile = True
+        elif arg.endswith(".raftdb") and (newfile or os.path.isfile(arg)):
             dbfilename = arg
 
     sys.excepthook = exception_hook
