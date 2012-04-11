@@ -2437,6 +2437,20 @@ ${global_cookie_jar}</string>
                  </property>
                 </spacer>
                </item>
+               <item>
+                <widget class="QPushButton" name="cookiesCookieExportCookieJarButton">
+                 <property name="text">
+                  <string>Export Cookie Jar</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="cookiesCookieImportCookieJarButton">
+                 <property name="text">
+                  <string>Import Cookie Jar</string>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </widget>
             </item>
@@ -3054,7 +3068,7 @@ ${global_cookie_jar}</string>
      <x>0</x>
      <y>0</y>
      <width>1169</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -27,6 +27,11 @@ from PyQt4.QtNetwork import QNetworkCookie
 from core.data.LocalStorage import LocalStorage
 from core.data.FlashCookies import FlashCookies
 
+from cStringIO import StringIO
+import bz2
+import time
+from lxml import etree
+
 class CookiesTab(QObject):
     def __init__(self, framework, mainWindow):
         QObject.__init__(self, mainWindow)
@@ -37,6 +42,8 @@ class CookiesTab(QObject):
         self.mainWindow.cookiesCookieJarTreeWidget.itemClicked.connect(self.handle_cookiesTreeWidget_itemClicked)
         self.mainWindow.cookiesCookieJarSaveButton.clicked.connect(self.handle_cookiesSave_clicked)
         self.mainWindow.cookiesCookieJarDeleteButton.clicked.connect(self.handle_cookiesDelete_clicked)
+        self.mainWindow.cookiesCookieExportCookieJarButton.clicked.connect(self.handle_cookiesExportCookieJar_clicked)
+        self.mainWindow.cookiesCookieImportCookieJarButton.clicked.connect(self.handle_cookiesImportCookieJar_clicked)
 
         self.mainWindow.cookiesLocalStorageTreeWidget.itemClicked.connect(self.handle_localStorageTreeWidget_itemClicked)
         self.mainWindow.cookiesLocalStorageSaveButton.clicked.connect(self.handle_localStorageSave_clicked)
@@ -90,6 +97,92 @@ class CookiesTab(QObject):
                 self.populate_cookieJar_edit_fields(cookie)
         else:
             self.clear_cookieJar_edit_fields(domain)
+
+    def handle_cookiesExportCookieJar_clicked(self):
+        # TODO: refactor and move to raftparse routines
+        cookieJar = self.framework.get_global_cookie_jar()
+        cookieList = cookieJar.allCookies()
+        results = StringIO()
+        results.write('<cookies>\n')
+        for cookie in cookieList:
+            results.write('<cookie>\n')
+            results.write('<raw encoding="base64">%s</raw>\n' % str(cookie.toRawForm().data()).encode('base64'))
+            results.write('</cookie>\n')
+        results.write('</cookies>\n')
+        filename = 'CookieExport-%s' % int(time.time())
+        file = QFileDialog.getSaveFileName(None, "Export Cookie Jar to file", filename, "XML File (*.xml);;BZ2 XML File (*.xml.bz2)")
+        if file and str(file):
+            filename = str(file)
+            if filename.endswith('.xml.bz2'):
+                filename = filename.replace('.xml.bz2.xml.bz2', '.xml.bz2')
+                fh = bz2.BZ2File(filename, 'w')
+            elif filename.endswith('.xml'):
+                filename = filename.replace('.xml.xml', '.xml')
+                fh = open(filename, 'wb')
+            else:
+                raise Exception('unhandled file type: %s' % (filename))
+            fh.write(results.getvalue())
+            fh.close()
+            
+    def load_cookies_from_file(self, filename):
+        cookieList = []
+
+        if filename.endswith('.xml.bz2'):
+            source = bz2.BZ2File(filename, 'r')
+        elif filename.endswith('.xml'):
+            source = open(filename, 'r')
+        else:
+            raise Exception('unhandled file type: %s' % (filename))
+
+        # http://effbot.org/zone/element-iterparse.htm#incremental-parsing
+        context = etree.iterparse(source, events=('start', 'end'), huge_tree = True)
+        iterator = iter(context)
+        root = None
+
+        in_cookies = False
+        in_cookie = False
+        while True:
+            try:
+                event, elem = iterator.next()
+                tag = elem.tag
+                if not in_cookies and 'cookies' == tag and 'start' == event:
+                    in_cookies = True
+                elif in_cookies and 'cookie' == tag and 'start' == event:
+                    in_cookie = True
+                elif in_cookie and 'raw' == tag and 'end' == event:
+                    value = str(elem.text)
+                    encoding = None
+                    if elem.attrib.has_key('encoding'):
+                        encoding = str(elem.attrib['encoding'])
+                    if 'base64' == encoding:
+                        value = value.decode('base64')
+                    cookies = QNetworkCookie.parseCookies(value)
+                    for cookie in cookies:
+                        cookieList.append(cookie)
+                elif 'cookies' == tag and 'end' == event:
+                    in_cookies = False
+                elif in_cookie and 'cookie' == tag and 'end' == event:
+                    in_cookie = False
+
+            except StopIteration:
+                source.close()
+                break
+
+        return cookieList
+
+    def handle_cookiesImportCookieJar_clicked(self):
+        filename = QFileDialog.getOpenFileName(None, "Import Cookies", "", "XML File (*.xml);;BZ2 XML File (*.xml.bz2)")
+        if filename and str(filename):
+            importCookieList = self.load_cookies_from_file(str(filename))
+            cookieJar = self.framework.get_global_cookie_jar()
+            # merge cookies
+            cookieList = cookieJar.allCookies()
+            for cookie in importCookieList:
+                if cookie not in cookieList:
+                    cookieList.append(cookie)
+
+            cookieJar.setAllCookies(cookieList)
+            self.populate_cookie_jar_tree()
 
     def handle_cookiesDelete_clicked(self):
         cookieJar = self.framework.get_global_cookie_jar()
