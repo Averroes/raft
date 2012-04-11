@@ -419,6 +419,9 @@ class RequestResponseWidget(QObject):
     def flat_str(self, u):
         try:
             s = str(u).encode('ascii')
+        except UnicodeDecodeError:
+            tmp = str(u).decode('utf-8')
+            s = repr(tmp)[2:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
         except UnicodeEncodeError:
             s = repr(unicode(u))[2:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
         return s
