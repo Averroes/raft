@@ -62,7 +62,7 @@ class ParseAdapter:
         results.write('<capture>\n')
         results.write('<request>\n')
         self.write_xml(results, '<method>%s</method>\n', capture.method)
-        self.write_xml(results, '<url>%s</url>\n', capture.url)
+        self.write_encoded_xml(results, 'url', capture.url)
         self.write_xml(results, '<host>%s</host>\n', capture.host)
         self.write_xml(results, '<hostip>%s</hostip>\n', capture.hostip)
         self.write_xml(results, '<datetime>%s</datetime>\n', capture.datetime)
@@ -204,7 +204,7 @@ class raft_parse_xml():
                 ),
             self.S_REQUEST_XML_ELEMENT : (
                 ('end', 'method', self.xml_element_end),
-                ('end', 'url', self.xml_element_end),
+                ('end', 'url', self.xml_encoded_element_end),
                 ('end', 'host', self.xml_element_end),
                 ('end', 'hostip', self.xml_element_end),
                 ('end', 'datetime', self.xml_element_end),
@@ -336,6 +336,7 @@ class raft_parse_xml():
 
     def capture_end(self, elem):
         elem.clear()
+        self.root.clear()
         self.states.pop()
         return self.make_results()
 
@@ -403,6 +404,21 @@ class raft_parse_xml():
 
     def xml_element_end(self, elem):
         self.current[elem.tag] = elem.text
+        self.states.pop()
+
+    def xml_encoded_element_end(self, elem):
+        content = elem.text
+        if not content:
+            content = ''
+        encoding = 'none'
+        if elem.attrib.has_key('encoding'):
+            encoding = elem.attrib['encoding']
+        if 'none' == encoding:
+            self.current[elem.tag] = content
+        elif 'base64' == encoding:
+            self.current[elem.tag] = content.decode('base64')
+        else:
+            raise Exception('unrecognized encoding: %s' % (encoding))
         self.states.pop()
 
     def __iter__(self):
