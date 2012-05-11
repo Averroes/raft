@@ -1077,6 +1077,22 @@ class Db:
         finally:
             self.qlock.unlock()
 
+    def add_differ_list(self, cursor, id_list):
+        self.qlock.lock()
+        added_list = []
+        try:
+            for Id in id_list:
+                try:
+                    cursor.execute("INSERT INTO differ_items (response_id, time_added) values (?, ?)", [Id, time.time()])
+                    added_list.append(Id)
+                except sqlite.IntegrityError:
+                    pass
+            self.commit()
+        finally:
+            self.qlock.unlock()
+
+        return added_list
+
     def clear_differ_items(self, cursor):
         self.qlock.lock()
         try:

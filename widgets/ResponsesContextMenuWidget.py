@@ -179,8 +179,10 @@ class ResponsesContextMenuWidget(QObject):
             # TODO: refactor
             filename = str(file)
             if filename.endswith('.xml.bz2'):
+                filename = filename.replace('.xml.bz2.xml.bz2', '.xml.bz2')
                 fh = bz2.BZ2File(filename, 'w')
             elif filename.endswith('.xml'):
+                filename = filename.replace('.xml.xml', '.xml')
                 fh = open(filename, 'wb')
             else:
                 raise Exception('unhandled file type: %s' % (filename))
@@ -247,9 +249,16 @@ class ResponsesContextMenuWidget(QObject):
 
     def send_response_data_to_differ(self):
         index = self.treeView.currentIndex()
-        Id = interface.index_to_id(self.dataModel, index)
-        if Id:
-            self.framework.send_response_id_to_differ(Id)
+        if len(self.treeViewSelectionModel.selectedRows()) > 1:
+            id_list = []
+            for index in self.treeViewSelectionModel.selectedRows():
+                Id = interface.index_to_id(self.dataModel, index)
+                id_list.append(str(Id))
+            self.framework.send_response_list_to_differ(id_list)
+        else:
+            Id = interface.index_to_id(self.dataModel, index)
+            if Id:
+                self.framework.send_response_id_to_differ(Id)
 
     def send_response_data_to_web_fuzzer(self):
         index = self.treeView.currentIndex()

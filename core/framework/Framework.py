@@ -284,6 +284,16 @@ class Framework(QObject):
         cursor.close()
         self._db.release_thread_cursor(cursor)
 
+    def send_response_list_to_differ(self, id_list):
+        # TODO: consider accepting cursor
+        cursor = self._db.allocate_thread_cursor()
+        added_list = self._db.add_differ_list(cursor, id_list)
+        # TODO: send as whole list?
+        for Id in added_list:
+            self.emit(SIGNAL('differAddResponseId(int)'), int(Id))
+        cursor.close()
+        self._db.release_thread_cursor(cursor)
+
     def subscribe_populate_requester_response_id(self, callback):
         QObject.connect(self, SIGNAL('requesterPopulateResponseId(int)'), callback, Qt.DirectConnection)
         
