@@ -40,6 +40,7 @@ class HtmlInput():
         self.maxlength = ''
         self.accept = ''
         self.label = ''
+        self.autocomplete = ''
 
     def __eq__(self, other):
         return self.make_input_string() ==  other.make_input_string()
@@ -67,6 +68,7 @@ class HtmlForm():
         self.target = ''
         self.onsubmit = ''
         self.onreset = ''
+        self.autocomplete = ''
 
     def add_input(self, input):
         if not input in self.inputs:
@@ -76,8 +78,8 @@ class HtmlForm():
         return self.make_form_string_start() == other.make_form_string_start()
 
     def make_form_string_start(self):
-        return '<form id="%s" class="%s" action="%s" method="%s" enctype="%s" onsubmit="%s" onreset="%s" target="%s">\n' % (
-            self.Id, self.Class, self.action, self.method, self.enctype, self.onsubmit, self.onreset, self.target)
+        return '<form id="%s" class="%s" action="%s" method="%s" enctype="%s" onsubmit="%s" onreset="%s" target="%s" autocomplete="%s">\n' % (
+            self.Id, self.Class, self.action, self.method, self.enctype, self.onsubmit, self.onreset, self.target, self.autocomplete)
     
     def __str__(self):
         s = StringIO()
@@ -470,6 +472,8 @@ class HtmlExtractor(BaseExtractor):
                     form.Id = value
                 elif 'class' == lname:
                     form.Class = value
+                elif 'autocomplete' == lname:
+                    form.autocomplete = value
         form = results.add_form(form)
 
         input_elems = elem.findall('.//input')
@@ -499,6 +503,8 @@ class HtmlExtractor(BaseExtractor):
                     input.maxlength = value
                 elif 'accept' == lname:
                     input.accept = value
+                elif 'autocomplete' == lname:
+                    input.autocomplete = value
 
         results.attach_input_label(input)
         return input
