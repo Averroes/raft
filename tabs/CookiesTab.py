@@ -386,10 +386,15 @@ class CookiesTab(QObject):
                     parentItem.addChild(item)
                     self.add_flash_name_value_item(item, domain, value)
                 else:
+                    try:
+                        svalue = str(value)
+                    except UnicodeEncodeError:
+                        svalue = repr(value)
+
                     item = QTreeWidgetItem([
                             '',
                             str(name),
-                            str(value),
+                            svalue,
                             ])
                     parentItem.addChild(item)
             
