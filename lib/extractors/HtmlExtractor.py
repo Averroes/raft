@@ -546,7 +546,7 @@ class HtmlExtractor(BaseExtractor):
 
     def process_uri_list(self, results, uri_list):
         for uri in uri_list.split():
-            self.process_uri(uri)
+            self.process_uri(results, uri)
 
     def process_inline_style(self, results, style):
         results.add_inline_style(style)
