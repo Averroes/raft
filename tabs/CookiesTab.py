@@ -55,6 +55,7 @@ class CookiesTab(QObject):
         self.Data = None
         self.cursor = None
         self.framework.subscribe_database_events(self.db_attach, self.db_detach)
+        self.framework.subscribe_cookie_jar_updated(self.populate_cookie_jar_tree)
 
     def db_attach(self):
         self.Data = self.framework.getDB()
