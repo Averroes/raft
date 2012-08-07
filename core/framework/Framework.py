@@ -28,7 +28,7 @@ import sys
 
 from PyQt4.QtCore import (Qt, SIGNAL, QObject, QThread, QMutex, QDir)
 from PyQt4.QtGui import QFont
-from PyQt4.QtNetwork import QNetworkCookieJar
+from PyQt4.QtNetwork import QNetworkCookieJar, QNetworkCookie
 
 from core.network.InMemoryCookieJar import InMemoryCookieJar
 
@@ -199,6 +199,25 @@ class Framework(QObject):
 
     def get_global_cookie_jar(self):
         return self._global_cookie_jar
+
+    def signal_cookie_jar_updated(self):
+        self.emit(SIGNAL('cookieJarUpdated()'))
+
+    def import_raw_cookie_list(self, raw_cookie_list):
+        cookieJar = self.get_global_cookie_jar()
+        # merge cookies
+        cookie_list = cookieJar.allCookies()
+        for raw_cookie in raw_cookie_list:
+            cookies = QNetworkCookie.parseCookies(raw_cookie)
+            for cookie in cookies:
+                if cookie not in cookie_list:
+                    cookie_list.append(cookie)
+
+        cookieJar.setAllCookies(cookie_list)
+        self.signal_cookie_jar_updated()
+
+    def subscribe_cookie_jar_updated(self, callback):
+        QObject.connect(self, SIGNAL('cookieJarUpdated()'), callback, Qt.DirectConnection)
 
     def subscribe_raft_config_populated(self, callback):
         QObject.connect(self, SIGNAL('raftConfigPopulated()'), callback, Qt.DirectConnection)

@@ -127,9 +127,12 @@ class raft_parse_xml():
     S_ANALYSIS = 6
     S_HEADERS = 7
     S_BODY = 8
+    S_COOKIES = 9
+    S_COOKIE = 10
     S_REQUEST_XML_ELEMENT = 101
     S_RESPONSE_XML_ELEMENT = 102
     S_ANALYSIS_XML_ELEMENT = 103
+    S_COOKIE_XML_ELEMENT = 104
 
     I_HEADERS = 0
     I_BODY = 1
@@ -164,6 +167,7 @@ class raft_parse_xml():
                 ),
             self.S_RAFT : (
                 ('start', 'capture', self.capture_start),
+                ('start', 'cookies', self.cookies_start),
                 ('end', 'raft', self.raft_end),
                 ),
             self.S_CAPTURE : (
@@ -218,9 +222,20 @@ class raft_parse_xml():
             self.S_ANALYSIS_XML_ELEMENT : (
                 ('end', 'notes', self.xml_element_end),
                 ('end', 'confirmed', self.xml_element_end),
-                )
+                ),
+            self.S_COOKIES : (
+                ('start', 'cookie', self.cookie_start),
+                ('end', 'cookies', self.cookies_end),
+                ),
+            self.S_COOKIE : (
+                ('start', 'raw', self.cookie_xml_element_start),
+                ('end', 'cookie', self.cookie_end),
+                ),
+            self.S_COOKIE_XML_ELEMENT : (
+                ('end', 'raw', self.cookie_xml_element_end),
+                ),
             }
-        self.default_values = (
+        self.default_capture_values = (
                 ('method', ''),
                 ('url', ''),
                 ('host', ''),
@@ -328,7 +343,7 @@ class raft_parse_xml():
             'request' : ['','','none','none'],
             'response' : ['','','none','none'],
             }
-        for n, v in self.default_values:
+        for n, v in self.default_capture_values:
             self.current[n] = v
 
         self.current_hb = None
@@ -391,6 +406,39 @@ class raft_parse_xml():
         self.states.append(self.S_ANALYSIS)
 
     def analysis_end(self, elem):
+        self.states.pop()
+
+    def cookies_start(self, elem):
+        self.states.append(self.S_COOKIES)
+
+    def cookies_end(self, elem):
+        self.states.pop()
+
+    def cookie_start(self, elem):
+        self.states.append(self.S_COOKIE)
+        self.current_cookie = {'raw':''}
+
+    def cookie_end(self, elem):
+        self.states.pop()
+        raw_cookie = self.current_cookie.get('raw')
+        return ('COOKIE', raw_cookie)
+
+    def cookie_xml_element_start(self, elem):
+        self.states.append(self.S_COOKIE_XML_ELEMENT)
+
+    def cookie_xml_element_end(self, elem):
+        content = elem.text
+        if not content:
+            content = ''
+        encoding = 'none'
+        if elem.attrib.has_key('encoding'):
+            encoding = elem.attrib['encoding']
+        if 'none' == encoding:
+            self.current_cookie[elem.tag] = content
+        elif 'base64' == encoding:
+            self.current_cookie[elem.tag] = content.decode('base64')
+        else:
+            raise Exception('unrecognized encoding: %s' % (encoding))
         self.states.pop()
 
     def request_xml_element_start(self, elem):

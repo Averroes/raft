@@ -48,11 +48,17 @@ def process_import(proxy_log, framework, source):
     else:
         raise(Exception('internal error; invalid source=' + source))
 
+    raw_cookie_list = []
     cursor = Data.allocate_thread_cursor()
     try:
         Data.set_insert_pragmas(cursor)
         count = 0
         for value in func(proxy_log):
+            if 'COOKIE' == value[0]:
+                if value[1]:
+                    raw_cookie_list.append(str(value[1]))
+                continue
+
             (origin, host, hostip, url, status, datetime, request, response, method, content_type, extras) = value
             if 0 == status or not request:
                 pass
@@ -103,3 +109,6 @@ def process_import(proxy_log, framework, source):
         raise
     finally:
         Data.reset_pragmas(cursor)
+
+    if len(raw_cookie_list) > 0:
+        framework.import_raw_cookie_list(raw_cookie_list)
