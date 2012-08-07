@@ -411,5 +411,5 @@ process(files)
 for status in status_counts.keys():
     print('status %s: %d' % (status, status_counts[status]))
 
-print_ordered('mappigns', robot_mappings)
+print_ordered('mappings', robot_mappings)
 

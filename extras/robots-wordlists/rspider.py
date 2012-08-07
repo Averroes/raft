@@ -289,7 +289,10 @@ class Client:
         results.write('<capture>\n')
         results.write('<request>\n')
         results.write('<method>%s</method>\n' % (self.method))
-        results.write('<url>%s</url>\n' % escape(self.url))
+        if self.do_encode(self.url):
+            results.write('<url encoding="base64">%s</url>\n' % self.url.encode('base64'))
+        else:
+            results.write('<url>%s</url>\n' % escape(self.url))
         results.write('<host>%s</host>\n' % escape(self.host))
         results.write('<hostip>%s</hostip>\n' % escape(self.ip_address))
         results.write('<datetime>%s GMT</datetime>\n' % escape(time.asctime(time.gmtime(self.start_time))))
@@ -301,7 +304,7 @@ class Client:
         else:
             results.write('<headers>')
             results.write(escape(self.request))
-        results.write('</headers>\n')
+            results.write('</headers>\n')
         results.write('<body></body>\n')
         results.write('</request>\n')
 
