@@ -45,14 +45,13 @@ class ImporterThread(QThread):
 
     def runImport(self, importers, proxy_file, source, callback):
         self.importers = importers
-        self.proxy_file = proxy_file
+        self.proxy_filelist = [proxy_file]
         self.source = source
         self.callbackObj = callback
         QTimer.singleShot(50, self, SIGNAL('do_runImport()'))
 
     def runImportList(self, importers, proxy_filelist, source, callback):
         self.importers = importers
-        self.proxy_file = None
         self.proxy_filelist = proxy_filelist
         self.source = source
         self.callbackObj = callback
@@ -61,11 +60,12 @@ class ImporterThread(QThread):
     def handle_runImport(self):
         if self.qlock.tryLock():
             try:
-                if self.proxy_file:
-                    self.importers.process_import(self.proxy_file, self.framework, self.source)
-                else:
-                    for proxy_file in self.proxy_filelist:
+                for proxy_file in self.proxy_filelist:
+                    try: 
+                        self.framework.debug_log('attempting import of %s' % (str(proxy_file)))
                         self.importers.process_import(str(proxy_file), self.framework, self.source)
+                    except Exception, ex:
+                        self.framework.report_exception(ex)
             finally:
                 self.qlock.unlock()
         
