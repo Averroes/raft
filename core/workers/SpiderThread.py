@@ -451,7 +451,7 @@ class SpiderThread(QThread):
             self.queueDataModel.append_data([queue_item])
 
     def do_populateExistingSpiderData(self):
-        print('starting populating responses')
+###        print('starting populating responses')
         self.qlock.lock()
         try:
 
@@ -483,7 +483,7 @@ class SpiderThread(QThread):
         finally:
             self.qlock.unlock()
 
-        print('finished populating responses')
+###        print('finished populating responses')
 
     def do_clearSpiderQueue(self):
         self.qlock.lock()
