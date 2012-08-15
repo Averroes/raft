@@ -129,7 +129,10 @@ class ResultFactory(object):
             #print "Factory:createItemsResultSet:loadedclass:",loadedclass
             
             span= None if result[6] is None else (result[6],result[7]) 
-            data= ast.literal_eval(result[5])
+            try:
+                data= ast.literal_eval(result[5])
+            except:
+                data = result[5]
             tempresult=loadedclass(result[3],result[4],data, span, result[1], result[2], resultfactory=self)
             results.append(tempresult)
         
