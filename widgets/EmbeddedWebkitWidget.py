@@ -88,8 +88,8 @@ class EmbeddedWebkitWidget(QObject):
         tab_id = self.tabs.pop(index)
         if self.browserTabs.has_key(tab_id):
             browserTab = self.browserTabs[tab_id]
-            browserTab.stop()
             self.browserTabs.pop(tab_id)
+            browserTab.stop()
 
     def current_tab_changed(self, index):
         if index >= len(self.tabs):

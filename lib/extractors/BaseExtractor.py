@@ -30,6 +30,8 @@ class BaseExtractor():
             'javascript' : 'javascript',
             'application/javascript': 'javascript',
             'application/x-javascript': 'javascript',
+            'application/json': 'javascript',
+            'text/x-js' : 'javascript',
             'text/xml' : 'xml',
             'text/html' : 'html',
             'text/xhtml' : 'html',

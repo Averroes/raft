@@ -55,6 +55,7 @@ class RequestResponseWidget(QObject):
             # TODO: complete
             'json' : 'javascript',
             'javascript': 'javascript',
+            'text/x-js' : 'javascript',
             'html' : 'html',
             'text/xml' : 'xml',
             'text/html' : 'html',
