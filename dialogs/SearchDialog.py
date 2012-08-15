@@ -45,10 +45,13 @@ class SearchDialog(QDialog, SearchDialog.Ui_SearchDialog):
         super(SearchDialog, self).__init__(parent)
         self.setupUi(self)
 
+        self.connect(self, SIGNAL('finished()'), self.finishedHandler)
+
         self.framework = framework
 
         # progress dialog
         self.Progress = ProgressDialog(self)
+        QObject.connect(self.Progress, SIGNAL('canceled()'), self.canceledHandler)
 
         self.searchRequestResponse = RequestResponseWidget(self.framework, self.searchTabWidget, self.searchSearchControlPlaceholder, self)
 
@@ -110,8 +113,15 @@ class SearchDialog(QDialog, SearchDialog.Ui_SearchDialog):
         self.thread.startSearch(searchCriteria, self)
 
     def searchFinishedHandler(self):
-        self.Progress.close()
+        self.Progress.reset()
         self.searchFilling = False
 
     def finishedHandler(self, code):
         self.thread.emit(SIGNAL('quit()'))
+
+    def canceledHandler(self):
+        if self.Progress.wasCanceled():
+            self.thread.stopSearch()
+    
+    def finishedHandler(self):
+        self.thread.quit()

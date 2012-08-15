@@ -33,12 +33,13 @@ class SearchThread(QThread):
         self.treeViewModel = treeViewModel
         self.qlock = QMutex()
         self.cursor = None
-        QObject.connect(self, SIGNAL('quit()'), self.quitHandler)
+        QObject.connect(self, SIGNAL('finished()'), self.quitHandler)
         QObject.connect(self, SIGNAL('started()'), self.startedHandler)
 
         self.Data = None
         self.cursor = None
         self.framework.subscribe_database_events(self.db_attach, self.db_detach)
+        self.canceled = False
 
     def db_attach(self):
         self.Data = self.framework.getDB()
@@ -56,6 +57,7 @@ class SearchThread(QThread):
 
     def run(self):
         QObject.connect(self, SIGNAL('performSearch()'), self.performSearchHandler, Qt.DirectConnection)
+        QObject.connect(self, SIGNAL('cancelSearch()'), self.cancelSearchHandler, Qt.DirectConnection)
         self.exec_()
 
     def quitHandler(self):
@@ -68,10 +70,17 @@ class SearchThread(QThread):
     def startSearch(self, searchCriteria, callback):
         self.searchCriteria = searchCriteria
         self.callbackObj = callback
+        self.canceled = False
         QTimer.singleShot(50, self, SIGNAL('performSearch()'))
 
-    def performSearchHandler(self):
+    def stopSearch(self):
+        QTimer.singleShot(50, self, SIGNAL('cancelSearch()'))
 
+    def cancelSearchHandler(self):
+        # TODO: consider a real threading primitive
+        self.canceled = True 
+
+    def performSearchHandler(self):
         text = self.searchCriteria.text
         options = self.searchCriteria.options
         locations = self.searchCriteria.locations
@@ -109,6 +118,8 @@ class SearchThread(QThread):
                 self.strategy = lambda v: -1 != v.lower().find(ltext)
 
         for row in self.Data.execute_search(self.cursor, self.reqbody or self.resbody):
+            if self.canceled:
+                break
             responseItems = [str(v) for v in [m or '' for m in list(row)]]
             if self.isMatch(responseItems):
                 if not invertSearch:
