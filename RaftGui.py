@@ -193,13 +193,13 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
     <p>Thanks for trying RAFT 3.</p>
     <p>You'll want to know this is a special pre-release version for the Arsenal at Blackhat USA 2013.</p>
     <p>Some of the features are not implemented, or have compatibility issues we are working to fix.</p>
-    <p>Before you start doing any real work, you'll want to get the latest version of the tool from:
+    <p>Before you start doing any real work, you'll want to get the latest version of the tool from:<br><br>
     <a href="http://code.google.com/p/raft/">http://code.google.com/p/raft/</a></p>
     <p>Have Fun!</p>
     </body></html>
     ''')
             self.bh_layout.addWidget(self.bh_text)
-            self.bh_dialog.setMinimumSize(480, 300)
+            self.bh_dialog.setMinimumSize(520, 340)
             self.bh_dialog.updateGeometry()
             self.bh_dialog.show()
             self.bh_dialog.raise_()
