@@ -40,9 +40,9 @@ class RegexFinder(AbstractAnalyzer):
     def analyzeTransaction(self, target, results):
         responseBody=target.responseBody
         
-        for main,sub in self.regex.items():
-            for regexName,regexValue in sub.items():
-                compiledRegex = re.compile(regexValue)
+        for main,sub in list(self.regex.items()):
+            for regexName,regexValue in list(sub.items()):
+                compiledRegex = re.compile(regexValue.encode('utf-8'))
                 for found in compiledRegex.finditer(responseBody):
                     founddata=found.group(1)
                     results.addPageResult(pageid=target.responseId, 

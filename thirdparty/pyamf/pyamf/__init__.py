@@ -546,7 +546,7 @@ def add_type(type_, func=None):
     if type_ in TYPE_MAP:
         raise KeyError('Type %r already exists' % (type_,))
 
-    if isinstance(type_, types.TupleType):
+    if isinstance(type_, tuple):
         for x in type_:
             _check_type(x)
     else:
@@ -565,7 +565,7 @@ def get_type(type_):
     if isinstance(type_, list):
         type_ = tuple(type_)
 
-    for k, v in TYPE_MAP.iteritems():
+    for k, v in TYPE_MAP.items():
         if k == type_:
             return v
 
@@ -644,11 +644,11 @@ def remove_error_class(klass):
         if klass not in ERROR_CLASS_MAP:
             raise ValueError('Code %s is not registered' % (klass,))
     elif isinstance(klass, python.class_types):
-        classes = ERROR_CLASS_MAP.values()
+        classes = list(ERROR_CLASS_MAP.values())
         if klass not in classes:
             raise ValueError('Class %s is not registered' % (klass,))
 
-        klass = ERROR_CLASS_MAP.keys()[classes.index(klass)]
+        klass = list(ERROR_CLASS_MAP.keys())[classes.index(klass)]
     else:
         raise TypeError("Invalid type, expected class or string")
 
@@ -680,7 +680,7 @@ def register_alias_type(klass, *args):
      - At least one type must be supplied
     """
     def check_type_registered(arg):
-        for k, v in ALIAS_TYPES.iteritems():
+        for k, v in ALIAS_TYPES.items():
             for kl in v:
                 if arg is kl:
                     raise RuntimeError('%r is already registered under %r' % (
@@ -708,7 +708,7 @@ def register_alias_type(klass, *args):
 
     ALIAS_TYPES[klass] = args
 
-    for k, v in CLASS_CACHE.copy().iteritems():
+    for k, v in CLASS_CACHE.copy().items():
         new_alias = util.get_class_alias(v.klass)
 
         if new_alias is klass:
@@ -790,11 +790,11 @@ def register_package(module=None, package=None, separator='.', ignore=[],
     if has('__all__'):
         keys = get('__all__')
     elif hasattr(module, '__dict__'):
-        keys = module.__dict__.keys()
+        keys = list(module.__dict__.keys())
     elif hasattr(module, 'keys'):
-        keys = module.keys()
+        keys = list(module.keys())
     elif isinstance(module, list):
-        keys = range(len(module))
+        keys = list(range(len(module)))
     else:
         raise TypeError('Cannot get list of classes from %r' % (module,))
 
@@ -814,7 +814,7 @@ def register_package(module=None, package=None, separator='.', ignore=[],
         return True
 
     # gotta love python
-    classes = filter(check_attr, [get(x) for x in keys])
+    classes = list(filter(check_attr, [get(x) for x in keys]))
 
     registered = {}
 

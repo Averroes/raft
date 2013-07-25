@@ -27,7 +27,7 @@ class ResponseHeaderServerInstances(AbstractAnalyzer):
         self.desc = "Detect instances of Web servers based on response headers"
         self.friendlyname = "Response Headers Server Instances"
         self.unique_server_headers = {}
-        self.re_server_pattern = re.compile('^Server:\s*(.+)$', re.I)
+        self.re_server_pattern = re.compile(b'^Server:\s*(.+)$', re.I)
         
     def preanalysis(self):
         pass
@@ -40,14 +40,14 @@ class ResponseHeaderServerInstances(AbstractAnalyzer):
             m = self.re_server_pattern.match(line)
             if m:
                 server_value = m.group(1).rstrip()
-                if not self.unique_server_headers.has_key(server_value):
+                if server_value not in self.unique_server_headers:
                     self.unique_server_headers[server_value] = [url]
                 else:
                     if url not in self.unique_server_headers[server_value]:
                         self.unique_server_headers[server_value].append(url)
 
     def postanalysis(self,results):
-        keys = self.unique_server_headers.keys()
+        keys = list(self.unique_server_headers.keys())
         keys.sort()
 
         # TODO: add support for some sort of summary

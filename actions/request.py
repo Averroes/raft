@@ -20,10 +20,10 @@
 #
 #!/usr/bin/env python
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import datetime
-from keepalive import HTTPHandler
-from keepalive import HTTPSHandler
+from .keepalive import HTTPHandler
+from .keepalive import HTTPSHandler
 
 from PyQt4.QtCore import (Qt, SIGNAL, QUrl, QTimer, QObject, QVariant)
 from PyQt4.QtGui import *
@@ -129,8 +129,8 @@ class Request:
     """ A class for creating HTTP and HTTPS requests """
     def __init__(self):
         # Create a custom opener that supports keepalives on HTTP and HTTPS
-        customOpener = urllib2.build_opener(HTTPHandler(), HTTPSHandler())
-        urllib2.install_opener(customOpener)
+        customOpener = urllib.request.build_opener(HTTPHandler(), HTTPSHandler())
+        urllib.request.install_opener(customOpener)
         
     def fetch(self, location, method="GET", postdata=None, headers=None):
         """ This provides a convenience function for making requests. This interfaces
@@ -140,14 +140,14 @@ class Request:
         
         # Checks to ensure that header values and postdata are in the appropriate format
         if type(headers) != dict and headers != None:
-            raise TypeError, ("headers are not a valid Python dictionary")
+            raise TypeError(("headers are not a valid Python dictionary"))
         if type(postdata) != str and postdata != None:
-            raise TypeError, ("postdata is not a valid Python string")
+            raise TypeError(("postdata is not a valid Python string"))
         
         if headers:
-            req = urllib2.Request(location, method, headers=headers)
+            req = urllib.request.Request(location, method, headers=headers)
         else:
-            req = urllib2.Request(location, method)
+            req = urllib.request.Request(location, method)
             
         req.get_method = lambda: method.upper()
         req.add_data(postdata)
@@ -155,11 +155,11 @@ class Request:
         # Anticipate errors from either unavailable content or nonexistent resources
         try:
             start = datetime.datetime.now()
-            response = urllib2.urlopen(req)
+            response = urllib.request.urlopen(req)
             end = datetime.datetime.now()
-        except urllib2.HTTPError, error:
+        except urllib.error.HTTPError as error:
             return(error.headers, error.read(), error.code, None)
-        except urllib2.URLError, error:
+        except urllib.error.URLError as error:
             # Noneexistent resources won't have headers or status codes
             return(None, error.reason, None, None)
         else:

@@ -27,6 +27,8 @@ from PyQt4 import QtWebKit, QtNetwork
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from utility import ContentHelper
+
 class RenderingWebView(QtWebKit.QWebView):
     def __init__(self, framework, pageFactory, parent = None):
         QtWebKit.QWebView.__init__(self, parent)
@@ -47,33 +49,14 @@ class RenderingWebView(QtWebKit.QWebView):
             url = 'about:blank'
 
         if not content_type:
-            lines = headers.splitlines()
-            pos = 0
-            for line in lines:
-                if ':' in line:
-                    name, value = [x.strip() for x in line.split(':', 1)]
-                    if 'content-type' == name.lower():
-                        content_type = value
-                        break
-        if content_type:
-            pos = content_type.find(';')
-            if pos != -1:
-                content_type = content_type[0:pos].strip()
-                pos = content_type.find('charset=', pos)
-                if pos != -1:
-                    charset = content_type[pos+8:].strip()
-        else:
-            content_type = 'text/html'
-            charset = 'utf-8'
+            content_type = ContentHelper.getContentTypeFromHeaders(headers)
+
+        charset = ContentHelper.getCharSet(content_type)
 
         qurl = QUrl.fromEncoded(url)
 
         # TODO: improve setting for non-html content, especially css
-
-        if 'html' in content_type:
-            self.setHtml(body, qurl)
-        else:
-            self.setContent(body, content_type, qurl)
+        self.setContent(body, content_type, qurl)
 
 
 

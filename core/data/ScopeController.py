@@ -22,7 +22,7 @@
 from PyQt4.QtCore import Qt, QObject, SIGNAL, QUrl
 import json
 import re
-from urllib2 import urlparse
+from urllib import parse as urlparse
 
 class ScopeController(QObject):
     def __init__(self, framework, parent = None):
@@ -46,8 +46,8 @@ class ScopeController(QObject):
         pass
 
     def configuration_updated(self, name, value):
-        if str(name) == 'SCOPING':
-            self.fill_scoping_configuration(str(value.toString()))
+        if name == 'SCOPING':
+            self.fill_scoping_configuration(value)
 
     def fill_scoping_configuration(self, configuration):
         if configuration:

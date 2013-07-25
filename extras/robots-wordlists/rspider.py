@@ -27,9 +27,9 @@ import re
 import string
 import collections
 import argparse
-from cStringIO import StringIO
+from io import StringIO
 from xml.sax.saxutils import escape
-from urllib2 import urlparse
+from urllib import parse as urlparse
 import traceback
 import adns
 from OpenSSL import SSL
@@ -97,7 +97,7 @@ class Client:
             self.csock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, self.NOLINGER)
             self.csock.connect((ip_address, port))
             ok = True
-        except socket.error, e:
+        except socket.error as e:
             if e.errno == errno.EINPROGRESS:
                 ok = True
             else:
@@ -120,7 +120,7 @@ class Client:
                     ok = self.csock.shutdown()
                 self.csock.close()
                 self.csock = None
-        except socket.error, e:
+        except socket.error as e:
             if not self.quiet:
                 sys.stderr.write('failed on close: %s\n' % (e))
 
@@ -162,7 +162,7 @@ class Client:
                 self.csock.set_connect_state()
             self.csock.do_handshake()
             self.state = self.S_CONNECTED
-        except SSL.Error, e:
+        except SSL.Error as e:
             if type(e) == SSL.WantReadError:
                 self.state = self.S_SSL_WANT_READ
             elif type(e) ==  SSL.WantWriteError:
@@ -172,7 +172,7 @@ class Client:
                     sys.stderr.write('failed on do_handshake (socket) [%s]: %s\n' % (self.ip_address, e))
                 self.close()
                 return False
-        except socket.error, e:
+        except socket.error as e:
             if e.errno in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                 pass
             else:
@@ -224,7 +224,7 @@ class Client:
                 self.state = self.S_REQUEST_SENT
             else:
                 sent = False
-        except SSL.Error, e:
+        except SSL.Error as e:
 #            print('SSL.Error: %s (%s)' % (e, type(e)))
             if type(e) in (SSL.WantReadError, SSL.WantWriteError):
                 sent = False
@@ -233,7 +233,7 @@ class Client:
                 if not self.quiet:
                     sys.stderr.write('failed on send_request (SSL) [%s]: %s\n' % (self.host, e))
                 self.close()
-        except socket.error, e:
+        except socket.error as e:
             if e.errno == errno.EAGAIN:
                 sent = False
             else:
@@ -256,7 +256,7 @@ class Client:
                 if not tmp:
                     break
                 self.response_io.write(tmp)
-        except SSL.Error, e:
+        except SSL.Error as e:
             if type(e) in (SSL.WantReadError, SSL.WantWriteError):
                 finished = False
             elif type(e) == SSL.ZeroReturnError:
@@ -268,7 +268,7 @@ class Client:
             else:
                 if not self.quiet:
                     sys.stderr.write('failed on read_response (SSL) [%s]: %s\n' % (self.host, type(e)))
-        except socket.error, e:
+        except socket.error as e:
             if e.errno == errno.EAGAIN:
                 finished = False
             else:
@@ -385,7 +385,7 @@ class Client:
                         body = zlib.decompress(body, -15)
                     # store real length
                     content_length = len(body)
-                except Exception, e:
+                except Exception as e:
                     if not self.quiet:
                         sys.stderr.write('warning: [%s] ignoring: %s\n' % (self.host, e))
 
@@ -460,7 +460,7 @@ class BatchedReader:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.finished:
             if self.infile:
                 self.infile.close()
@@ -483,7 +483,7 @@ class BatchedReader:
                 self.linecount += 1
 
                 if self.skip_count == -1 or self.linecount > self.skip_count:
-                    ret = apply(self.callback, (line,))
+                    ret = self.callback(*(line,))
                     if ret:
                         self.count += 1
                         self.this_count += 1
@@ -491,7 +491,7 @@ class BatchedReader:
 
         except StopIteration:
             raise
-        except Exception, e:
+        except Exception as e:
             sys.stderr.write('oops: %s' % (traceback.format_exc(e)))
             raise StopIteration
 
@@ -587,7 +587,7 @@ class RSpider:
         # first handle completed DNS
         for query in self.resolver.completed():
             host = self.queries.pop(query)
-            if not self.pending_requests.has_key(host):
+            if host not in self.pending_requests:
                 if not self.quiet:
                     sys.stderr.write('warning: missing host [%s] in pending_requests\n' % (host))
                 continue
@@ -657,7 +657,7 @@ class RSpider:
         if len(urls) > 0:
             query = self.resolver.submit(host, adns.rr.A, 0)
             self.queries[query] = host
-            if not self.pending_requests.has_key(host):
+            if host not in self.pending_requests:
                 self.pending_requests[host] = urls
             else:
                 self.pending_requests[host].extend(urls)
@@ -673,7 +673,7 @@ class RSpider:
         try:
             if splitted.port:
                 port = splitted.port
-        except ValueError, e:
+        except ValueError as e:
             if not self.quiet:
                 sys.stderr.write('ignoring malformed url [%s]: %s\n' % (url, e))
         if not port:
@@ -701,7 +701,7 @@ class RSpider:
 
                 now = time.time()
                 for client in self.clients:
-                    if inflight_list.has_key(client.fileno()):
+                    if client.fileno() in inflight_list:
                         if client.elapsed_seconds(now) > self.timeout:
                             url, ip_address = inflight_list.pop(client.fileno())
                             if not self.quiet:
@@ -712,7 +712,7 @@ class RSpider:
                                 self.retry_with_https(splitted.hostname, url, ip_address)
                             elif not splitted.hostname.startswith('www.'):
                                 self.retry_with_www(splitted.hostname, [url])
-                    if dispatch_list.has_key(client.fileno()):
+                    if client.fileno() in dispatch_list:
                         if client.elapsed_seconds(now) > self.timeout:
                             url, ip_address = dispatch_list.pop(client.fileno())
                             if not self.quiet:
@@ -782,7 +782,7 @@ class RSpider:
                                 same_host = False
                                 if splitted.hostname == orig_splitted.hostname:
                                     same_host = True
-                                if redirect_list.has_key(splitted.hostname):
+                                if splitted.hostname in redirect_list:
                                     if redirect_list[splitted.hostname] < 5:
                                         if same_host:
                                             self.add_resolved_request(redirect, ip_address)
@@ -800,7 +800,7 @@ class RSpider:
                                     redirect_list[splitted.hostname] = 1
                             else:
                                 splitted = urlparse.urlsplit(url)
-                                if redirect_list.has_key(splitted.hostname):
+                                if splitted.hostname in redirect_list:
                                     redirect_list.pop(splitted.hostname)
                             rcount += 1
                             if wrote_output:
@@ -820,7 +820,7 @@ class RSpider:
             except KeyboardInterrupt:
                 sys.stderr.write('processing interrupted\n')
                 return
-            except Exception, e:
+            except Exception as e:
                 sys.stderr.write('major problem: %s\nurl=%s, dispatch_list=%s,inflight_list=%s,retry_list=%s,redirect_list=%s\n' % (traceback.format_exc(e), url, dispatch_list, inflight_list, retry_list, redirect_list))
                 return
 
@@ -828,7 +828,7 @@ class RSpider:
         self.open_results()
         try:
             self.run_requests(self.request_generator)
-        except Exception, e:
+        except Exception as e:
             pass
         self.close_results()
 

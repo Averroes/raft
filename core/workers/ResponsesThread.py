@@ -117,7 +117,7 @@ class ResponsesThread(QThread):
                 self.treeViewModel.append_data(datarows)
 
             except Exception as error:
-                print('FIX ME! ERROR: %s' % (traceback.format_exc(error)))
+                print(('FIX ME! ERROR: %s' % (traceback.format_exc(error))))
             finally:
                 self.qlock.unlock()
 

@@ -30,9 +30,11 @@ from PyQt4. QtNetwork import *
 from ui import SequenceDialog
 import re
 import time
+import json
 
 from widgets import EmbeddedWebkitWidget
 from utility import ContentHelper
+from actions import interface
 
 from core.web.SequenceBuilderPageFactory import SequenceBuilderPageFactory
 from core.web.SequenceBuilderFormCapture import SequenceBuilderFormCapture
@@ -168,7 +170,7 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
     def handle_deleteSequence_clicked(self):
         sequenceId = self.sequencesComboBox.itemData(self.sequencesComboBox.currentIndex())
         if self.display_confirm_dialog('Delete sequence: %s?' % self.sequencesComboBox.currentText()):
-            self.Data.delete_sequence(self.cursor, int(sequenceId.toString()))
+            self.Data.delete_sequence(self.cursor, int(sequenceId))
             
         self.populate_sequence_combo()
 
@@ -179,7 +181,7 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
         if -1 == index:
             return
 
-        sequenceId = self.sequencesComboBox.itemData(index).toString()
+        sequenceId = self.sequencesComboBox.itemData(index)
 
         if '-1' != sequenceId:
             self.deleteSequenceButton.setEnabled(True)
@@ -191,7 +193,8 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
     def handle_saveSequence_clicked(self):
         try:
             currentItem = self.sequencesComboBox.itemData(self.sequencesComboBox.currentIndex())
-            sequenceId = currentItem.toString()
+            sequenceId = currentItem
+            print(('current', sequenceId))
             if '' == sequenceId:
                 return
             sequenceId = int(sequenceId)
@@ -230,6 +233,7 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
             # insert parameters
             # TODO: populate and read from tree view
             parameters = self.formCapture.allParameters(self.sequenceResponseIds)
+            print(('save parameters', parameters))
             for responseId, requestId, param, value, origin in parameters:
                 if 'source' == origin:
                     if responseId:
@@ -240,7 +244,7 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
                                 param.position,
                                 param.Type,
                                 param.name,
-                                value,
+                                json.dumps(value).encode('utf-8'),
                                 True
                                 ])
                 elif 'target' == origin:
@@ -250,7 +254,7 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
                             param.source,
                             param.position,
                             param.name,
-                            value,
+                            json.dumps(value).encode('utf-8'),
                             True
                             ])
 
@@ -261,14 +265,15 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
                 self.Data.insert_sequence_cookie(self.cursor, [
                         sequenceId,
                         str(cookie.domain()),
-                        str(cookie.name()),
-                        str(cookie.toRawForm()),
+                        str(cookie.name(), 'utf-8'),
+                        cookie.toRawForm().data(),
                         True
                         ])
 
             self.Data.commit()
-        except:
+        except Exception as error:
             self.Data.rollback()
+            self.framework.report_exception(error)
             raise
 
         self.framework.signal_sequences_changed()
@@ -294,6 +299,7 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
         pass
 
     def fill_sequence_info(self, sequenceId):
+        self.sequenceResponseIds = set()
         sequenceId = int(sequenceId)
         if -1 == sequenceId:
             sequenceItem = (sequenceId, '', '', 0, 0, 0, '', 0, '', 0, 0)
@@ -301,7 +307,8 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
             row = self.Data.get_sequence_by_id(self.cursor, sequenceId)
             if not row:
                 return
-            sequenceItem = [m or '' for m in row]
+            datarow = list(row)
+            sequenceItem = [m or '' for m in datarow]
 
         self.reset_sequence_layout(sequenceId, sequenceItem)
 
@@ -336,7 +343,7 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
                 stepItems = [m or '' for m in row]
                 sequenceSteps.append(stepItems)
             for stepItems in sequenceSteps:
-                item = self.append_sequence_item(int(stepItems[SequenceStepsTable.RESPONSE_ID]))
+                item = self.append_sequence_item(str(stepItems[SequenceStepsTable.RESPONSE_ID]))
                 if not bool(stepItems[SequenceStepsTable.IS_ENABLED]):
                     item.setHidden(True)
                     if not bool(stepItems[SequenceStepsTable.IS_HIDDEN]):
@@ -404,9 +411,10 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
         # TODO: clean this up
         if 3 == index:
             self.sequenceParametersTreeWidget.clear()
+            print(('sequenceResponseIds', type(self.sequenceResponseIds), self.sequenceResponseIds))
             parameters = self.formCapture.allParameters(self.sequenceResponseIds)
             for responseId, requestId, param, value, origin in parameters:
-                print(responseId, requestId, param, value, origin)
+                print((responseId, requestId, param, value, origin))
                 rId = ''
                 Xref = ''
                 source = ''
@@ -465,19 +473,19 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
         try:
             responseId, requestId, xrefId = '', '', ''
             varId = reply.attribute(QNetworkRequest.User)
-            if varId.isValid():
-                responseId = str(varId.toString())
+            if varId is not None:
+                responseId = str(varId)
             varId = reply.attribute(QNetworkRequest.User + 1)
-            if varId.isValid():
-                requestId = str(varId.toString())
+            if varId is not None:
+                requestId = str(varId)
             varId = reply.attribute(QNetworkRequest.User + 2)
-            if varId.isValid():
-                xrefId = str(varId.toString())
+            if varId is not None:
+                xrefId = str(varId)
 
-            print('process_request_finished', responseId, requestId, xrefId)
+            print(('process_request_finished', responseId, requestId, xrefId))
 
             if xrefId and requestId and responseId:
-                if not self.originatingResponses.has_key(requestId):
+                if requestId not in self.originatingResponses:
                     self.originatingResponses[requestId] = responseId
 
                 # TODO: is this necessary?
@@ -506,21 +514,21 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
 
         self.sequenceResponseIds.add(responseId)
 
-        responseItems = [m or '' for m in list(row)]
+        responseItems = interface.data_row_to_response_items(row)
 
-        url = str(responseItems[ResponsesTable.URL])
-        method = str(responseItems[ResponsesTable.REQ_METHOD])
-        contentType = str(responseItems[ResponsesTable.RES_CONTENT_TYPE]).lower().strip()
+        url = responseItems[ResponsesTable.URL]
+        method = responseItems[ResponsesTable.REQ_METHOD]
+        contentType = responseItems[ResponsesTable.RES_CONTENT_TYPE].lower().strip()
         charset = ContentHelper.getCharSet(contentType)
         if contentType and ';' in contentType:
             contentType = contentType[0:contentType.index(';')]
 
-        reqHeaders = str(responseItems[ResponsesTable.REQ_HEADERS])
-        reqData = str(responseItems[ResponsesTable.REQ_DATA])
+        reqHeaders = responseItems[ResponsesTable.REQ_HEADERS]
+        reqData = responseItems[ResponsesTable.REQ_DATA]
         requestHeaders, requestBody, rawRequest = ContentHelper.combineRaw(reqHeaders, reqData)
 
-        resHeaders = str(responseItems[ResponsesTable.RES_HEADERS])
-        resData = str(responseItems[ResponsesTable.RES_DATA])
+        resHeaders = responseItems[ResponsesTable.RES_HEADERS]
+        resData = responseItems[ResponsesTable.RES_DATA]
         responseHeaders, responseBody, rawResponse = ContentHelper.combineRaw(resHeaders, resData, charset)
 
         sequence_item = {
@@ -623,8 +631,8 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
                         self.re_insession = re.compile(searchText, re.I)
                     if self.re_insession.search(rawResponse):
                         is_insession = True
-                except Exception, e:
-                    print(e)
+                except Exception as e:
+                    self.framework.report_implementation_error(e)
             else:
                 if -1 != rawResponse.lower().find(searchText.lower()):
                     is_insession = True
@@ -637,8 +645,8 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
                         self.re_outofsession = re.compile(searchText, re.I)
                     if self.re_outofsession.search(rawResponse):
                         is_outofsession = True
-                except Exception, e:
-                    print(e)
+                except Exception as e:
+                    self.framework.report_implementation_error(e)
 
             else:
                 if -1 != rawResponse.lower().find(searchText.lower()):
@@ -708,7 +716,7 @@ class SequenceDialog(QDialog, SequenceDialog.Ui_seqBuildDialog):
                     if m:
                         searchText = m.group(0)
                         is_re = False
-                except Exception, e:
+                except Exception as e:
                     pass
                       
             if not self.sequenceResponseViewEdit.findFirst(searchText, is_re, False, False, True, True, 0, 0):

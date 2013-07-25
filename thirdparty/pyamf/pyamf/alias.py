@@ -119,7 +119,7 @@ class ClassAlias(object):
             self.decodable_properties.update(self.klass.__slots__)
             self.encodable_properties.update(self.klass.__slots__)
 
-        for k, v in self.klass.__dict__.iteritems():
+        for k, v in self.klass.__dict__.items():
             if not isinstance(v, property):
                 continue
 
@@ -297,7 +297,7 @@ class ClassAlias(object):
             self.alias, self.klass, id(self))
 
     def __eq__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, str):
             return self.alias == other
         elif isinstance(other, self.__class__):
             return self.klass == other.klass
@@ -328,18 +328,18 @@ class ClassAlias(object):
         if not (hasattr(klass, '__init__') and hasattr(klass.__init__, '__call__')):
             return
 
-        klass_func = klass.__init__.im_func
+        klass_func = klass.__init__.__func__
 
         if not hasattr(klass_func, 'func_code'):
             # Can't examine it, assume it's OK.
             return
 
-        if klass_func.func_defaults:
-            available_arguments = len(klass_func.func_defaults) + 1
+        if klass_func.__defaults__:
+            available_arguments = len(klass_func.__defaults__) + 1
         else:
             available_arguments = 1
 
-        needed_arguments = klass_func.func_code.co_argcount
+        needed_arguments = klass_func.__code__.co_argcount
 
         if available_arguments >= needed_arguments:
             # Looks good to me.
@@ -400,14 +400,14 @@ class ClassAlias(object):
         if self.proxy_attrs is not None and attrs and codec:
             context = codec.context
 
-            for k, v in attrs.copy().iteritems():
+            for k, v in attrs.copy().items():
                 if k in self.proxy_attrs:
                     attrs[k] = context.getProxyForObject(v)
 
         if self.synonym_attrs:
             missing = object()
 
-            for k, v in self.synonym_attrs.iteritems():
+            for k, v in self.synonym_attrs.items():
                 value = attrs.pop(k, missing)
 
                 if value is missing:
@@ -479,7 +479,7 @@ class ClassAlias(object):
         if self.synonym_attrs:
             missing = object()
 
-            for k, v in self.synonym_attrs.iteritems():
+            for k, v in self.synonym_attrs.items():
                 value = attrs.pop(k, missing)
 
                 if value is missing:

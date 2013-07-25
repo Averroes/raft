@@ -25,6 +25,7 @@
 import traceback
 import os
 import sys
+import functools
 
 from PyQt4.QtCore import (Qt, SIGNAL, QObject, QThread, QMutex, QDir)
 from PyQt4.QtGui import QFont
@@ -47,10 +48,7 @@ class Framework(QObject):
         self._requestResponseFactory = None
         self.zoom_size = 0
         self.base_font = QFont()
-        # Dictionary for RequestResponse objects loaded into cache
-        self.rrd_qlock = QMutex()
-        self._request_response_cache = {}
-        self.home_dir = str(QDir.toNativeSeparators(QDir.homePath()).toUtf8())
+        self.home_dir = QDir.toNativeSeparators(QDir.homePath())
         self.raft_dir = self.create_raft_directory(self.home_dir, '.raft')
         self.user_db_dir = self.create_raft_directory(self.raft_dir, 'db')
         self.user_data_dir = self.create_raft_directory(self.raft_dir, 'data')
@@ -64,6 +62,9 @@ class Framework(QObject):
         self._raft_config_cache = {}
         # configuration defaults
         self._default_useragent = 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1'
+        # callbacks
+        self._open_url_in_browser = None
+        self._open_content_in_browser = None
         
     def create_raft_directory(self, basepath, dirname):
         dirtarget = os.path.join(basepath, dirname)
@@ -94,7 +95,6 @@ class Framework(QObject):
         self._db_uuid = self._db.get_db_uuid()
         self.web_db_path = self.create_raft_directory(self.user_web_path, self._db_uuid)
         self._raft_config_cache = {}
-        self._request_response_cache = {}
         self.emit(SIGNAL('raftConfigPopulated()'))
         self.emit(SIGNAL('databaseAttached()'))
 
@@ -188,12 +188,6 @@ class Framework(QObject):
     def signal_responses_cleared(self):
         self.emit(SIGNAL('responsesCleared()'))
 
-    def console_log(self, msg):
-        print(msg)
-
-    def debug_log(self, msg):
-        print('DEBUG', msg)
-
     def set_global_cookie_jar(self, cookie_jar):
         self._global_cookie_jar = cookie_jar
 
@@ -224,11 +218,17 @@ class Framework(QObject):
         if self._db is not None:
             callback()
 
+    def unsubscribe_raft_config_populated(self, callback):
+        QObject.disconnect(self, SIGNAL('raftConfigPopulated()'), callback)
+
     def subscribe_raft_config_updated(self, callback):
         QObject.connect(self, SIGNAL('raftConfigUpdated(QString, QVariant)'), callback, Qt.DirectConnection)
 
+    def unsubscribe_raft_config_updated(self, callback):
+        QObject.disconnect(self, SIGNAL('raftConfigUpdated(QString, QVariant)'), callback)
+
     def set_raft_config_value(self, name, value):
-        if self._raft_config_cache.has_key(name):
+        if name in self._raft_config_cache:
             if str(value) == str(self._raft_config_cache[name]):
                 return
         cursor = self._db.allocate_thread_cursor()
@@ -239,7 +239,7 @@ class Framework(QObject):
         self.emit(SIGNAL('raftConfigUpdated(QString, QVariant)'), name, value)
 
     def get_raft_config_value(self, name, rtype = str, default_value = None):
-        if self._raft_config_cache.has_key(name):
+        if name in self._raft_config_cache:
             value = self._raft_config_cache[name]
             if value is not None:
                 return rtype(value)
@@ -278,19 +278,35 @@ class Framework(QObject):
         cursor.close()
         self._db.release_thread_cursor(cursor)
     
+    @functools.lru_cache(maxsize=16, typed=False)
     def get_request_response(self, response_id):
-        self.rrd_qlock.lock()
-        try:
-            if self._request_response_cache.has_key(response_id):
-                request_response = self._request_response_cache[response_id]
-            else:
-                request_response = self._request_response_cache[response_id] = self._requestResponseFactory.fill(response_id)
-        finally:
-            self.rrd_qlock.unlock()
-        return request_response
+        return self._requestResponseFactory.fill(response_id)
+
+    def report_implementation_issue(self, message):
+        self.send_log_message('INTERNAL ERROR', '\n'.join(message))
+        print(('INTERNAL ERROR:\n%s' % message))
+
+    def report_implementation_error(self, exc):
+        message = traceback.format_exception(type(exc), exc, exc.__traceback__)
+        self.send_log_message('INTERNAL ERROR', '\n'.join(message))
+        print(('INTERNAL ERROR:\n%s' % message))
 
     def report_exception(self, exc):
-        print('EXCEPTION:\n%s' % traceback.format_exc(exc))
+        message = traceback.format_exception(type(exc), exc, exc.__traceback__)
+        self.send_log_message('EXCEPTION', '\n'.join(message))
+        print(('EXCEPTION:\n%s' % message))
+
+    def log_warning(self, msg):
+        self.send_log_message('WARNING', msg)
+        print(('WARNING', msg))
+
+    def console_log(self, msg):
+        self.send_log_message('LOG', msg)
+        print(msg)
+
+    def debug_log(self, msg):
+        self.send_log_message('DEBUG', msg)
+        print(('DEBUG', msg))
 
     def subscribe_add_differ_response_id(self, callback):
         QObject.connect(self, SIGNAL('differAddResponseId(int)'), callback, Qt.DirectConnection)
@@ -316,6 +332,9 @@ class Framework(QObject):
     def subscribe_populate_requester_response_id(self, callback):
         QObject.connect(self, SIGNAL('requesterPopulateResponseId(int)'), callback, Qt.DirectConnection)
         
+    def subscribe_populate_bulk_requester_responses(self, callback):
+        QObject.connect(self, SIGNAL('bulkRequesterPopulateResponses(QList<int>)'), callback, Qt.DirectConnection)
+        
     def subscribe_populate_webfuzzer_response_id(self, callback):
         QObject.connect(self, SIGNAL('webfuzzerPopulateResponseId(int)'), callback, Qt.DirectConnection)
 
@@ -333,6 +352,9 @@ class Framework(QObject):
 
     def send_response_id_to_requester(self, Id):
         self.emit(SIGNAL('requesterPopulateResponseId(int)'), int(Id))
+
+    def send_responses_to_bulk_requester(self, ids):
+        self.emit(SIGNAL('bulkRequesterPopulateResponses(QList<int>)'), ids)
         
     def send_response_id_to_webfuzzer(self, Id):
         self.emit(SIGNAL('webfuzzerPopulateResponseId(int)'), int(Id))
@@ -366,12 +388,6 @@ class Framework(QObject):
     def signal_sequences_changed(self):
         self.emit(SIGNAL('sequencesChanged()'))
 
-    def report_implementation_error(self, exc):
-        print('IMPLEMENTATION ERROR:\n%s' % traceback.format_exc(exc))
-
-    def log_warning(self, msg):
-        print('WARNING', msg)
-
     def subscribe_populate_tester_csrf(self, callback):
         QObject.connect(self, SIGNAL('testerPopulateCSRFResponseId(int)'), callback, Qt.DirectConnection)
 
@@ -383,3 +399,29 @@ class Framework(QObject):
 
     def send_to_tester_click_jacking(self, Id):
         self.emit(SIGNAL('testerPopulateClickJackingResponseId(int)'), int(Id))
+
+    def subscribe_log_events(self, callback):
+        QObject.connect(self, SIGNAL('logMessageReceived(QString, QString)'), callback, Qt.DirectConnection)
+
+    def send_log_message(self, message_type, message):
+        self.emit(SIGNAL('logMessageReceived(QString, QString)'), message_type, message)
+
+    def register_browser_openers(self, open_url, open_content):
+        if self._open_url_in_browser is None:
+            self._open_url_in_browser = open_url
+            QObject.connect(self, SIGNAL('openUrlInBrowser(QString)'), self._open_url_in_browser, Qt.DirectConnection)
+
+        if self._open_content_in_browser is None:
+            self._open_content_in_browser = open_content
+            QObject.connect(self, SIGNAL('openContentInBrowser(QString, QByteArray, QString)'), self._open_content_in_browser, Qt.DirectConnection)
+
+    def open_url_in_browser(self, url):
+        self.emit(SIGNAL('openUrlInBrowser(QString)'), url)
+
+    def open_content_in_browser(self, url, body, mimetype=''):
+        if isinstance(body, str):
+            data = body.encode('utf-8') # TODO: vary based on mimetype ?
+        else:
+            data = body
+        self.emit(SIGNAL('openContentInBrowser(QString, QByteArray, QString)'), url, data, mimetype)
+

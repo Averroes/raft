@@ -29,8 +29,6 @@ class BaseNetworkAccessManager(QtNetwork.QNetworkAccessManager):
         QtNetwork.QNetworkAccessManager.__init__(self)
         self.framework = framework
 
-        self.__proxy_host = 'localhost'
-        self.__proxy_port = 8080
         self.__use_proxy = False
 
         self.setProxy(QtNetwork.QNetworkProxy())
@@ -41,8 +39,12 @@ class BaseNetworkAccessManager(QtNetwork.QNetworkAccessManager):
         self.framework.subscribe_raft_config_updated(self.__handle_raft_config_updated)
 
     def __db_attach(self):
-        self.__proxy_host = self.framework.get_raft_config_value('proxy_host', str)
-        self.__proxy_port = self.framework.get_raft_config_value('proxy_port', int)
+        self.__proxy = {}
+        self.__proxy['host'] = self.framework.get_raft_config_value('proxy_host', str)
+        self.__proxy['port'] = self.framework.get_raft_config_value('proxy_port', int)
+        self.__proxy['username'] = self.framework.get_raft_config_value('proxy_username', str)
+        self.__proxy['password'] = self.framework.get_raft_config_value('proxy_password', str)
+        self.__proxy['type'] = self.framework.get_raft_config_value('proxy_type', str)
         self.__use_proxy = self.framework.get_raft_config_value('use_proxy', bool)
         self.__setup_network_proxy()
 
@@ -50,42 +52,50 @@ class BaseNetworkAccessManager(QtNetwork.QNetworkAccessManager):
         pass
 
     def __handle_raft_config_updated(self, name, value):
-        config_name = str(name)
-        new_value = str(value)
-        if 'proxy_host' == config_name:
-            if new_value != self.__proxy_host:
-                self.__proxy_host = new_value
+        config_name = name
+        new_value = value
+        if config_name in ('proxy_host', 'proxy_username', 'proxy_password', 'proxy_type'):
+            conf = config_name[6:] # skip proxy_
+            if new_value != self.__proxy[conf]:
+                self.__proxy[conf] = new_value
                 self.__setup_network_proxy()
         elif 'proxy_port' == config_name:
-            if new_value != str(self.__proxy_port):
+            if new_value != str(self.__proxy['port']):
                 try:
-                    self.__proxy_port = int(new_value)
+                    self.__proxy['port'] = int(new_value)
                     self.__setup_network_proxy()
                 except ValueError:
                     pass
         elif 'use_proxy' == config_name:
-            self.__use_proxy = bool(value.toBool())
+            self.__use_proxy = bool(value)
             self.__setup_network_proxy()
 
     def __setup_network_proxy(self):
         proxy = self.proxy()
         if self.__use_proxy:
-            proxy.setHostName(self.__proxy_host)
-            proxy.setPort(self.__proxy_port)
-            proxy.setType(QtNetwork.QNetworkProxy.HttpProxy)
+            proxy.setHostName(self.__proxy['host'])
+            proxy.setPort(self.__proxy['port'])
+            proxy.setUser(self.__proxy['username'])
+            proxy.setPassword(self.__proxy['password'])
+            if 'socks5' == self.__proxy['type']:
+                proxy.setType(QtNetwork.QNetworkProxy.Socks5Proxy)
+            else:
+                proxy.setType(QtNetwork.QNetworkProxy.HttpProxy)
         else:
             proxy.setType(QtNetwork.QNetworkProxy.NoProxy)
 
         self.setProxy(proxy)
 
-#         proxy = self.proxy()
-#         for name, value in (('Tunneling', QtNetwork.QNetworkProxy.TunnelingCapability),
-#                             ('ListeningCapability', QtNetwork.QNetworkProxy.ListeningCapability),
-#                             ('UdpTunnelingCapability', QtNetwork.QNetworkProxy.UdpTunnelingCapability),
-#                             ('CachingCapability', QtNetwork.QNetworkProxy.CachingCapability),
-#                             ('HostNameLookupCapability', QtNetwork.QNetworkProxy.HostNameLookupCapability),):
-#             print(name, (int(proxy.capabilities()))&value)
+        if False:
+            # TODO: should specify capabilities?
+            proxy = self.proxy()
+            for name, value in (('Tunneling', QtNetwork.QNetworkProxy.TunnelingCapability),
+                                ('ListeningCapability', QtNetwork.QNetworkProxy.ListeningCapability),
+                                ('UdpTunnelingCapability', QtNetwork.QNetworkProxy.UdpTunnelingCapability),
+                                ('CachingCapability', QtNetwork.QNetworkProxy.CachingCapability),
+                                ('HostNameLookupCapability', QtNetwork.QNetworkProxy.HostNameLookupCapability),):
+                print(name, (int(proxy.capabilities()))&value)
 
 
     def handle_authenticationRequired(self, reply, authenticator):
-        print('authenticationRequired', reply, authenticator)
+        print(('authenticationRequired', reply, authenticator))

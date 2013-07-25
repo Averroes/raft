@@ -42,18 +42,17 @@ class StandardNetworkAccessManager(BaseNetworkAccessManager):
         self.proxyAuthenticationRequired.connect(self.handle_proxyAuthenticationRequired)
 
     def handle_proxyAuthenticationRequired(self, proxy, authenticator):
-        print('proxyAuthenticationRequired', proxy, authenticator)
+        print(('proxyAuthenticationRequired', proxy, authenticator))
 
     def createRequest(self, operation, request, outgoingData = None):
         try: 
-            url = str(request.url().toEncoded()).encode('ascii', 'ignore')
+            url = request.url().toEncoded().data().decode('utf-8')
             if outgoingData is not None and type(outgoingData) == QIODevice:
                 outgoingData = InterceptFormData(outgoingData)
             return StoreNetworkReply(self.framework, url, operation, request, outgoingData, self.cookieJar(),
                                      QNetworkAccessManager.createRequest(self, operation, request, outgoingData), self)
         except Exception as error:
             # exceptions will cause a segfault
-            import traceback
-            print('--->FIX ME:\n%s' % traceback.format_exc(error))
+            self.framework.report_exception(error)
             request.setUrl(QUrl('about:blank'))
             return QNetworkAccessManager.createRequest(self, operation, request, outgoingData)

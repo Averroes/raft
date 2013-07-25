@@ -20,12 +20,12 @@
 #
 
 import re
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from analysis.AbstractAnalyzer import AbstractAnalyzer
 
 class XSSFinder(AbstractAnalyzer):
-    AlertRegex = re.compile(r'(?<!&gt;)(?<!3[eE])(alert\((.+?)\))')
+    AlertRegex = re.compile(b'(?<!&gt;)(?<!3[eE])(alert\((.+?)\))')
     
     def __init__(self):
         self.desc="Identification of successful XSS attacks."
@@ -42,9 +42,9 @@ class XSSFinder(AbstractAnalyzer):
             matched = False
             if alert_data in combined:
                 matched = True
-            elif urllib2.quote(alert_data) in combined:
+            elif urllib.parse.quote(alert_data) in combined:
                 matched = True
-            elif urllib2.unquote(alert_data) in combined:
+            elif urllib.parse.unquote(alert_data) in combined:
                 matched = True
             if matched:
                 results.addPageResult(pageid=target.responseId, 

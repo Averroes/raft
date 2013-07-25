@@ -1,5 +1,7 @@
 <RCC>
   <qresource>
+    <file>icons/RAFT.ico</file>
+    <file>images/RAFT_app_icon.png</file>
     <file>images/Analyze-icon-16.png</file>
     <file>images/analyze-icon-32.png</file>
     <file>images/browser-icon-32.png</file>

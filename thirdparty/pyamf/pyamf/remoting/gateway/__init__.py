@@ -22,7 +22,7 @@ except ImportError:
 
 SERVER_NAME = 'PyAMF/%s %s/%s' % (
     pyamf.version, impl,
-    '.'.join(map(lambda x: str(x), sys.version_info[0:3]))
+    '.'.join([str(x) for x in sys.version_info[0:3]])
 )
 
 
@@ -85,7 +85,7 @@ class ServiceWrapper(object):
         """
         service = None
 
-        if isinstance(self.service, (type, types.ClassType)):
+        if isinstance(self.service, type):
             service = self.service()
         else:
             service = self.service
@@ -238,10 +238,10 @@ class ServiceCollection(dict):
     I hold a collection of services, mapping names to objects.
     """
     def __contains__(self, value):
-        if isinstance(value, basestring):
-            return value in self.keys()
+        if isinstance(value, str):
+            return value in list(self.keys())
 
-        return value in self.values()
+        return value in list(self.values())
 
 
 class BaseGateway(object):
@@ -292,7 +292,7 @@ class BaseGateway(object):
         if kwargs:
             raise TypeError('Unknown kwargs: %r' % (kwargs,))
 
-        for name, service in services.iteritems():
+        for name, service in services.items():
             self.addService(service, name)
 
     def addService(self, service, name=None, description=None,
@@ -308,21 +308,21 @@ class BaseGateway(object):
         @raise TypeError: C{service} cannot be a scalar value.
         @raise TypeError: C{service} must be C{callable} or a module.
         """
-        if isinstance(service, (int, long, float, basestring)):
+        if isinstance(service, (int, float, str)):
             raise TypeError("Service cannot be a scalar value")
 
-        allowed_types = (types.ModuleType, types.FunctionType, types.DictType,
-            types.MethodType, types.InstanceType, types.ObjectType)
+        allowed_types = (types.ModuleType, types.FunctionType, dict,
+            types.MethodType, types.InstanceType, object)
 
         if not python.callable(service) and not isinstance(service, allowed_types):
             raise TypeError("Service must be a callable, module, or an object")
 
         if name is None:
             # TODO: include the module in the name
-            if isinstance(service, (type, types.ClassType)):
+            if isinstance(service, type):
                 name = service.__name__
             elif isinstance(service, types.FunctionType):
-                name = service.func_name
+                name = service.__name__
             elif isinstance(service, types.ModuleType):
                 name = service.__name__
             else:
@@ -352,7 +352,7 @@ class BaseGateway(object):
         @type service: C{callable} or a class instance
         @raise NameError: Service not found.
         """
-        for name, wrapper in self.services.iteritems():
+        for name, wrapper in self.services.items():
             if service in (name, wrapper.service):
                 del self.services[name]
                 return
@@ -532,7 +532,7 @@ def authenticate(func, c, expose_request=False):
     attr = func
 
     if isinstance(func, types.UnboundMethodType):
-        attr = func.im_func
+        attr = func.__func__
 
     if expose_request is True:
         c = globals()['expose_request'](c)
@@ -552,7 +552,7 @@ def expose_request(func):
         raise TypeError("func must be callable")
 
     if isinstance(func, types.UnboundMethodType):
-        setattr(func.im_func, '_pyamf_expose_request', True)
+        setattr(func.__func__, '_pyamf_expose_request', True)
     else:
         setattr(func, '_pyamf_expose_request', True)
 
@@ -578,7 +578,7 @@ def preprocess(func, c, expose_request=False):
     attr = func
 
     if isinstance(func, types.UnboundMethodType):
-        attr = func.im_func
+        attr = func.__func__
 
     if expose_request is True:
         c = globals()['expose_request'](c)

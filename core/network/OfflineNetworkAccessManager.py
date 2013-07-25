@@ -31,6 +31,7 @@ from core.network.InMemoryCache import InMemoryCache
 from core.network.CustomNetworkReply import CustomNetworkReply
 
 from core.database.constants import ResponsesTable
+from actions import interface
 
 class OfflineNetworkAccessManager(BaseNetworkAccessManager):
     def __init__(self, framework, cookieJar):
@@ -71,14 +72,14 @@ class OfflineNetworkAccessManager(BaseNetworkAccessManager):
             if scheme in ('data', 'about', 'javascript'):
                 reply = QNetworkAccessManager.createRequest(self, operation, request, outgoingData)
             elif scheme in ('http', 'https'):
-                url = str(requestUrl.toEncoded()).encode('ascii', 'ignore')
+                url = requestUrl.toEncoded().data().decode('utf-8')
                 url_response = None
-                if self.request_lookaside.has_key(url):
+                if url in self.request_lookaside:
                     url_response = self.request_lookaside[url]
                 else:
                     responses = []
                     for row in self.Data.read_responses_by_url(self.cursor, url):
-                        responseItems = [m or '' for m in row]
+                        responseItems = interface.data_row_to_response_items(row)
                         response_length = str(responseItems[ResponsesTable.RES_LENGTH])
                         if response_length and int(response_length) > 0 and str(responseItems[ResponsesTable.STATUS]).startswith('2'):
                             responses.append(responseItems)
@@ -93,7 +94,7 @@ class OfflineNetworkAccessManager(BaseNetworkAccessManager):
                         else:
                             base_url = url
                         for row in self.Data.read_responses_starting_with_url(self.cursor, base_url):
-                            responseItems = [m or '' for m in row]
+                            responseItems = interface.data_row_to_response_items(row)
                             response_length = str(responseItems[ResponsesTable.RES_LENGTH])
                             if response_length and int(response_length) > 0 and str(responseItems[ResponsesTable.STATUS]).startswith('2'):
                                 responses.append(responseItems)
@@ -101,9 +102,9 @@ class OfflineNetworkAccessManager(BaseNetworkAccessManager):
                                 url_response = responses[-1]
                                 self.request_lookaside[url] = url_response
                 if url_response:
-                    reply = CustomNetworkReply(self, requestUrl, str(url_response[ResponsesTable.RES_HEADERS]), str(url_response[ResponsesTable.RES_DATA]))
+                    reply = CustomNetworkReply(self, requestUrl, url_response[ResponsesTable.RES_HEADERS], url_response[ResponsesTable.RES_DATA])
 
-        except Exception, error:
+        except Exception as error:
             self.framework.report_implementation_error(error)
 
         if not reply:

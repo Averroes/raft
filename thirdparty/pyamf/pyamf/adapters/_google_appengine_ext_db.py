@@ -110,7 +110,7 @@ class DataStoreClassAlias(pyamf.ClassAlias):
         self.properties = {}
         reverse_props = []
 
-        for name, prop in self.klass.properties().iteritems():
+        for name, prop in self.klass.properties().items():
             self.properties[name] = prop
 
             props.append(name)
@@ -125,12 +125,12 @@ class DataStoreClassAlias(pyamf.ClassAlias):
         # check if the property is a defined as a collection_name. These types
         # of properties are read-only and the datastore freaks out if you
         # attempt to meddle with it. We delete the attribute entirely ..
-        for name, value in self.klass.__dict__.iteritems():
+        for name, value in self.klass.__dict__.items():
             if isinstance(value, db._ReverseReferenceProperty):
                 reverse_props.append(name)
 
-        self.encodable_properties.update(self.properties.keys())
-        self.decodable_properties.update(self.properties.keys())
+        self.encodable_properties.update(list(self.properties.keys()))
+        self.decodable_properties.update(list(self.properties.keys()))
         self.readonly_attrs.update(reverse_props)
 
         if not self.reference_properties:
@@ -147,7 +147,7 @@ class DataStoreClassAlias(pyamf.ClassAlias):
         gae_objects = getGAEObjects(codec.context) if codec else None
 
         if self.reference_properties and gae_objects:
-            for name, prop in self.reference_properties.iteritems():
+            for name, prop in self.reference_properties.items():
                 klass = prop.reference_class
                 key = prop.get_value_for_datastore(obj)
 
@@ -161,7 +161,7 @@ class DataStoreClassAlias(pyamf.ClassAlias):
                     gae_objects.addClassKey(klass, key, ref_obj)
                     attrs[name] = ref_obj
 
-        for k in attrs.keys()[:]:
+        for k in list(attrs.keys())[:]:
             if k.startswith('_'):
                 del attrs[k]
 
@@ -198,14 +198,14 @@ class DataStoreClassAlias(pyamf.ClassAlias):
         apply_init = True
 
         if self.properties:
-            for k in [k for k in attrs.keys() if k in self.properties.keys()]:
+            for k in [k for k in list(attrs.keys()) if k in list(self.properties.keys())]:
                 prop = self.properties[k]
                 v = attrs[k]
 
-                if isinstance(prop, db.FloatProperty) and isinstance(v, (int, long)):
+                if isinstance(prop, db.FloatProperty) and isinstance(v, int):
                     attrs[k] = float(v)
                 elif isinstance(prop, db.IntegerProperty) and isinstance(v, float):
-                    x = long(v)
+                    x = int(v)
 
                     # only convert the type if there is no mantissa - otherwise
                     # let the chips fall where they may
@@ -267,7 +267,7 @@ def loadInstanceFromDatastore(klass, key, codec=None):
     if not issubclass(klass, (db.Model, db.Expando)):
         raise TypeError('expected db.Model/db.Expando class, got %s' % (klass,))
 
-    if not isinstance(key, basestring):
+    if not isinstance(key, str):
         raise TypeError('string expected for key, got %s', (repr(key),))
 
     key = str(key)

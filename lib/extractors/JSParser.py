@@ -28,7 +28,7 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from cStringIO import StringIO
+from io import StringIO
 import re
 
 
@@ -287,7 +287,7 @@ class Tokenizer():
             match = self.re_identifier.match(script_input)
             if match:
                 Id = match.group(0)
-                if KEYWORDS.has_key(Id):
+                if Id in KEYWORDS:
                     token.ttype = KEYWORDS[Id]
                 else:
                     token.ttype = T_IDENTIFIER
@@ -309,7 +309,7 @@ class Tokenizer():
             match = self.re_op.match(script_input)
             if match:
                 op = match.group(0)
-                if ASSIGN_OPS.has_key(op) and script_input[len(op)] == '=':
+                if op in ASSIGN_OPS and script_input[len(op)] == '=':
                     token.ttype = T_ASSIGN
                     token.assignOp = GLOBAL[OP_TYPE_NAMES[op]]
                     matched = match.group(0) + '='
@@ -388,7 +388,7 @@ class Tokenizer():
                     if i < 128:
                         return chr(i)
                     else:
-                        return unichr(i)
+                        return chr(i)
                 else:
                     return m
             except ValueError:
@@ -399,7 +399,7 @@ class Tokenizer():
             try:
                 return self.re_escape_string.sub(self.interpretEscape, value[1:-1])
             except UnicodeDecodeError:
-                print('oops', value)
+                print(('oops', value))
         return value[1:-1]
 
     def parseRegexp(self, value, flags):
@@ -478,7 +478,7 @@ class Node(list):
 
 def tokenstr(tt):
     t = TOKENS.get(tt)
-    if OP_TYPE_NAMES.has_key(t):
+    if t in OP_TYPE_NAMES:
         return OP_TYPE_NAMES[t]
     else:
         return str(t).upper()
@@ -1108,7 +1108,7 @@ class JSParser():
             node = Script(self.tokenizer, context)
             if (not self.tokenizer.done()):
                 raise tokenizer.newSyntaxError("Syntax error")
-        except JsParseException, e:
+        except JsParseException as e:
             import sys
             sys.stderr.write('%s\n' % e)
             pass
@@ -1119,7 +1119,7 @@ class JSParser():
             node = Script(self.tokenizer, context)
             if (not self.tokenizer.done()):
                 raise tokenizer.newSyntaxError("Syntax error")
-        except JsParseException, e:
+        except JsParseException as e:
             import sys
             sys.stderr.write('%s\n' % e)
             pass
@@ -1131,7 +1131,7 @@ class JSParser():
             node = Script(self.tokenizer, context)
             if (not self.tokenizer.done()):
                 raise tokenizer.newSyntaxError("Syntax error")
-        except JsParseException, e:
+        except JsParseException as e:
             import sys
             sys.stderr.write('%s\n' % e)
             pass
@@ -1148,5 +1148,5 @@ if '__main__' == __name__:
         parser = JSParser()
         source = open(a).read()
         node = parser.parse_file(source, a, 1)
-        print('\n'.join([s.encode('ascii', 'ignore') for s in parser.strings()]))
-        print(parser.comments())
+        print(('\n'.join([s.encode('ascii', 'ignore') for s in parser.strings()])))
+        print((parser.comments()))

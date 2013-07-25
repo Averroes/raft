@@ -22,7 +22,7 @@
 #
 
 from core.network.InMemoryCookieJar import InMemoryCookieJar
-from urllib2 import urlparse
+from urllib import parse as urlparse
 
 class SequenceBuilderCookieJar(InMemoryCookieJar):
     def __init__(self, framework, parent = None):
@@ -48,22 +48,22 @@ class SequenceBuilderCookieJar(InMemoryCookieJar):
                 cookie_domain = str(cookie.domain())
                 if not cookie_domain:
                     cookie_domain = str(url.encodedHost())
-                if not self.cookie_items.has_key(cookie_domain):
+                if cookie_domain not in self.cookie_items:
                     self.cookie_items[cookie_domain] = {}
                 self.cookie_items[cookie_domain][str(cookie.name())] = str(cookie.value())
 
         return InMemoryCookieJar.setCookiesFromUrl(self, cookieList, url)
     
     def is_cookie_tracked(self, cookie_domain, cookie_name):
-        if self.cookie_items.has_key(cookie_domain):
-            if self.cookie_items[cookie_domain].has_key(cookie_name):
+        if cookie_domain in self.cookie_items:
+            if cookie_name in self.cookie_items[cookie_domain]:
                 return True
         elif cookie_domain.startswith('.'):
             cookie_domain = cookie_domain[1:]
-            if self.cookie_items.has_key(cookie_domain) and self.cookie_items[cookie_domain].has_key(cookie_name):
+            if cookie_domain in self.cookie_items and cookie_name in self.cookie_items[cookie_domain]:
                 return True
 
-        print ('OOPS', cookie_domain, self.cookie_items.keys())
+        print(('OOPS', cookie_domain, list(self.cookie_items.keys())))
         
         return False
         

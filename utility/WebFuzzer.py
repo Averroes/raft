@@ -47,7 +47,7 @@ class StandardFuzzer(object):
         # match = re.search("{S_\.*}", content)
         if match:
             variable = match.group().lstrip("${S_")
-            print(variable.rstrip("}"))
+            print((variable.rstrip("}")))
         else:
             pass
         

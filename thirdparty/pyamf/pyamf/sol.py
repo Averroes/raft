@@ -16,13 +16,14 @@ a per-domain basis.
 
 import pyamf
 from pyamf import util
+import sys
 
 #: Magic Number - 2 bytes
-HEADER_VERSION = '\x00\xbf'
+HEADER_VERSION = b'\x00\xbf'
 #: Marker - 10 bytes
-HEADER_SIGNATURE = 'TCSO\x00\x04\x00\x00\x00\x00'
+HEADER_SIGNATURE = b'TCSO\x00\x04\x00\x00\x00\x00'
 #: Padding - 4 bytes
-PADDING_BYTE = '\x00'
+PADDING_BYTE = b'\x00'
 
 
 def decode(stream, strict=True):
@@ -38,7 +39,6 @@ def decode(stream, strict=True):
 
     # read the version
     version = stream.read(2)
-
     if version != HEADER_VERSION:
         raise pyamf.DecodeError('Unknown SOL version in header')
 
@@ -66,7 +66,7 @@ def decode(stream, strict=True):
 
     values = {}
 
-    while 1:
+    while True:
         if stream.at_eof():
             break
 
@@ -74,8 +74,11 @@ def decode(stream, strict=True):
         value = decoder.readElement()
 
         # read the padding
-        if stream.read(1) != PADDING_BYTE:
-            raise pyamf.DecodeError('Missing padding byte')
+        t = stream.read(1) 
+        while t != PADDING_BYTE:
+        #    raise pyamf.DecodeError('Missing padding byte')
+            sys.stderr.write('Bad padding byte: 0x02%x\n' % ord(t))
+            t = stream.read(1) 
 
         values[name] = value
 
@@ -117,7 +120,7 @@ def encode(name, values, strict=True, encoding=pyamf.AMF0):
     stream.write(PADDING_BYTE * 3)
     stream.write_uchar(encoding)
 
-    for n, v in values.iteritems():
+    for n, v in values.items():
         encoder.serialiseString(n)
         encoder.writeElement(v)
 
@@ -143,7 +146,7 @@ def load(name_or_file):
     f = name_or_file
     opened = False
 
-    if isinstance(name_or_file, basestring):
+    if isinstance(name_or_file, str):
         f = open(name_or_file, 'rb')
         opened = True
     elif not hasattr(f, 'read'):
@@ -152,7 +155,7 @@ def load(name_or_file):
     name, values = decode(f.read())
     s = SOL(name)
 
-    for n, v in values.iteritems():
+    for n, v in values.items():
         s[n] = v
 
     if opened is True:
@@ -171,7 +174,7 @@ def save(sol, name_or_file, encoding=pyamf.AMF0):
     f = name_or_file
     opened = False
 
-    if isinstance(name_or_file, basestring):
+    if isinstance(name_or_file, str):
         f = open(name_or_file, 'wb+')
         opened = True
     elif not hasattr(f, 'write'):

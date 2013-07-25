@@ -21,7 +21,7 @@
 
 from PyQt4.QtCore import Qt, QObject, SIGNAL, QThread, QTimer, QMutex, QUrl
 from PyQt4.QtNetwork import QNetworkCookie
-from urllib2 import urlparse
+from urllib import parse as urlparse
 import re
 
 from core.data.SiteMapModel import SiteMapNode
@@ -39,6 +39,7 @@ class SiteMapThread(QThread):
         QObject.connect(self, SIGNAL('started()'), self.startedHandler)
 
         self.re_set_cookie = re.compile(r'^Set-Cookie2?:\s*(.+)$', re.I|re.M)
+        self.re_host_name = re.compile(r'^Host:\s*(.+?)$', re.I|re.M)
 
         self.lastId = 0
         self.Data = None
@@ -105,9 +106,14 @@ class SiteMapThread(QThread):
                 except ValueError:
                     pass
 
-                url = str(rowItems[1])
+                # XXX: review all for bytes usage
+                if isinstance(rowItems[1], bytes):
+                    url = str(rowItems[1], 'utf-8', 'ignore')
+                else:
+                    url = str(rowItems[1])
                 status = str(rowItems[2])
                 response_headers = str(rowItems[3])
+                request_headers = str(rowItems[4])
                 # TODO: make configurable
                 if status in ('400', '404', '500', '501'):
                     continue
@@ -120,7 +126,15 @@ class SiteMapThread(QThread):
                     global_cookie_jar.setCookiesFromUrl(cookieList, QUrl.fromEncoded(url))
 
                 parsed = urlparse.urlsplit(url)
-                hostname = parsed.hostname.lower()
+                hostname = ''
+                if not parsed.hostname:
+                    m = self.re_host_name.search(request_headers)
+                    if m:
+                        hostname = m.group(1).rstrip()
+                else:
+                    hostname = parsed.hostname
+
+                hostname = hostname.lower()
                 hostloc = urlparse.urlunsplit((parsed.scheme, parsed.netloc, '/','',''))
 
                 rootNode = self.treeViewModel.findOrAddNode(hostname)

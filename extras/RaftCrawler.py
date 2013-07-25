@@ -2,7 +2,7 @@
 #
 # Author: Gregory Fleischer (gfleischer@gmail.com)
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2013 RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -21,10 +21,13 @@
 #
 
 from xml.sax.saxutils import escape
-from urllib2 import urlparse
-import sys, logging, os, bz2, time, collections
+from urllib import parse as urlparse
+import sys, logging, os, time, collections
+import lzma
 import re
 import traceback
+import io
+import base64
 
 #### from PyQt4.QtCore import QTimer, SIGNAL, SLOT, QUrl, QObject, QIODevice, QThread
 import PyQt4
@@ -34,6 +37,11 @@ from PyQt4.QtGui import *
 
 from PyQt4 import QtWebKit, QtNetwork
 
+try:
+    QUrl.FullyEncoded
+except AttributeError:
+    QUrl.FullyEncoded = QUrl.FormattingOptions(0x100000 | 0x200000 | 0x400000 | 0x800000 | 0x1000000)
+
 MAX_LINK_COUNT = 100
 
 class CookieJar(QtNetwork.QNetworkCookieJar):
@@ -42,16 +50,16 @@ class CookieJar(QtNetwork.QNetworkCookieJar):
     def cookiesForUrl(self, url):
         cookieList = QtNetwork.QNetworkCookieJar.cookiesForUrl(self, url)
         if False:
-            print('get cookie url= %s' % (str(url.toEncoded())))
+            print(('get cookie url= %s' % (url.toString(QUrl.FullyEncoded))))
             for cookie in cookieList:
-                print('  Cookie: %s' % (str(cookie.toRawForm(QtNetwork.QNetworkCookie.Full))))
+                print(('  Cookie: %s' % (cookie.toRawForm(QtNetwork.QNetworkCookie.Full))))
         return cookieList
 
     def setCookiesFromUrl(self, cookieList, url):
         if False:
-            print('set cookie url= %s' % (str(url.toEncoded())))
+            print(('set cookie url= %s' % (url.toString(QUrl.FullyEncoded))))
             for cookie in cookieList:
-                print('  Set-Cookie: %s' % (str(cookie.toRawForm(QtNetwork.QNetworkCookie.Full))))
+                print(('  Set-Cookie: %s' % (cookie.toRawForm(QtNetwork.QNetworkCookie.Full))))
         ok = QtNetwork.QNetworkCookieJar.setCookiesFromUrl(self, cookieList, url)
         return ok
 
@@ -97,8 +105,8 @@ class WrapIODevice(QIODevice):
     def readData(self, maxSize):
         data = self.ioDevice.read(maxSize)
         if data:
-            self.__data += str(data)
-        return data
+            self.__data += data
+        return data.data()
         
 class NetworkReply(QtNetwork.QNetworkReply):
     def __init__(self, networkAccessManager, writer, request, outgoingData, reply):
@@ -113,7 +121,7 @@ class NetworkReply(QtNetwork.QNetworkReply):
         self.__request = request
         self.__outgoingData = outgoingData
         self.__reply = reply
-        self.__data = ''
+        self.__data = b''
         self.__datalen = 0
         self.__offset = 0
         self.__datetime = time.time()
@@ -138,36 +146,39 @@ class NetworkReply(QtNetwork.QNetworkReply):
             return 'DELETE'
         else:
             # CUSTOM
-            return str(self.__request.attribute(self.__request.CustomVerbAttribute).toString())
+            return self.__request.attribute(self.__request.CustomVerbAttribute).data().decode('ascii')
         
     def handleError(self, error):
-        print('error: ', error)
+        print(('error: ', error))
 
     def handleSslErrors(self, errorList):
         try:
             for error in errorList:
                 print(error)
             self.__reply.ignoreSslErrors()
-        except Exception, e:
-            print('Failed: %s' % (traceback.format_exc(e)))
+        except Exception as e:
+            print(('Failed: %s' % (traceback.format_exc(e))))
 
     def handleFinished(self):
         request = self.__request
         reply = self.__reply
 
-        responseData = str(reply.readAll())
-        self.__data = responseData
+        responseData = reply.readAll()
+        self.__data = responseData.data()
         self.__datalen = len(self.__data)
         self.__offset = 0
 
-        status = reply.attribute(QtNetwork.QNetworkRequest.HttpStatusCodeAttribute).toString()
-        fromCache = bool(reply.attribute(QtNetwork.QNetworkRequest.SourceIsFromCacheAttribute).toString())
+        status = reply.attribute(QtNetwork.QNetworkRequest.HttpStatusCodeAttribute)
+        fromCache = bool(reply.attribute(QtNetwork.QNetworkRequest.SourceIsFromCacheAttribute))
 
-        url = str(self.__request.url().toEncoded())
+        qurl = self.__request.url()
+        # Qt 5 => url = qurl.toDisplayString()
+#        url = qurl.toEncoded().data().decode('utf-8')
+        url = qurl.toString(QUrl.FullyEncoded)
         if not status or fromCache or url.startswith('about:') or url.startswith('data:'):
             pass
         else:
-            self.__writeData(request, reply, status, responseData)
+            self.__writeData(request, reply, status, self.__data)
 
         # check for redirect
         redirectTarget = reply.attribute(QtNetwork.QNetworkRequest.RedirectionTargetAttribute)
@@ -194,12 +205,12 @@ class NetworkReply(QtNetwork.QNetworkReply):
             bvalue = reply.rawHeader(bname)
             self.setRawHeader(bname, bvalue)
 
-        contentType = str(reply.header(QtNetwork.QNetworkRequest.ContentTypeHeader).toString())
+        contentType = reply.header(QtNetwork.QNetworkRequest.ContentTypeHeader)
         if not contentType:
             # TODO: implement real "sniff" content-type
-            if -1 != self.__data.find('<html'):
+            if -1 != self.__data.find(b'<html'):
                 contentType = 'text/html'
-                self.setRawHeader('Content-Type', contentType)
+                self.setRawHeader('Content-Type', contentType.encode('utf-8'))
                 reply.setHeader(QtNetwork.QNetworkRequest.ContentTypeHeader, contentType)
 
         self.__finished = True
@@ -209,39 +220,54 @@ class NetworkReply(QtNetwork.QNetworkReply):
     def __writeData(self, request, reply, status, responseData):
         outgoingData = self.__outgoingData
         method = self.__getOperationString()
-        url = str(request.url().toEncoded())
+        url = request.url().toString(QUrl.FullyEncoded)
         parsed = urlparse.urlsplit(url)
-        relativeUrl = urlparse.urlunsplit(('','', parsed.path, parsed.query,''))
+        relativeUrl = urlparse.urlunsplit(('','', parsed.path, parsed.query, ''))
         host = parsed.hostname
 
-        requestHeaders = '%s %s HTTP/1.1\r\n' % (method, relativeUrl)
+        bio = io.BytesIO()
+        bio.write(method.encode('ascii'))
+        bio.write(b' ')
+        bio.write(relativeUrl.encode('utf-8'))
+        bio.write(b' HTTP/1.1\r\n')
         for bname in request.rawHeaderList():
             bvalue = request.rawHeader(bname)
-            name = str(bname)
-            value = str(bvalue)
-            if 'host' == name.lower():
-                host = value
-            requestHeaders += '%s: %s\r\n' % (name, value)
-        requestHeaders += '\r\n'
+            name = bname.data()
+            value = bvalue.data()
+            if b'host' == name.lower():
+                host = value.encode('utf-8')
+            bio.write(name)
+            bio.write(b': ')
+            bio.write(value)
+            bio.write(b'\r\n')
+        bio.write(b'\r\n')
+        requestHeaders = bio.getvalue()
 
-        contentType = str(reply.header(QtNetwork.QNetworkRequest.ContentTypeHeader).toString())
-        contentLength = str(reply.header(QtNetwork.QNetworkRequest.ContentLengthHeader).toString())
-        if not contentLength:
+        contentType = reply.header(QtNetwork.QNetworkRequest.ContentTypeHeader)
+        contentLength = reply.header(QtNetwork.QNetworkRequest.ContentLengthHeader)
+        if contentLength is None:
             contentLength = len(responseData)
         else:
             contentLength = int(contentLength)
 
-        status = int(status)
-        msg = str(self.__reply.attribute(QtNetwork.QNetworkRequest.HttpReasonPhraseAttribute).toString())
-        responseHeaders = 'HTTP/1.1 %d %s\r\n' % (status, msg) # TODO: is server HTTP version exposed?
+        status = str(status)
+        msg = self.__reply.attribute(QtNetwork.QNetworkRequest.HttpReasonPhraseAttribute)
+        bio = io.BytesIO()
+        bio.write(b'HTTP/1.1 ')
+        bio.write(status.encode('ascii'))
+        bio.write(b' ')
+        bio.write(msg.encode('utf-8'))
+        bio.write(b'\r\n')
         for bname in reply.rawHeaderList():
             bvalue = reply.rawHeader(bname)
-            name = str(bname)
-            value = str(bvalue)
-            responseHeaders += '%s: %s\r\n' % (name, value)
-        responseHeaders += '\r\n'
+            bio.write(bname.data())
+            bio.write(b': ')
+            bio.write(bvalue.data())
+            bio.write(b'\r\n')
+        bio.write(b'\r\n')
+        responseHeaders = bio.getvalue()
 
-        requestData = ''
+        requestData = b''
         if outgoingData:
             requestData = outgoingData.getdata()
 
@@ -259,7 +285,6 @@ class NetworkReply(QtNetwork.QNetworkReply):
             responseHeaders,
             responseData
             )
-
         self.__writer.write(data)
 
     def request(self):
@@ -289,12 +314,13 @@ class NetworkReply(QtNetwork.QNetworkReply):
         return True
 
     def bytesAvailable(self):
-        return self.__datalen - self.__offset
+        ba = self.__datalen - self.__offset
+        return ba
 
     def readData(self, maxSize):
         size = min(self.__datalen - self.__offset, maxSize)
-        if min < 0:
-            return None
+        if size <= 0:
+            return b''
         data = self.__data[self.__offset:self.__offset+size]
         self.__offset += size
         return data
@@ -310,7 +336,7 @@ class NetworkMemoryCache(QtNetwork.QAbstractNetworkCache):
         return self.size
 
     def clear(self):
-        for k in self.cache.keys():
+        for k in list(self.cache.keys()):
             metaData, buf, mtime = self.cache.pop(k)
             if buf:
                 self.size -= buf.length()
@@ -318,8 +344,8 @@ class NetworkMemoryCache(QtNetwork.QAbstractNetworkCache):
             metaData, buf = None, None            
 
     def data(self, url):
-        k = url.toEncoded()
-        if self.cache.has_key(k):
+        k = url.toString(QUrl.FullyEncoded)
+        if k in self.cache:
             buf = self.cache[k][1]
             device = QBuffer(buf)
             device.open(QIODevice.ReadOnly|QIODevice.Unbuffered)
@@ -327,7 +353,7 @@ class NetworkMemoryCache(QtNetwork.QAbstractNetworkCache):
         return None
 
     def insert(self, device):
-        for k in self.outstanding.keys():
+        for k in list(self.outstanding.keys()):
             if self.outstanding[k] == device:
                 self.size += device.size()
                 self.cache[k][1] = device.data()
@@ -337,8 +363,8 @@ class NetworkMemoryCache(QtNetwork.QAbstractNetworkCache):
             raise Exception('Failed to find outstanding entry on cache insert')
 
     def metaData(self, url):
-        k = url.toEncoded()
-        if self.cache.has_key(k):
+        k = url.toString(QUrl.FullyEncoded)
+        if k in self.cache:
             metaData, buf, mtime = self.cache.pop(k)
             if buf:
                 return metaData
@@ -347,7 +373,7 @@ class NetworkMemoryCache(QtNetwork.QAbstractNetworkCache):
         return metaData
 
     def prepare(self, metaData):
-        k = metaData.url().toEncoded()
+        k = metaData.url().toString(QUrl.FullyEncoded)
         self.cache[k] = [metaData, None, time.time()]
         device = QBuffer()
         device.open(QIODevice.ReadWrite|QIODevice.Unbuffered)
@@ -355,11 +381,11 @@ class NetworkMemoryCache(QtNetwork.QAbstractNetworkCache):
         return device
 
     def remove(self, url):
-        k = url.toEncoded()
-        if self.outstanding.has_key(k):
+        k = url.toString(QUrl.FullyEncoded)
+        if k in self.outstanding:
             device = self.outstanding.pop(k)
             device = None
-        if self.cache.has_key(k):
+        if k in self.cache:
             metaData, buf, mtime = self.cache.pop(k)
             if buf:
                 self.size -= buf.length()
@@ -368,8 +394,8 @@ class NetworkMemoryCache(QtNetwork.QAbstractNetworkCache):
         return False
 
     def updateMetaData(self, metaData):
-        url = metaData.url().toEncoded()
-        if self.cache.has_key(url):
+        url = metaData.url().toString(QUrl.FullyEncoded)
+        if url in self.cache:
             self.cache[url][0] = metaData
 
 class NetworkCacheL(QtNetwork.QAbstractNetworkCache):
@@ -388,47 +414,47 @@ class NetworkCacheL(QtNetwork.QAbstractNetworkCache):
             self.nc = NetworkMemoryCache(parent)
 
     def __attr__(self, name):
-        print('NetworkCache: [%s]' % (name))
+        ###print(('NetworkCache: [%s]' % (name)))
         return getattr(self.nc, msg)
 
     def insert(self, device):
         msg = 'NetworkCache: [%s](%s)' % ('insert', device)
         r = self.nc.insert(device)
-        print('%s -> %s' % (msg, r))
+        ###print(('%s -> %s' % (msg, r)))
         return r
 
     def metaData(self, url):
         msg = 'NetworkCache: [%s](%s)' % ('metaData', url)
         r = self.nc.metaData(url)
-        print('%s -> %s, isValid=%s' % (msg, r, r.isValid()))
-        print('\n'.join(['%s: %s' % (n, v) for n,v in r.rawHeaders()]))
+        ###print(('%s -> %s, isValid=%s' % (msg, r, r.isValid())))
+        ###print(('\n'.join(['%s: %s' % (n, v) for n,v in r.rawHeaders()])))
         return r
 
     def data(self, url):
         msg = 'NetworkCache: [%s](%s)' % ('data', url)
         r = self.nc.data(url)
         if r:
-            print('%s -> %s, isOpen=%s' % (msg, r, r.isOpen()))
+            print(('%s -> %s, isOpen=%s' % (msg, r, r.isOpen())))
         return r
 
     def prepare(self, metaData):
         msg = 'NetworkCache: [%s](%s)' % ('prepare', metaData)
         r = self.nc.prepare(metaData)
-        print('%s -> %s' % (msg, r))
+        ###print(('%s -> %s' % (msg, r)))
 #        print('\n'.join(['%s: %s' % (n, v) for n,v in metaData.rawHeaders()]))
         return r
 
     def remove(self, url):
         msg = 'NetworkCache: [%s](%s)' % ('remove', url)
         r = self.nc.remove(url)
-        print('%s -> %s' % (msg, r))
+        ###print(('%s -> %s' % (msg, r)))
         return r
 
     def updateMetaData(self, metaData):
         msg = 'NetworkCache: [%s](%s)' % ('updateMetaData', metaData)
         r = self.nc.updateMetaData(metaData)
-        print('%s -> %s' % (msg, r))
-        print('\n'.join(['%s: %s' % (n, v) for n,v in metaData.rawHeaders()]))
+        ###print(('%s -> %s' % (msg, r)))
+        ###print(('\n'.join(['%s: %s' % (n, v) for n,v in metaData.rawHeaders()])))
 
 class NetworkManager(QtNetwork.QNetworkAccessManager):
     def __init__(self, writer, parent = None):
@@ -465,13 +491,12 @@ class NetworkManager(QtNetwork.QNetworkAccessManager):
         self.setCookieJar(self.__cookiejar)
 
         # no proxy
-        proxy = QtNetwork.QNetworkProxy(QtNetwork.QNetworkProxy.HttpProxy, 'localhost', 8080)
-        self.setProxy(proxy)
+#        proxy = QtNetwork.QNetworkProxy(QtNetwork.QNetworkProxy.HttpProxy, 'localhost', 8080)
+#        self.setProxy(proxy)
 
         QObject.connect(self, SIGNAL('finished(QNetworkReply *)'), self.replyFinished)
 
     def createRequest(self, operation, request, outgoingData = None):
-#        print('getting -> %s' % (request.url().toString()))
         if outgoingData:
             outgoingData = WrapIODevice(outgoingData)
         reply =  NetworkReply(self, self.writer, request, outgoingData, QtNetwork.QNetworkAccessManager.createRequest(self, operation, request, outgoingData))
@@ -481,7 +506,7 @@ class NetworkManager(QtNetwork.QNetworkAccessManager):
         # check for redirect
         redirectTarget = reply.attribute(QtNetwork.QNetworkRequest.RedirectionTargetAttribute)
         if redirectTarget:
-            targetUrl = redirectTarget.toUrl()
+            targetUrl = redirectTarget
             if not targetUrl.isEmpty():
                 if targetUrl.isRelative():
                     targetUrl = reply.url().resolved(targetUrl)
@@ -489,7 +514,6 @@ class NetworkManager(QtNetwork.QNetworkAccessManager):
                 if targetUrl != reply.url():
                     originatingObject = reply.request().originatingObject()
                     if originatingObject and (reply.url() == originatingObject.requestedUrl()):
-                        print('**reply finished: %s, redirect target=%s' % (reply.url().toString(), targetUrl.toString()))
                         originatingObject.setUrl(targetUrl)
 
 class setTimeoutWrapper(QObject):
@@ -501,7 +525,6 @@ class setTimeoutWrapper(QObject):
         return 1234
 
     def __call__(self):
-        print('call\'d')
         return self
 
     def foo(self):
@@ -521,16 +544,16 @@ class WebPage(QtWebKit.QWebPage):
         return True
 
     def javaScriptAlert(self, frame, msg):
-        print('alert from [%s / %s]: %s' % (frame.url(), frame.requestedUrl(), msg))
+        print(('alert from [%s / %s]: %s' % (frame.url(), frame.requestedUrl(), msg)))
 
     def javaScriptConfirm(self, frame, msg):
-        print('confirm from [%s / %s]: %s' % (frame.url(), frame.requestedUrl(), msg))
+        print(('confirm from [%s / %s]: %s' % (frame.url(), frame.requestedUrl(), msg)))
 
     def javaScriptPrompt(self, frame, msg, defaultValue, result):
-        print('prompt from [%s / %s]: %s' % (frame.url(), frame.requestedUrl(), msg))
+        print(('prompt from [%s / %s]: %s' % (frame.url(), frame.requestedUrl(), msg)))
 
     def javaScriptConsoleMessage(self, message, lineNumber, sourceID):
-        print('console log from [%s / %s]: %s' % (lineNumber, sourceID, message))
+        print(('console log from [%s / %s]: %s' % (lineNumber, sourceID, message)))
 
     def userAgentForUrl(self, url):
         return 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1'
@@ -539,11 +562,11 @@ class WebPage(QtWebKit.QWebPage):
         fUrl = ''
         pfUrl = ''
         if frame:
-            fUrl = frame.url().toEncoded()
+            fUrl = frame.url().toString(QUrl.FullyEncoded)
         pf = frame.parentFrame()
         if pf is not None:
-            pfUrl = pf.url().toEncoded()
-        print('navigation request to --> %s from %s | %s' % (request.url().toEncoded(), fUrl, pfUrl))
+            pfUrl = pf.url().toString(QUrl.FullyEncoded)
+        print(('navigation request to --> %s from %s | %s' % (request.url().toString(QUrl.FullyEncoded), fUrl, pfUrl)))
         if self.__browserWindow.processing_links:
             if request.url().isValid() and frame.url().host() == request.url().host() and frame.url() != request.url():
                 self.__mainWindow.emit(SIGNAL('addTargetUrl(QUrl,QWebFrame)'), request.url(), frame)
@@ -553,7 +576,7 @@ class WebPage(QtWebKit.QWebPage):
             return True
 
     def frameCreatedHandler(self, frame):
-        print('--> new frame created: %s' % (frame))
+        print(('--> new frame created: %s' % (frame)))
         QObject.connect(frame, SIGNAL('javaScriptWindowObjectCleared()'), self.javaScriptWindowObjectClearedHandler)
 
     def javaScriptWindowObjectClearedHandler(self):
@@ -589,11 +612,11 @@ class BrowserWindow(QWidget):
         QObject.connect(self, SIGNAL('navigate(QString)'), self.navigateHandler)
         QObject.connect(self.qtimer, SIGNAL('timeout()'), self.timeoutHandler)
         QObject.connect(self.webview.page().mainFrame(), SIGNAL('javaScriptWindowObjectCleared()'), self.javaScriptWindowObjectClearedHandler)
-        self.webview.page().mainFrame().addToJavaScriptWindowObject('setInterva', setTimeoutWrapper(self))
+        self.webview.page().mainFrame().addToJavaScriptWindowObject('setInterval', setTimeoutWrapper(self))
 
     def javaScriptWindowObjectClearedHandler(self):
         print('---->javaScriptWindowObjectCleared')
-        self.webview.page().mainFrame().addToJavaScriptWindowObject('setInterva', setTimeoutWrapper(self))
+        self.webview.page().mainFrame().addToJavaScriptWindowObject('setInterval', setTimeoutWrapper(self))
 
     def navigateHandler(self, url):
         self.__url = url
@@ -642,7 +665,7 @@ class BrowserWindow(QWidget):
         return False
 
     def processFrame(self, frame):
-        print('processing frame [%s]: %s' % (frame.frameName(), frame.url().toEncoded()))
+        print(('processing frame [%s]: %s' % (frame.frameName(), frame.url().toString(QUrl.FullyEncoded))))
         baseUrl = frame.url()
         dom = frame.documentElement()
         headElement = dom.findFirst('head')
@@ -670,7 +693,7 @@ class BrowserWindow(QWidget):
                     pass
 
                 for aname in form.attributeNames():
-                    print('%s: %s' % (aname, form.attribute(aname)))
+                    print(('%s: %s' % (aname, form.attribute(aname))))
             # links
             alinks = dom.findAll("a")
             for alink in alinks:
@@ -680,9 +703,9 @@ class BrowserWindow(QWidget):
                     href = alink.attribute(aname)
                     hrefUrl = QUrl(href)
                     if hrefUrl.isValid():
-                        print('href=%s' % href)
+                        print(('href=%s' % href))
                         if hrefUrl.scheme() == 'javascript':
-                            print('evaluating javascript->%s' % hrefUrl.path())
+                            print(('evaluating javascript->%s' % hrefUrl.path()))
                             alink.evaluateJavaScript(hrefUrl.path())
                         else:
                             if hrefUrl.isRelative():
@@ -692,11 +715,11 @@ class BrowserWindow(QWidget):
                             if self.shouldAddTarget(frame, baseUrl, resolvedUrl):
                                 self.__mainWindow.emit(SIGNAL('addTargetUrl(QUrl)'), resolvedUrl)
                     else:
-                        print('ignoring invalid href=%s' % href)
+                        print(('ignoring invalid href=%s' % href))
 #                    print('%s: %s' % (aname, alink.attribute(aname)))
 #        print(buffer(dom.toOuterXml()))
 
-        html = str(dom.toOuterXml().toAscii()).decode('ascii', 'ignore')
+        html = dom.toOuterXml()
 
 #        print(html)
         for child in frame.childFrames():
@@ -709,7 +732,7 @@ class BrowserWindow(QWidget):
         securityOrigin = mainFrame.securityOrigin()
         databases = securityOrigin.databases()
         for database in databases:
-            print('database=%s' % (database.fileName()))
+            print(('database=%s' % (database.fileName())))
         self.processing_links = False
         self.__mainWindow.emit(SIGNAL('navigationFinished(int, QString)'), self.__index, self.__url)
             
@@ -718,10 +741,10 @@ class WriterThread(QThread):
         QThread.__init__(self)
         now = time.time()
         self.logger = logger
-        self.filename = os.path.join(directory, 'RaftCapture-%d.xml.bz2' % (int(now*1000)))
-        self.re_nonprintable = re.compile('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r'))
-        self.ofhandle = bz2.BZ2File(self.filename, 'wb')
-        self.ofhandle.write('<raft version="1.0">')
+        self.filename = os.path.join(directory, 'RaftCapture-%d.xml.xz' % (int(now*1000)))
+        self.re_nonprintable = re.compile(bytes('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r'), 'ascii'))
+        self.ofhandle = lzma.LZMAFile(self.filename, 'wb')
+        self.ofhandle.write(b'<raft version="1.0">')
         self.qlock = QMutex()
         self.datalist = collections.deque()
         self.timer = QTimer()
@@ -764,7 +787,7 @@ class WriterThread(QThread):
         [10] - response headers
         [11] - response body
         """
-        ohandle = self.ofhandle
+        ohandle = io.StringIO()
         ohandle.write('<capture>\n')
         ohandle.write('<request>\n')
         ohandle.write('<method>%s</method>\n' % escape(data[0]))
@@ -776,14 +799,14 @@ class WriterThread(QThread):
         request_headers = data[4]
         request_body = data[5]
         if self.re_nonprintable.search(request_headers):
-            ohandle.write('<headers encoding="base64">%s</headers>\n' % request_headers.encode('base64'))
+            ohandle.write('<headers encoding="base64">%s</headers>\n' % base64.b64encode(request_headers).decode('ascii'))
         else:
-            ohandle.write('<headers>%s</headers>\n' % escape(request_headers))
+            ohandle.write('<headers>%s</headers>\n' % escape(request_headers.decode('ascii')))
         if request_body:
             if self.re_nonprintable.search(request_body):
-                ohandle.write('<body encoding="base64">%s</body>\n' % request_body.encode('base64'))
+                ohandle.write('<body encoding="base64">%s</body>\n' % base64.b64encode(request_body).decode('ascii'))
             else:
-                ohandle.write('<body>%s</body>\n' % escape(request_body))
+                ohandle.write('<body>%s</body>\n' % escape(request_body.decode('ascii')))
         ohandle.write('</request>\n')
         ohandle.write('<response>\n')
         ohandle.write('<status>%d</status>\n' % int(data[6]))
@@ -793,22 +816,24 @@ class WriterThread(QThread):
         response_headers = data[10]
         response_body = data[11]
         if self.re_nonprintable.search(response_headers):
-            ohandle.write('<headers encoding="base64">%s</headers>\n' % response_headers.encode('base64'))
+            ohandle.write('<headers encoding="base64">%s</headers>\n' % base64.b64encode(response_headers).decode('ascii'))
         else:
-            ohandle.write('<headers>%s</headers>\n' % escape(response_headers))
+            ohandle.write('<headers>%s</headers>\n' % escape(response_headers.decode('ascii')))
         if response_body:
             if self.re_nonprintable.search(response_body):
-                ohandle.write('<body encoding="base64">%s</body>\n' % response_body.encode('base64'))
+                ohandle.write('<body encoding="base64">%s</body>\n' % base64.b64encode(response_body).decode('ascii'))
             else:
-                ohandle.write('<body>%s</body>\n' % escape(response_body))
+                ohandle.write('<body>%s</body>\n' % escape(response_body.decode('ascii')))
         ohandle.write('</response>\n')
         ohandle.write('</capture>\n')
+
+        self.ofhandle.write(ohandle.getvalue().encode('utf-8')) # TODO: should use utf-8 universally?
 
     def finishWrite(self):
         self.qlock.lock()
         while len(self.datalist)>0:
             self.writeData(self.datalist.popleft())
-        self.ofhandle.write('</raft>')
+        self.ofhandle.write(b'</raft>')
         self.ofhandle.close()
 
     def shutdown(self):
@@ -893,19 +918,17 @@ class MainWindow(QWidget):
     def go(self):
         self.qlock.lock()
         try:
-            entry = str(self.qlineedit.text())
+            entry = self.qlineedit.text()
             if entry:
+                entry = QUrl.fromUserInput(entry).toEncoded().data().decode('utf-8')
                 self.targets.append(entry)
                 self.qlineedit.setText('')
             for target in self.targets:
                 self.targets_outstanding[target] = True
-            for i in range(0, min(len(self.targets), self.num_tabs)):
-                index = self.index % self.num_tabs
-                self.browsers[index].emit(SIGNAL('navigate(QString)'), self.targets[self.index])
-                self.available[index] = False
-                self.index += 1
         finally:
             self.qlock.unlock()
+
+        self.dispatchNext()
 
     def waitForOutstandingHandler(self):
         self.qlock.lock()
@@ -926,21 +949,21 @@ class MainWindow(QWidget):
             self.logger.debug('locked after tryLock')
 
         try:
-            target = str(url.toEncoded())
+            target = url.toString(QUrl.FullyEncoded)
             for pat in self.exclude_patterns:
                 if pat.search(target):
                     self.logger.warn('excluding target: %s\n' % (target))
                     return
             if not target in self.targets:
-                host = str(url.host())
-                if self.link_count.has_key(host):
+                host = url.host()
+                if host in self.link_count:
                     if self.link_count[host] > MAX_LINK_COUNT:
                         return
                     else:
                         self.link_count[host] += 1
                 else:
                     self.link_count[host] = 1
-                print('adding target [%s]' % (target))
+                print(('adding target [%s]' % (target)))
                 self.targets_outstanding[target] = True
                 self.targets.append(target)
         finally:
@@ -953,8 +976,8 @@ class MainWindow(QWidget):
         else:
             self.logger.debug('locked after tryLock')
         try:
-            target = str(url)
-            if not self.targets_outstanding.has_key(target):
+            target = url
+            if target not in self.targets_outstanding:
                 self.logger.debug('unexpected target: %s, %s' % (target, repr(self.targets_outstanding)))
             else:
                 self.logger.debug('removing outstanding: %s' % (target))
@@ -991,7 +1014,7 @@ class MainWindow(QWidget):
 
 def capture_error(typ, val, traceb):
     import traceback
-    print('type=%s, value=%s\n%s' % (typ, val, traceback.format_tb(traceb)))
+    print(('type=%s, value=%s\n%s' % (typ, val, traceback.format_tb(traceb))))
 
 if '__main__' == __name__:
 
@@ -1024,19 +1047,18 @@ if '__main__' == __name__:
             else:
                 fileargs.append(arg)
             i += 1
-        print(fileargs)
         
         for arg in fileargs:
             if os.path.exists(arg):
                 for line in open(arg, 'r'):
                     target = line.rstrip()
                     if not (target.startswith('http:') or target.startswith('https:')):
-                        target = 'http://' + target + '/'
+                        target = QUrl.fromUserInput(target).toEncoded().data().decode('utf-8')
                     targets.append(target)
             else:
                 target = arg
                 if not (target.startswith('http:') or target.startswith('https:')):
-                    target = 'http://' + target + '/'
+                    target = QUrl.fromUserInput(target).toEncoded().data().decode('utf-8')
                 targets.append(target)
 
     app = QApplication([])

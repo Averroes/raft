@@ -27,7 +27,8 @@ import pkgutil
 import inspect
 import sys
 import os
-from AbstractAnalyzer import AbstractAnalyzer
+import imp
+from .AbstractAnalyzer import AbstractAnalyzer
 
 class AnalyzerList():
 
@@ -62,14 +63,14 @@ class AnalyzerList():
 
             try:
                 #print 'attempting to reload %s'%modname
-                module=reload(sys.modules[modname])
+                module=imp.reload(sys.modules[modname])
                 #print 'reloaded %s'%module
-            except KeyError,e:
+            except KeyError as e:
                 module = __import__(modname, fromlist="junklist")
                 #print 'first time loaded %s'%module
-            except ImportError,e:
-                print 'IMPORT ERROR ON modname'
-                print e
+            except ImportError as e:
+                print('IMPORT ERROR ON modname')
+                print(e)
             
             #print "Imported", module
             classmembers = inspect.getmembers(module, inspect.isclass)

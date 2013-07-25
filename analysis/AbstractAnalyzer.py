@@ -19,7 +19,7 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 import json
-import resultsclasses.AnalysisResults
+from .resultsclasses import AnalysisResults
 from utility import TreeWidgetTools
 from PyQt4.QtGui import *
 from PyQt4.QtCore import Qt
@@ -87,7 +87,7 @@ class AbstractAnalyzer(object):
         """Accepts any configuration data from the system.
             Either a settings dictionary or a JSON string representation
             of the same is OK."""
-        if (type(newconfiguration)==str or type(newconfiguration)==unicode) and len(newconfiguration)>0:
+        if (type(newconfiguration)==str or type(newconfiguration)==str) and len(newconfiguration)>0:
             #print "FOUND JSON, decoding"
             #pprint.pprint(newconfiguration)
             temp=json.loads(newconfiguration)
@@ -114,8 +114,8 @@ class AbstractAnalyzer(object):
         Analyzer writers shouldn't need to override this function except for special cases, like
         when subclassing a custom AnalysisResults object.
         """
-        self.analysisresults=resultsclasses.AnalysisResults.AnalysisResults()
-        self.analysisresults.setAnalyzerInfo(self.desc,self.friendlyname,str(self.__class__).translate(None,'<>'))
+        self.analysisresults=AnalysisResults.AnalysisResults()
+        self.analysisresults.setAnalyzerInfo(self.desc,self.friendlyname,str(self.__class__).translate('<>'))
         
         
     def getResults(self):
@@ -144,6 +144,6 @@ class AbstractAnalyzer(object):
         outstring="""<h1>%s</h1>
         (%s)
         <p>%s</p>
-        """%(self.friendlyname,str(self.__class__).translate(None,'<>'),self.desc)
+        """%(self.friendlyname,str(self.__class__).translate('<>'),self.desc)
         return outstring
     

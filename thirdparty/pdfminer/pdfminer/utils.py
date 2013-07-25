@@ -3,29 +3,37 @@
 Miscellaneous Routines.
 """
 import struct
-from sys import maxint as INF
+from sys import maxsize as INF
 
 
 ##  Matrix operations
 ##
 MATRIX_IDENTITY = (1, 0, 0, 1, 0, 0)
 
-def mult_matrix((a1,b1,c1,d1,e1,f1), (a0,b0,c0,d0,e0,f0)):
+def mult_matrix(xxx_todo_changeme2, xxx_todo_changeme3):
     """Returns the multiplication of two matrices."""
+    (a1,b1,c1,d1,e1,f1) = xxx_todo_changeme2
+    (a0,b0,c0,d0,e0,f0) = xxx_todo_changeme3
     return (a0*a1+c0*b1,    b0*a1+d0*b1,
             a0*c1+c0*d1,    b0*c1+d0*d1,
             a0*e1+c0*f1+e0, b0*e1+d0*f1+f0)
 
-def translate_matrix((a,b,c,d,e,f), (x,y)):
+def translate_matrix(xxx_todo_changeme4, xxx_todo_changeme5):
     """Translates a matrix by (x,y)."""
+    (a,b,c,d,e,f) = xxx_todo_changeme4
+    (x,y) = xxx_todo_changeme5
     return (a,b,c,d,x*a+y*c+e,x*b+y*d+f)
 
-def apply_matrix_pt((a,b,c,d,e,f), (x,y)):
+def apply_matrix_pt(xxx_todo_changeme6, xxx_todo_changeme7):
     """Applies a matrix to a point."""
+    (a,b,c,d,e,f) = xxx_todo_changeme6
+    (x,y) = xxx_todo_changeme7
     return (a*x+c*y+e, b*x+d*y+f)
 
-def apply_matrix_norm((a,b,c,d,e,f), (p,q)):
+def apply_matrix_norm(xxx_todo_changeme8, xxx_todo_changeme9):
     """Equivalent to apply_matrix_pt(M, (p,q)) - apply_matrix_pt(M, (0,0))"""
+    (a,b,c,d,e,f) = xxx_todo_changeme8
+    (p,q) = xxx_todo_changeme9
     return (a*p+c*q, b*p+d*q)
 
 
@@ -64,7 +72,7 @@ def fsplit(pred, objs):
 def drange(v0, v1, d):
     """Returns a discrete range."""
     assert v0 < v1
-    return xrange(int(v0)/d, int(v1+d-1)/d)
+    return range(int(v0)/d, int(v1+d-1)/d)
 
 # get_bound
 def get_bound(pts):
@@ -116,7 +124,7 @@ def nunpack(s, default=0):
         raise TypeError('invalid length: %d' % l)
 
 # decode_text
-PDFDocEncoding = ''.join( unichr(x) for x in (
+PDFDocEncoding = ''.join( chr(x) for x in (
   0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
   0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0017, 0x0017,
@@ -153,7 +161,7 @@ PDFDocEncoding = ''.join( unichr(x) for x in (
 def decode_text(s):
     """Decodes a PDFDocEncoding string to Unicode."""
     if s.startswith('\xfe\xff'):
-        return unicode(s[2:], 'utf-16be', 'ignore')
+        return str(s[2:], 'utf-16be', 'ignore')
     else:
         return ''.join( PDFDocEncoding[ord(c)] for c in s )
 
@@ -163,10 +171,12 @@ def enc(x, codec='ascii'):
     x = x.replace('&','&amp;').replace('>','&gt;').replace('<','&lt;').replace('"','&quot;')
     return x.encode(codec, 'xmlcharrefreplace')
 
-def bbox2str((x0,y0,x1,y1)):
+def bbox2str(xxx_todo_changeme10):
+    (x0,y0,x1,y1) = xxx_todo_changeme10
     return '%.3f,%.3f,%.3f,%.3f' % (x0, y0, x1, y1)
 
-def matrix2str((a,b,c,d,e,f)):
+def matrix2str(xxx_todo_changeme11):
+    (a,b,c,d,e,f) = xxx_todo_changeme11
     return '[%.2f,%.2f,%.2f,%.2f, (%.2f,%.2f)]' % (a,b,c,d,e,f)
 
 
@@ -224,7 +234,8 @@ class Plane(object):
     def __contains__(self, obj):
         return obj in self._objs
 
-    def _getrange(self, (x0,y0,x1,y1)):
+    def _getrange(self, xxx_todo_changeme):
+        (x0,y0,x1,y1) = xxx_todo_changeme
         for y in drange(y0, y1, self.gridsize):
             for x in drange(x0, x1, self.gridsize):
                 yield (x,y)
@@ -253,7 +264,8 @@ class Plane(object):
         return
 
     # find(): finds objects that are in a certain area.
-    def find(self, (x0,y0,x1,y1)):
+    def find(self, xxx_todo_changeme1):
+        (x0,y0,x1,y1) = xxx_todo_changeme1
         done = set()
         for k in self._getrange((x0,y0,x1,y1)):
             if k not in self._grid: continue

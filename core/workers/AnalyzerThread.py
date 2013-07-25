@@ -25,9 +25,15 @@
 
 import inspect
 
-from PyQt4.QtCore import Qt, QObject, SIGNAL, QThread, QTimer, QMutex, QString
+from PyQt4.QtCore import Qt, QObject, SIGNAL, QThread, QTimer, QMutex
 
-from cStringIO import StringIO
+try:
+    from PyQt4.QtCore import QString
+except ImportError:
+    # we are using Python3 so QString is not defined
+    QString = type("")
+
+from io import StringIO
 
 from analysis.AnalyzerList import AnalyzerList
 from core.database.constants import ResponsesTable
@@ -90,7 +96,7 @@ class AnalyzerThread(QThread):
         else:
             try:
                 fullanalysistext = self.analyze_content()
-            except Exception, e:
+            except Exception as e:
                 self.framework.report_exception(e)
             finally:
                 self.qlock.unlock()
@@ -129,14 +135,14 @@ class AnalyzerThread(QThread):
             
             #dbconfig=self.Data.get_config_value(self.read_cursor, 'ANALYSIS', str(x.__class__))
             #print "dbconfig=%s"%dbconfig
-            #print "class=%s"%x.__class__
+            print("class=%s"%x.__class__)
             #x.setConfiguration(dbconfig)
             x.preanalysis()
             x.initResultsData()
             resultinstance=x.getResults()
             x.analyzerinstanceid=self.Data.analysis_add_analyzer_instance(self.cursor, 
                                                                           analysisrunid,
-                                                                          str(x.__class__).translate(None,'<>'),
+                                                                          str(x.__class__).translate('<>'),
                                                                           x.friendlyname,x.desc, self.result_type_to_string(resultinstance))     
         
         fullanalysistext=StringIO()
@@ -166,11 +172,11 @@ class AnalyzerThread(QThread):
                                                                 str(result.data),
                                                                 result.span,
                                                                 self.result_type_to_string(result))
-                        for key,value in tempanalysisresults.pages[transaction.responseId].stats.items():
+                        for key,value in list(tempanalysisresults.pages[transaction.responseId].stats.items()):
                             self.Data.analysis_add_stat(self.cursor, pageresultset, key, value)
-                except Exception, e:
+                except Exception as e:
                     # TODO: add real debugging support
-                    self.framework.debug_log(transaction)
+                    self.framework.debug_log('Transaction ID: ' + str(transaction.responseId))
                     self.framework.report_exception(e)
                     
         #Post Analysis
@@ -178,7 +184,7 @@ class AnalyzerThread(QThread):
                 results=analyzer.getResults()
                 analyzer.postanalysis(results)
                 
-                for context in results.overall.keys():
+                for context in list(results.overall.keys()):
                     
                     overallresultset=self.Data.analysis_add_resultset(self.cursor, 
                                                                       analyzer.analyzerinstanceid,
@@ -196,7 +202,7 @@ class AnalyzerThread(QThread):
                                                             result.span,
                                                             self.result_type_to_string(result))
                         #print "WRITING:",self.result_type_to_string(result)
-                    for key,value in results.overall[context].stats.items():
+                    for key,value in list(results.overall[context].stats.items()):
                         self.Data.analysis_add_stat(self.cursor, overallresultset, key, value)
                 
         self.Data.commit()

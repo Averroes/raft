@@ -27,8 +27,9 @@ def getContentType(contentType, data = ''):
     # TODO: implement
     return contentType
 
-def getCharSet(contentType):
-    # TODO : remove, deprecated ... use BaseExtractor instead
+def getCharSet(contentType, default_charset = 'utf-8'):
+    if isinstance(contentType, bytes):
+        contentType = contentType.decode('utf-8', 'ignore')
     charset = ''
     if contentType:
         lookup = 'charset='
@@ -36,8 +37,24 @@ def getCharSet(contentType):
         if n > -1:
             charset = contentType[n+len(lookup):].strip()
     if not charset:
-        charset = 'utf-8'
-    return charset
+        return default_charset
+    else:
+        return charset
+
+def getContentTypeFromHeaders(headers, default_content_type = 'text/html'):
+    lines = headers.splitlines()
+    pos = 0
+    content_type = None
+    for line in lines:
+        if b':' in line:
+            name, value = [x.strip() for x in line.split(b':', 1)]
+            if b'content-type' == name.lower():
+                content_type = value
+                break
+    if not content_type:
+        return default_content_type
+    else:
+        return content_type.decode('utf-8', 'ignore')
 
 def decodeBody(data, charset):
     try:
@@ -46,12 +63,10 @@ def decodeBody(data, charset):
             if data.startswith(codecs.BOM_UTF16):
                 bodyText = data.decode('utf-16')
             elif data.startswith(codecs.BOM_UTF8):
-                bodyText = data.replace(codecs.BOM_UTF8, '').decode('utf-8')
+                bodyText = data[len(codecs.BOM_UTF8):].decode('utf-8')
             else:
                 bodyText = data.decode(charset)
         except UnicodeDecodeError:
-            pass
-        except UnicodeEncodeError:
             pass
         except LookupError:
             pass
@@ -62,10 +77,10 @@ def decodeBody(data, charset):
             bodyText = repr(bodyText)[1:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
     except UnicodeDecodeError:
         # TODO: handle binary content ???
-        bodyText = repr(data)[1:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
+        bodyText = repr(data)[2:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
     except UnicodeEncodeError:
         # TODO: handle binary content ???
-        bodyText = repr(data)[1:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
+        bodyText = repr(data)[2:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
 
     return bodyText
 
@@ -80,3 +95,25 @@ def combineRaw(headers, data, charset = 'utf-8'):
 
     return (headersText, bodyText, headersText + bodyText)
 
+def convertBytesToDisplayText(b):
+    # TODO: implement hex dump
+    if bytes == type(b):
+        try:
+            s = b.decode('utf-8')
+        except UnicodeDecodeError:
+            s = repr(b)[2:-1].replace('\\r', '').replace('\\n', '\n').replace('\\t', '\t')
+        return s
+    else:
+        return b
+    
+def getCombinedText(headers, data, content_type):
+    charset = 'utf-8'
+    if content_type:
+        ct = content_type.lower() 
+        n = ct.find('charset=')
+        if n > 0:
+            charset = ct[n+8:]
+            if ';' in charset:
+                charset, junk = charset.split(';',1)
+    headersText, bodyText, combinedText = combineRaw(headers, data, charset)
+    return combinedText

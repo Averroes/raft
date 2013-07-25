@@ -29,9 +29,9 @@ from core.crawler.FormFiller import FormFiller
 from core.crawler.SpiderRules import SpiderRules
 
 import re
-import urllib2
-from urllib2 import urlparse
-from cStringIO import StringIO
+import urllib.request, urllib.error, urllib.parse
+from urllib import parse as urlparse
+from io import StringIO
 from collections import deque
 import uuid
 
@@ -264,7 +264,7 @@ class SpiderThread(QThread):
 
             self.pendingResponsesDataModel.append_data(putback_rows)
 
-        except Exception, error:
+        except Exception as error:
             self.framework.report_exception(error)
         finally:
             self.qlock.unlock()
@@ -291,7 +291,7 @@ class SpiderThread(QThread):
                 else:
                     keep_looping = False
 
-        except Exception, error:
+        except Exception as error:
             self.framework.report_exception(error)
         finally:
             self.qlock.unlock()
@@ -335,7 +335,7 @@ class SpiderThread(QThread):
         if context:
             self.qlock.lock()
             try:
-                if not self.spider_outstanding_requests.has_key(context):
+                if context not in self.spider_outstanding_requests:
                     self.framework.log_warning('*** missing spider request for [%s]' % (context))
                 else:
                     data_item = self.spider_outstanding_requests.pop(context)
@@ -388,7 +388,7 @@ class SpiderThread(QThread):
 
             self.pendingResponsesDataModel.appendleft_data(putback_rows)
 
-        except Exception, error:
+        except Exception as error:
             self.framework.report_exception(error)
         finally:
             self.qlock.unlock()
@@ -416,7 +416,7 @@ class SpiderThread(QThread):
 
     def do_stopSpidering(self):
         self.keep_spidering = False
-        print('do_stopSpidering', self, self.keep_spidering)
+        print(('do_stopSpidering', self, self.keep_spidering))
 
     def generate_spider_values(self, response_id, depth):
         new_depth = depth + 1
@@ -549,7 +549,7 @@ class SpiderThread(QThread):
         already_seen = {}
         found_response_id = None
         for request in requests:
-            print('filter spider request', request)
+            print(('filter spider request', request))
             method, base_url, query = request[0], request[1], request[2]
             if query:
                 base_url += '?' + query
@@ -647,9 +647,9 @@ class SpiderThread(QThread):
             if 0 != i:
                 body_io.write('&')
             if value is not None:
-                body_io.write('%s=%s' % (urllib2.quote(name), urllib2.quote(value)))
+                body_io.write('%s=%s' % (urllib.parse.quote(name), urllib.parse.quote(value)))
             else:
-                body_io.write('%s' % (urllib2.quote(name)))
+                body_io.write('%s' % (urllib.parse.quote(name)))
 
         return body_io.getvalue()
         

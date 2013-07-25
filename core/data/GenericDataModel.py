@@ -133,13 +133,13 @@ class GenericDataModel(QAbstractItemModel):
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return self.adapter.columnName(section)
-        return QVariant()
+        return None # QVariant()
 
     def data(self, index, role = Qt.DisplayRole):
         if not index.isValid():
-            return QVariant()
+            return None #QVariant()
         node = index.internalPointer()
         if role == Qt.DisplayRole:
-            return QVariant(self.adapter.getData(node.data, index.column()))
-        return QVariant()
+            return self.adapter.getData(node.data, index.column())
+        return None # QVariant()
             

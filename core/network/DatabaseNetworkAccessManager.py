@@ -77,7 +77,7 @@ class DatabaseNetworkAccessManager(BaseNetworkAccessManager):
     def handle_raft_config_updated(self, name, value):
         config_name = str(name)
         if 'black_hole_network' == config_name:
-            self.__blackholed = bool(value.toBool())
+            self.__blackholed = bool(value)
 
     def __isset_network_accessible(self):
         if self.__has_setNetworkAccessible:
@@ -91,14 +91,14 @@ class DatabaseNetworkAccessManager(BaseNetworkAccessManager):
         try: 
             reply = None
             reqUrl = request.url()
-            url = str(reqUrl.toEncoded()).encode('ascii', 'ignore')
+            url = reqUrl.toEncoded().data().decode('utf-8')
             x_raft_id = self.framework.X_RAFT_ID
             if request.hasRawHeader(x_raft_id):
-                raftId = str(request.rawHeader(x_raft_id))
+                raftId = request.rawHeader(x_raft_id).data().decode('utf-8')
                 request.setRawHeader(x_raft_id, QByteArray())
                 response = self.Data.read_responses_by_id(self.cursor, raftId)
                 if response is not None:
-                    reply = CustomNetworkReply(self, reqUrl, str(response[ResponsesTable.RES_HEADERS]), str(response[ResponsesTable.RES_DATA]))
+                    reply = CustomNetworkReply(self, reqUrl, bytes(response[ResponsesTable.RES_HEADERS]), bytes(response[ResponsesTable.RES_DATA]))
 
             if not reply:
                 if url.startswith('data:') or url.startswith('about:') or url.startswith('javascript:'):
@@ -109,7 +109,7 @@ class DatabaseNetworkAccessManager(BaseNetworkAccessManager):
                         if int(response[ResponsesTable.RES_LENGTH]) > 0 and str(response[ResponsesTable.STATUS]).startswith('2'):
                             responses.append(response)
                     if len(responses) > 0:
-                        reply = CustomNetworkReply(self, reqUrl, str(responses[-1][ResponsesTable.RES_HEADERS]), str(responses[-1][ResponsesTable.RES_DATA]))
+                        reply = CustomNetworkReply(self, reqUrl, bytes(responses[-1][ResponsesTable.RES_HEADERS]), bytes(responses[-1][ResponsesTable.RES_DATA]))
                     else:
                         # no network, but need to return reply
                         request.setUrl(QUrl('about:blank'))
@@ -121,7 +121,7 @@ class DatabaseNetworkAccessManager(BaseNetworkAccessManager):
                                               QtNetwork.QNetworkAccessManager.createRequest(self, operation, request, outgoingData), self)
 
             return reply
-        except Exception, error:
+        except Exception as error:
             # exceptions will cause a segfault
             self.framework.report_exception(error)
             request.setUrl(QUrl('about:blank'))

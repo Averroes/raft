@@ -97,7 +97,7 @@ class JSLiteParser():
                     if i < 128:
                         return chr(i)
                     else:
-                        return unichr(i)
+                        return chr(i)
                 else:
                     return m
             except ValueError:
@@ -108,7 +108,7 @@ class JSLiteParser():
             try:
                 return self.re_escape_string.sub(self.interpretEscape, value)
             except UnicodeDecodeError:
-                print('oops', value)
+                print(('oops', value))
         return value
 
     def process(self, script):
@@ -280,7 +280,7 @@ if '__main__' == __name__:
     for a in sys.argv[1:]:
         script=open(a).read()
         parser.parse_file(script)
-        print('\n'.join([s.encode('ascii', 'ignore') for s in parser.strings()]))
-        print(parser.comments())
+        print(('\n'.join([s.encode('ascii', 'ignore') for s in parser.strings()])))
+        print((parser.comments()))
 
 

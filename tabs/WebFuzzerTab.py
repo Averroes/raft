@@ -26,11 +26,12 @@ from PyQt4.QtGui import *
 from PyQt4 import Qsci
 
 
-from cStringIO import StringIO
-from urllib2 import urlparse
+from io import StringIO
+from urllib import parse as urlparse
 import uuid
 import re
 import json
+import os
 
 from actions import interface
 
@@ -46,6 +47,7 @@ from widgets.ResponsesContextMenuWidget import ResponsesContextMenuWidget
 from widgets.MiniResponseRenderWidget import MiniResponseRenderWidget
 from core.network.InMemoryCookieJar import InMemoryCookieJar
 from core.fuzzer import Payloads
+from dialogs import ConfirmDialog
 
 from core.fuzzer.TemplateDefinition import TemplateDefinition
 from core.fuzzer.TemplateItem import TemplateItem
@@ -91,6 +93,10 @@ class WebFuzzerTab(QObject):
         self.framework.subscribe_populate_webfuzzer_response_id(self.webfuzzer_populate_response_id)
         self.framework.subscribe_sequences_changed(self.fill_sequences)
         
+        self.mainWindow.wfFunctionsComboBox.activated.connect(self.fill_function_edit)
+        
+        self.mainWindow.wfFunctionsDeleteButton.clicked.connect(self.del_function_file)
+        
         self.miniResponseRenderWidget = MiniResponseRenderWidget(self.framework, self.mainWindow.stdFuzzResultsTabWidget, self)
         
         self.re_request = re.compile(r'^(\S+)\s+((?:https?://(?:\S+\.)+\w+(?::\d+)?)?/.*)\s+HTTP/\d+\.\d+\s*$', re.I)
@@ -102,16 +108,23 @@ class WebFuzzerTab(QObject):
 
         self.setup_functions_tab()
         
+        self.functions_dir = os.path.join(self.framework.get_data_dir(), 'functions')
+        
         self.Attacks = Payloads.Payloads(self.framework)
         self.Attacks.list_files()
         
         # Fill the payloads combo boxes on init
         self.fill_payloads()
         self.pending_fuzz_requests = None
+        
+        # Fill the functions combo box on init
+        self.fill_function_combo_box()
 
         self.Data = None
         self.cursor = None
         self.framework.subscribe_database_events(self.db_attach, self.db_detach)
+        
+        
 
     def db_attach(self):
         self.Data = self.framework.getDB()
@@ -148,10 +161,13 @@ class WebFuzzerTab(QObject):
         self.functionsEditScintilla.setFont(self.framework.get_font())
         self.functionsEditScintilla.setWrapMode(1)
         self.functionsEditScintilla.setMarginWidth(1, '1000')
+        self.functionsEditScintilla.setAutoIndent(True)
         self.functionsLayout.addWidget(self.functionsEditScintilla)
         self.functionsEditScintilla.zoomTo(self.framework.get_zoom_size()+5) # TODO: hack
         self.framework.subscribe_zoom_in(self.edit_function_zoom_in)
         self.framework.subscribe_zoom_out(self.edit_function_zoom_out)
+        
+        
 
     def edit_function_zoom_in(self):
         self.functionsEditScintilla.zoomIn()
@@ -247,8 +263,6 @@ class WebFuzzerTab(QObject):
         
         selectedText = comboBox.currentText()
         comboBox.clear()
-        # comboBox.addItem("SQLi")
-        # comboBox.addItem("XSS")
         
         payloads = self.Attacks.list_files()
         for item in payloads:
@@ -256,6 +270,62 @@ class WebFuzzerTab(QObject):
                 pass
             else:
                 comboBox.addItem(item)
+                
+    def fill_payload_combo_box_function(self, comboBox):
+        
+        selectedText = comboBox.currentText()
+        comboBox.clear()
+        
+        functions = self.Attacks.list_function_files()
+        for item in functions:
+            if item.startswith("."):
+                pass
+            else:
+                comboBox.addItem(item)
+    
+                
+    def fill_function_combo_box(self):
+        comboBox = self.mainWindow.wfFunctionsComboBox
+        comboBox.clear()
+        
+        functions = self.Attacks.list_function_files()
+        for item in functions:
+            if item.startswith("."):
+                pass
+            else:
+                comboBox.addItem(item)
+                
+    def fill_function_edit(self):
+        
+        filename = self.mainWindow.wfFunctionsComboBox.currentText()
+        
+        func = self.Attacks.read_function(filename)
+        
+        # Clear the Scintilla widget
+        self.functionsEditScintilla.clear()
+        
+        for line in func:
+            self.functionsEditScintilla.append(line.decode("utf8"))
+            
+    def del_function_file(self):
+        
+        # Gets the current name of the file selected in the combobox
+        filename = self.mainWindow.wfFunctionsComboBox.currentText()
+        path = self.functions_dir
+        
+        message = "Are you sure you want to delete: {0}".format(filename)
+        
+        response = ConfirmDialog.display_confirm_dialog(self.mainWindow, message)
+        
+        if response == True:
+            os.remove(path + "/" + filename)
+            
+            self.fill_function_combo_box()
+                    
+            # Clear the items from the scintilla widget
+            #ToDo: This should be the default data for the function
+            self.functionsEditScintilla.clear()
+    
         
     def create_payload_map(self):
         # create payload map from configuration tab
@@ -310,12 +380,12 @@ class WebFuzzerTab(QObject):
         self.local_ns = None
         functions = [
 '''
-import urllib2
+import urllib.parse
 import re
 import random
 
 def url_encode(input):
-   return urllib2.quote(input)
+   return urllib.parse.quote(input)
 
 re_alert_mangler = re.compile(r'alert\([^(]+\)', re.I)
 
@@ -348,16 +418,40 @@ def randomize_alert(input):
         self.mainWindow.wfStdBox.setEnabled(self.mainWindow.wfTempSeqChk.isChecked())
         
     def handle_payload_toggled(self):
-        self.mainWindow.wfPay1PayloadBox.setEnabled(self.mainWindow.wfPay1FuzzRadio.isChecked())
-        self.mainWindow.wfPay1StaticEdit.setEnabled(self.mainWindow.wfPay1StaticRadio.isChecked() or self.mainWindow.wfPay1DynamicRadio.isChecked())
-        self.mainWindow.wfPay2PayloadBox.setEnabled(self.mainWindow.wfPay2FuzzRadio.isChecked())
-        self.mainWindow.wfPay2StaticEdit.setEnabled(self.mainWindow.wfPay2StaticRadio.isChecked() or self.mainWindow.wfPay2DynamicRadio.isChecked())
-        self.mainWindow.wfPay3PayloadBox.setEnabled(self.mainWindow.wfPay3FuzzRadio.isChecked())
-        self.mainWindow.wfPay3StaticEdit.setEnabled(self.mainWindow.wfPay3StaticRadio.isChecked() or self.mainWindow.wfPay3DynamicRadio.isChecked())
-        self.mainWindow.wfPay4PayloadBox.setEnabled(self.mainWindow.wfPay4FuzzRadio.isChecked())
-        self.mainWindow.wfPay4StaticEdit.setEnabled(self.mainWindow.wfPay4StaticRadio.isChecked() or self.mainWindow.wfPay4DynamicRadio.isChecked())
-        self.mainWindow.wfPay5PayloadBox.setEnabled(self.mainWindow.wfPay5FuzzRadio.isChecked())
-        self.mainWindow.wfPay5StaticEdit.setEnabled(self.mainWindow.wfPay5StaticRadio.isChecked() or self.mainWindow.wfPay5DynamicRadio.isChecked())
+        self.mainWindow.wfPay1PayloadBox.setEnabled(self.mainWindow.wfPay1FuzzRadio.isChecked() or self.mainWindow.wfPay1DynamicRadio.isChecked())
+        self.mainWindow.wfPay1StaticEdit.setEnabled(self.mainWindow.wfPay1StaticRadio.isChecked()) 
+        # self.mainWindow.wfPay1PayloadBox.setEnabled(self.mainWindow.wfPay1DynamicRadio.isChecked()) or self.fill_payload_combo_box_function(self.mainWindow.wfPay1PayloadBox)
+        self.mainWindow.wfPay2PayloadBox.setEnabled(self.mainWindow.wfPay2FuzzRadio.isChecked() or self.mainWindow.wfPay2DynamicRadio.isChecked())
+        self.mainWindow.wfPay2StaticEdit.setEnabled(self.mainWindow.wfPay2StaticRadio.isChecked()) 
+        self.mainWindow.wfPay3PayloadBox.setEnabled(self.mainWindow.wfPay3FuzzRadio.isChecked() or self.mainWindow.wfPay3DynamicRadio.isChecked())
+        self.mainWindow.wfPay3StaticEdit.setEnabled(self.mainWindow.wfPay3StaticRadio.isChecked()) 
+        self.mainWindow.wfPay4PayloadBox.setEnabled(self.mainWindow.wfPay4FuzzRadio.isChecked() or self.mainWindow.wfPay4DynamicRadio.isChecked())
+        self.mainWindow.wfPay4StaticEdit.setEnabled(self.mainWindow.wfPay4StaticRadio.isChecked()) 
+        self.mainWindow.wfPay5PayloadBox.setEnabled(self.mainWindow.wfPay5FuzzRadio.isChecked() or self.mainWindow.wfPay5DynamicRadio.isChecked())
+        self.mainWindow.wfPay5StaticEdit.setEnabled(self.mainWindow.wfPay5StaticRadio.isChecked()) 
+        
+        # Determine if fuzz or dynamic is selected and change combo box items
+        if self.mainWindow.wfPay1FuzzRadio.isChecked():
+            self.fill_payload_combo_box(self.mainWindow.wfPay1PayloadBox)
+        if self.mainWindow.wfPay1DynamicRadio.isChecked():
+            self.fill_payload_combo_box_function(self.mainWindow.wfPay1PayloadBox)
+        if self.mainWindow.wfPay2FuzzRadio.isChecked():
+            self.fill_payload_combo_box(self.mainWindow.wfPay2PayloadBox)
+        if self.mainWindow.wfPay2DynamicRadio.isChecked():
+            self.fill_payload_combo_box_function(self.mainWindow.wfPay2PayloadBox)
+        if self.mainWindow.wfPay3FuzzRadio.isChecked():
+            self.fill_payload_combo_box(self.mainWindow.wfPay3PayloadBox)
+        if self.mainWindow.wfPay3DynamicRadio.isChecked():
+            self.fill_payload_combo_box_function(self.mainWindow.wfPay3PayloadBox)
+        if self.mainWindow.wfPay4FuzzRadio.isChecked():
+            self.fill_payload_combo_box(self.mainWindow.wfPay4PayloadBox)
+        if self.mainWindow.wfPay4DynamicRadio.isChecked():
+            self.fill_payload_combo_box_function(self.mainWindow.wfPay4PayloadBox)
+        if self.mainWindow.wfPay5FuzzRadio.isChecked():
+            self.fill_payload_combo_box(self.mainWindow.wfPay5PayloadBox)
+        if self.mainWindow.wfPay5DynamicRadio.isChecked():
+            self.fill_payload_combo_box_function(self.mainWindow.wfPay5PayloadBox)
+            
 
     def handle_fuzzer_history_clicked(self):
         index = self.mainWindow.fuzzerHistoryTreeView.currentIndex()
@@ -368,10 +462,10 @@ def randomize_alert(input):
                 return
             responseItems = [m or '' for m in list(row)]
             url = str(responseItems[ResponsesTable.URL])
-            reqHeaders = str(responseItems[ResponsesTable.RES_HEADERS])
-            reqData = str(responseItems[ResponsesTable.RES_DATA])
+            reqHeaders = bytes(responseItems[ResponsesTable.RES_HEADERS])
+            reqData = bytes(responseItems[ResponsesTable.RES_DATA])
             contentType = str(responseItems[ResponsesTable.RES_CONTENT_TYPE])
-            self.miniResponseRenderWidget.populate_response_text(url, reqHeaders, reqData, contentType)
+            self.miniResponseRenderWidget.populate_response_content(url, reqHeaders, reqData, contentType)
         
     def webfuzzer_populate_response_id(self, Id):
         
@@ -444,10 +538,10 @@ def randomize_alert(input):
         self.framework.set_raft_config_value('WebFuzzer.Standard.Method', method)
 
         self.framework.set_raft_config_value('WebFuzzer.Standard.PreSequenceEnabled', self.mainWindow.wfStdPreChk.isChecked())
-        self.framework.set_raft_config_value('WebFuzzer.Standard.PreSequenceId', str(self.mainWindow.wfStdPreBox.itemData(self.mainWindow.wfStdPreBox.currentIndex()).toString()))
+        self.framework.set_raft_config_value('WebFuzzer.Standard.PreSequenceId', self.mainWindow.wfStdPreBox.itemData(self.mainWindow.wfStdPreBox.currentIndex()))
 
         self.framework.set_raft_config_value('WebFuzzer.Standard.PostSequenceEnabled', self.mainWindow.wfStdPostChk.isChecked())
-        self.framework.set_raft_config_value('WebFuzzer.Standard.PostSequenceId', str(self.mainWindow.wfStdPostBox.itemData(self.mainWindow.wfStdPostBox.currentIndex()).toString()))
+        self.framework.set_raft_config_value('WebFuzzer.Standard.PostSequenceId', self.mainWindow.wfStdPostBox.itemData(self.mainWindow.wfStdPostBox.currentIndex()))
 
     def save_config_configuration(self):
         self.save_config_configuration_item('Payload1', self.mainWindow.wfPay1FuzzRadio, self.mainWindow.wfPay1PayloadBox, self.mainWindow.wfPay1StaticRadio, self.mainWindow.wfPay1DynamicRadio, self.mainWindow.wfPay1StaticEdit)
@@ -468,7 +562,7 @@ def randomize_alert(input):
 
         if 'Cancel' == self.mainWindow.wfStdStartButton.text() and self.pending_fuzz_requests is not None:
             self.cancel_fuzz_requests = True
-            for context, pending_request in self.pending_fuzz_requests.iteritems():
+            for context, pending_request in self.pending_fuzz_requests.items():
                 pending_request.cancel()
             self.pending_fuzz_requests = None
             self.mainWindow.wfStdStartButton.setText('Start Attack')
@@ -487,11 +581,11 @@ def randomize_alert(input):
 
         sequenceId = None
         if self.mainWindow.wfStdPreChk.isChecked():
-            sequenceId = str(self.mainWindow.wfStdPreBox.itemData(self.mainWindow.wfStdPreBox.currentIndex()).toString())
+            sequenceId = self.mainWindow.wfStdPreBox.itemData(self.mainWindow.wfStdPreBox.currentIndex())
 
         postSequenceId = None
         if self.mainWindow.wfStdPostChk.isChecked():
-            postSequenceId = str(self.mainWindow.wfStdPostBox.itemData(self.mainWindow.wfStdPostBox.currentIndex()).toString())
+            postSequenceId = self.mainWindow.wfStdPostBox.itemData(self.mainWindow.wfStdPostBox.currentIndex())
         
         # Fuzzing stuff
         payload_mapping = self.create_payload_map()
@@ -506,7 +600,7 @@ def randomize_alert(input):
                 
         errors = []
         fuzz_payloads = {}
-        for name, payload_info in payload_mapping.iteritems():
+        for name, payload_info in payload_mapping.items():
             if name in parameter_names:
                 payload_type, payload_value = payload_info
                 if 'fuzz' == payload_type:
@@ -528,7 +622,7 @@ def randomize_alert(input):
         tests_count = []
         total_tests = 1
         
-        for name, payload_info in payload_mapping.iteritems():
+        for name, payload_info in payload_mapping.items():
             if name in parameter_names:
                 payload_type, payload_value = payload_info
                 if 'static' == payload_type:
@@ -697,7 +791,7 @@ def randomize_alert(input):
         if self.pending_fuzz_requests is not None:
             try:
                 self.pending_fuzz_requests.pop(context)
-            except KeyError, e:
+            except KeyError as e:
                 pass
         if 0 != response_id:
             row = self.Data.read_responses_by_id(self.cursor, response_id)

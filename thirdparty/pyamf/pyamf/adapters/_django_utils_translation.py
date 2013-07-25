@@ -15,7 +15,7 @@ import pyamf
 
 def convert_lazy(l, encoder=None):
     if l.__class__._delegate_unicode:
-        return unicode(l)
+        return str(l)
 
     if l.__class__._delegate_str:
         return str(l)

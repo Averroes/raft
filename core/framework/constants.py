@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
-from urllib2 import urlparse
+from urllib import parse as urlparse
 
 METHODS = """GET
 POST

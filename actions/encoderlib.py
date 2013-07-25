@@ -5,7 +5,7 @@
 #         Nathan Hamiel (nathan{at}neohaxor{dot}org)
 #         Gregory Fleischer (gfleischer@gmail.com)
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2013 RAFT Team
 # Copyright (c) 2010 Nathan Hamiel
 #
 # This file is part of RAFT.
@@ -24,15 +24,17 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
+import base64
 import hashlib
 import cgi
-import StringIO
+import io
 import zlib
 import decimal
 import re
 from xml.sax.saxutils import unescape
 from xml.sax.saxutils import escape
+from codecs import getencoder, getdecoder
 
 ###################
 # Encoder section #
@@ -42,7 +44,7 @@ def url_encode(encvalue):
     """ URL encode the specifed value. Example Format: Hello%20World """
     
     try:
-        encoded_value = urllib.quote(encvalue)
+        encoded_value = urllib.parse.quote(encvalue)
     except:
         encoded_value = "There was a problem with the specified value"
     return(encoded_value)
@@ -63,11 +65,19 @@ def base64_encode(encvalue):
     """ Base64 encode the specified value. Example Format: SGVsbG8gV29ybGQ= """
     
     try:
-        basedata = encvalue.encode("Base64")
+        basedata = base64.b64encode(bytes(encvalue, encoding="utf-8"))
     except:
         basedata = "There was an error"
     
-    return(basedata)
+    return(basedata.decode("utf-8"))
+
+def html_entity_encode(encvalue):
+    """ HTML Entity encoding using the CGI module escaping with quote """
+    
+    encoded = cgi.escape(encvalue, quote=True)
+    
+    return(encoded)
+
     
 def hex_encode(encvalue):
     """ Encode value to Hex. Example Format: 48656c6c6f2576f726c64"""
@@ -130,17 +140,19 @@ def md5_hash(encvalue):
     """ md5 hash the specified value.
     Example Format: b10a8db164e0754105b7a99be72e3fe5"""
     
-    hashdata = hashlib.md5(encvalue).hexdigest()
+    hashdata = hashlib.md5()
+    hashdata.update(encvalue.encode("utf-8"))
     
-    return(hashdata)
+    return(hashdata.hexdigest())
     
 def sha1_hash(encvalue):
     """ sha1 hash the specified value.
     Example Format: 0a4d55a8d778e5022fab701977c5d840bbc486d0 """
     
-    hashdata = hashlib.sha1(encvalue).hexdigest()
+    hashdata = hashlib.sha1()
+    hashdata.update(encvalue.encode("utf-8"))
     
-    return(hashdata)
+    return(hashdata.hexdigest())
     
 def sqlchar_encode(encvalue):
     """ SQL char encode the specified value.
@@ -194,7 +206,10 @@ def rot13_encode(encvalue):
     """ Perform ROT13 encoding on the specified value.
     Example Format: Uryyb Jbeyq """
     
-    return(encvalue.encode("rot13"))
+    encoder = getencoder("rot-13")
+    rot13 = encoder(encvalue) [0]
+    
+    return(rot13)
 
 def _int2bits(val, width):
     result = ''
@@ -219,6 +234,7 @@ def _utf7_encode(encvalue, padbit):
 
     result = ''
     raw = encvalue.encode('utf-16be')
+
     for i in range(0, len(raw)/2):
         ch1, ch2 = raw[i*2], raw[i*2+1]
         if '\x00' == ch1 and '+' == ch2:
@@ -252,7 +268,7 @@ def url_decode(decvalue):
     """ URL Decode the specified value. Example Format: Hello%20World """
     
     # returnval = urllib.unquote(decvalue.decode)
-    returnval = urllib.unquote(decvalue)
+    returnval = urllib.parse.unquote(decvalue)
     
     return(returnval)
     
@@ -276,8 +292,9 @@ def base64_decode(decvalue):
     and Python choked on it """
     
     try:
-        base64dec = decvalue.decode("Base64")
-        return(base64dec)
+        # base64dec = decvalue.decode("Base64")
+        base64dec = base64.b64decode(bytes(decvalue, encoding="utf-8"))
+        return(base64dec.decode("utf-8"))
     except:
         return(msg)
 
@@ -357,7 +374,10 @@ def unicode_decode(decvalue):
 def rot13_decode(decvalue):
     """ ROT13 decode the specified value. Example Format: Uryyb Jbeyq  """
     
-    return(decvalue.decode("rot13"))
+    decoder = getdecoder("rot-13")
+    rot13 = decoder(decvalue) [0]
+    
+    return(rot13)
 
 def utf7_decode(decvalue):
     """ UTF-7 decode value including values with bad padding """
@@ -480,7 +500,7 @@ def decode_values(decode_value, decode_method):
     elif decode_method == "UTF-7":
         value = utf7_decode(decode_value)
     else:
-        print('unimplemented decode method,', decode_method)
+        print(('unimplemented decode method,', decode_method))
 
     return(value)
     

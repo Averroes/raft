@@ -26,12 +26,12 @@ from analysis.AbstractAnalyzer import AbstractAnalyzer
 class FindInsecureCookies(AbstractAnalyzer):
     
     #Class variables shared across all instances
-    SetCookieRegex = re.compile("set-cookie\:\s(\S*?=\S*?);\s(.*)",re.I)
-    SecureRegex = re.compile("secure",re.I)
-    HttpOnlyRegex = re.compile("httponly",re.I)
-    HttpsRegex = re.compile("https://",re.I)
-    PathRegex = re.compile("path=/;{0,1}\s",re.I)
-    UrlPathRegex = re.compile("https{0,1}:\/\/.*\/(\S+)")
+    SetCookieRegex = re.compile(b"set-cookie\:\s(\S*?=\S*?);\s(.*)",re.I)
+    SecureRegex = re.compile(b"secure",re.I)
+    HttpOnlyRegex = re.compile(b"httponly",re.I)
+    HttpsRegex = re.compile(b"https://",re.I)
+    PathRegex = re.compile(b"path=/;{0,1}\s",re.I)
+    UrlPathRegex = re.compile(b"https{0,1}:\/\/.*\/(\S+)")
     outputSecureHeader = 'Cookies not marked as "secure"'
     notSecureText = "If the 'secure' flag is included in the HTTP set-cookie response header, the cookie will only be sent with a request when the browser is communicating using HTTPS."
     notSecure = {}
@@ -133,10 +133,10 @@ class FindInsecureCookies(AbstractAnalyzer):
 
     def postanalysis(self,results):
         outputSecureValue = ""
-        for h in self.notSecure.iterkeys():
+        for h in self.notSecure.keys():
             outputSecureValue += " %s (" % h
             first = True
-            for v in self.notSecure[h].iterkeys():
+            for v in self.notSecure[h].keys():
                 if not first:
                     outputSecureValue += ", "
                 else:
@@ -153,10 +153,10 @@ class FindInsecureCookies(AbstractAnalyzer):
                                      )
 
         outputHttpValue = ""
-        for h in self.notHttpOnly.iterkeys():
+        for h in self.notHttpOnly.keys():
             outputHttpValue += " %s (" % h
             first = True
-            for v in self.notHttpOnly[h].iterkeys():
+            for v in self.notHttpOnly[h].keys():
                 if not first:
                     outputHttpValue += ", "
                 else:
@@ -174,8 +174,8 @@ class FindInsecureCookies(AbstractAnalyzer):
         
         for cookie in self.OWASP_Cookie_Map:
             cookieRE = re.compile(cookie,re.I)
-            for h in self.cookies.iterkeys():
-                for c in self.cookies[h].iterkeys():
+            for h in self.cookies.keys():
+                for c in self.cookies[h].keys():
                     if cookieRE.search(c):
                         results.addOverallResult(type='OWASP Cookie Database',
                                      desc='Cookies identified in the OWASP Cookie Database (https://www.owasp.org/index.php/Category:OWASP_Cookies_Database) may reveal architecture information about the application and/or web server.',
@@ -188,43 +188,43 @@ class FindInsecureCookies(AbstractAnalyzer):
 
 
     OWASP_Cookie_Map={
-        'JSESSIONID': 'J2EE Application Server - Many appservers use this cookie including Claudio Resin, Jakarta Tomcat/JSERV, Macromedia Jrun',
-        'ASPSESSIONID': 'Microsoft IIS 5.0 - Cookie name varies by site',
-        'ASP.Net_SessionId': 'Microsoft IIS 6.0',
-        'PHPSESSION': 'The PHP Group - PHP',
-        'wiki18_session': 'MediaWiki 1.8 - Content Management Server - http://www.wikipedia.com/',
-        'WebLogicSession': 'BEA Weblogic - J2EE Application Server',
-        'BIGipServer': 'F5 BIG-IP Load Balancer - Used to mantain persistence based on original client when balancing to a farm. The cookie name contains the name of the web site being accessed as well as the protocol used.',
-        'SERVERID': 'HAproxy Load Balancer - More information in the [ http://haproxy.1wt.eu/download/1.2/doc/architecture.txt Architecture documentation]',
-        'SaneID': 'UNica NetTracker (formerly SANE NetTracker) - http://www.sane.com/ - A.B.C.D in the cookie value is the IP address of the client accessing the site',
-        'ssuid': 'Vignette Content Manager',
-        'vgnvisitor': 'Vignette Content Manager',
-        'SESSION_ID': 'IBM Net.Commerce',
-        'NSES40Session': 'Redhat - Netscape Enterprise Server 4.0',
-        'iPlanetUserId': 'Sun iPlanet web server (discontinued) - A.B.C.D in the cookie value is the client\'s IP address',
-        'gx_session_id': 'Sun Java System Application Server',
-        'JROUTE': 'Sun Java System Application Server - Used by the load balancing module to determine the server backend',
-        'RMID': 'RealMedia OpenAdStream 6.x Media Server',
-        'Apache': 'Apache web server - http://www.paypal.com/ - A.B.C.D in the cookie value is the client\'s IP address',
-        'CFID': 'Macromedia Coldfusion Application Server',
-        'CFTOKEN': 'Macromedia Coldfusion Application Server',
-        'CFGLOBALS': 'Macromedia Coldfusion Application Server',
-        'RoxenUserID': 'Roxen Web Server',
-        'JServSessionIdroot': 'Apache Foundation - ApacheJServ',
-        'sesessionid': 'IBM WebSphere Application Server',
-        'PD-S-SESSION-ID': 'IBM Tivoli Access Manager WebSeal (part of the IBM TAM for e-business) - 5.x, 6.x - Reverse authentication proxy',
-        'PD_STATEFUL': 'IBM Tivoli Access Manager WebSeal (part of the IBM TAM for e-business) - 5.x, 6.x - Reverse authentication proxy',
-        'WEBTRENDS_ID': 'WebTrends Tracking',
-        '__utm': 'Google Urchin Tracking Module',
-        'sc_id': 'Omniture http://2o7.net Tracking',
-        's_sq': 'Omniture http://2o7.net Tracking',
-        's_sess': 'Omniture http://2o7.net Tracking',
-        's_vi_': 'Omniture http://2o7.net Tracking',
-        'Mint': 'Shaun Inman - Mint - Tracking',
-        'SS_X_CSINTERSESSIONID': 'FatWire OpenMarket/FatWire Content Server',
-        'CSINTERSESSIONID':'FatWire OpenMarket/FatWire Content Server',
-        '_sn': 'Siebel CRM Application',
-        'BCSI-CSC': 'BlueCoat Proxy',
-        'Ltpatoken': 'IBM WebSphere Application Server',
-        'DomAuthSessID': 'IBM Lotus Domino Session-based authentication'    
+        b'JSESSIONID': 'J2EE Application Server - Many appservers use this cookie including Claudio Resin, Jakarta Tomcat/JSERV, Macromedia Jrun',
+        b'ASPSESSIONID': 'Microsoft IIS 5.0 - Cookie name varies by site',
+        b'ASP.Net_SessionId': 'Microsoft IIS 6.0',
+        b'PHPSESSION': 'The PHP Group - PHP',
+        b'wiki18_session': 'MediaWiki 1.8 - Content Management Server - http://www.wikipedia.com/',
+        b'WebLogicSession': 'BEA Weblogic - J2EE Application Server',
+        b'BIGipServer': 'F5 BIG-IP Load Balancer - Used to mantain persistence based on original client when balancing to a farm. The cookie name contains the name of the web site being accessed as well as the protocol used.',
+        b'SERVERID': 'HAproxy Load Balancer - More information in the [ http://haproxy.1wt.eu/download/1.2/doc/architecture.txt Architecture documentation]',
+        b'SaneID': 'UNica NetTracker (formerly SANE NetTracker) - http://www.sane.com/ - A.B.C.D in the cookie value is the IP address of the client accessing the site',
+        b'ssuid': 'Vignette Content Manager',
+        b'vgnvisitor': 'Vignette Content Manager',
+        b'SESSION_ID': 'IBM Net.Commerce',
+        b'NSES40Session': 'Redhat - Netscape Enterprise Server 4.0',
+        b'iPlanetUserId': 'Sun iPlanet web server (discontinued) - A.B.C.D in the cookie value is the client\'s IP address',
+        b'gx_session_id': 'Sun Java System Application Server',
+        b'JROUTE': 'Sun Java System Application Server - Used by the load balancing module to determine the server backend',
+        b'RMID': 'RealMedia OpenAdStream 6.x Media Server',
+        b'Apache': 'Apache web server - http://www.paypal.com/ - A.B.C.D in the cookie value is the client\'s IP address',
+        b'CFID': 'Macromedia Coldfusion Application Server',
+        b'CFTOKEN': 'Macromedia Coldfusion Application Server',
+        b'CFGLOBALS': 'Macromedia Coldfusion Application Server',
+        b'RoxenUserID': 'Roxen Web Server',
+        b'JServSessionIdroot': 'Apache Foundation - ApacheJServ',
+        b'sesessionid': 'IBM WebSphere Application Server',
+        b'PD-S-SESSION-ID': 'IBM Tivoli Access Manager WebSeal (part of the IBM TAM for e-business) - 5.x, 6.x - Reverse authentication proxy',
+        b'PD_STATEFUL': 'IBM Tivoli Access Manager WebSeal (part of the IBM TAM for e-business) - 5.x, 6.x - Reverse authentication proxy',
+        b'WEBTRENDS_ID': 'WebTrends Tracking',
+        b'__utm': 'Google Urchin Tracking Module',
+        b'sc_id': 'Omniture http://2o7.net Tracking',
+        b's_sq': 'Omniture http://2o7.net Tracking',
+        b's_sess': 'Omniture http://2o7.net Tracking',
+        b's_vi_': 'Omniture http://2o7.net Tracking',
+        b'Mint': 'Shaun Inman - Mint - Tracking',
+        b'SS_X_CSINTERSESSIONID': 'FatWire OpenMarket/FatWire Content Server',
+        b'CSINTERSESSIONID':'FatWire OpenMarket/FatWire Content Server',
+        b'_sn': 'Siebel CRM Application',
+        b'BCSI-CSC': 'BlueCoat Proxy',
+        b'Ltpatoken': 'IBM WebSphere Application Server',
+        b'DomAuthSessID': 'IBM Lotus Domino Session-based authentication'    
     }

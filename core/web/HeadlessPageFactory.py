@@ -23,7 +23,7 @@
 
 from PyQt4.QtCore import QObject, SIGNAL
 
-from HeadlessWebPage import HeadlessWebPage
+from .HeadlessWebPage import HeadlessWebPage
 
 class HeadlessPageFactory(QObject):
     class Logger:

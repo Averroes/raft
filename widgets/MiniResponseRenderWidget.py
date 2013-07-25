@@ -26,6 +26,7 @@ from PyQt4 import Qsci
 
 from core.web.StandardPageFactory import StandardPageFactory
 from core.web.RenderingWebView import RenderingWebView
+from utility import ContentHelper
 
 class MiniResponseRenderWidget(QObject):
     def __init__(self, framework, tabWidget, parent = None):
@@ -61,10 +62,10 @@ class MiniResponseRenderWidget(QObject):
         self.tabWidget.currentChanged.connect(self.do_render_apply)
 
     def fill_from_response(self, url, headers, body, content_type = ''):
-        self.reqRenderView.fill_from_response(url, headers, body)
+        self.reqRenderView.fill_from_response(url, headers, body, content_type)
 
-    def populate_response_text(self, url, headers, body, content_type = ''):
-
+    def populate_response_content(self, url, headers, body, content_type = ''):
+            
         self.request_url = url
         self.response_headers = headers
         self.response_body = body
@@ -75,7 +76,7 @@ class MiniResponseRenderWidget(QObject):
         lexerInstance.setFont(self.framework.get_font())
         self.reqRespEdit.setLexer(lexerInstance)
         # TODO: should verify trailing newlines?
-        self.reqRespEdit.setText(self.response_headers + self.response_body)
+        self.reqRespEdit.setText(ContentHelper.getCombinedText(self.response_headers, self.response_body, self.response_content_type))
 
         self.do_render_apply(self.tabWidget.currentIndex())
 
@@ -89,7 +90,7 @@ class MiniResponseRenderWidget(QObject):
         self.reqRespEdit.setText('')
         self.reqRenderView.setHtml('', QUrl('about:blank'))
         self.request_url = ''
-        self.response_headers = ''
-        self.response_body = ''
+        self.response_headers = b''
+        self.response_body = b''
         self.response_content_type = ''
         

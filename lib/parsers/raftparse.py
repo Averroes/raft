@@ -19,15 +19,21 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 from lxml import etree
-import sys, bz2, gzip
+import sys
+import bz2
+import gzip
+import lzma
 import re
-from urllib2 import urlparse
+from urllib import parse as urlparse
 import logging, traceback
-from cStringIO import StringIO
+from io import StringIO
 from xml.sax.saxutils import escape
+import base64
 
 class ParseAdapter:
-    re_nonprintable = re.compile('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r'))
+    re_nonprintable = re.compile(bytes('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r'),'ascii'))
+    re_nonprintable_str = re.compile('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r'))
+    re_apply_escape_str = re.compile('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%()*+,-./:;=?@[\\]^_`{|}~ \t\n\r'))
     def __init__(self):
         pass
 
@@ -38,23 +44,37 @@ class ParseAdapter:
         if value is None:
             return
         try:
-            value = str(func(value))
-            if self.re_nonprintable.search(value):
-                # TODO: could be decimal encoded?
+            value = func(value)
+            if str == type(value):
                 pass
+            elif bytes == type(value):
+                value = value.decode('utf-8', 'ignore')
+            else:
+                value = str(value)
+            if self.re_nonprintable_str.search(value):
+                results.write(fmt % re_apply_escape_str.sub(lambda m: '&#x%02X;' % (ord(m.group(0))), value))
             else:
                 results.write(fmt % escape(value))
         except ValueError:
             pass
 
     def write_encoded_xml(self, results, tagname, value):
-        if self.re_nonprintable.search(value):
+        is_str = type(value) == str
+        if is_str:
+            bvalue = value.encode('utf-8')
+        else:
+            bvalue = value
+
+        if self.re_nonprintable.search(bvalue):
             results.write('<%s encoding="base64">' % tagname)
-            results.write(value.encode('base64'))
+            results.write(base64.b64encode(bvalue).decode('ascii'))
             results.write('</%s>\n' % tagname)
         else:
             results.write('<%s>' % tagname)
-            results.write(escape(value))
+            if is_str:
+                results.write(escape(value))
+            else:
+                results.write(escape(value.decode('ascii')))
             results.write('</%s>\n' % tagname)
 
     def format_as_xml(self, capture):
@@ -95,14 +115,14 @@ class ParseAdapter:
                 self.request_headers = request[0]
                 self.request_body = request[1]
             else:
-                self.request_headers = ''
-                self.request_body = ''
+                self.request_headers = b''
+                self.request_body = b''
             if response:
                 self.response_headers = response[0]
                 self.response_body = response[1]
             else:
-                self.response_headers = ''
-                self.response_body = ''
+                self.response_headers = b''
+                self.response_body = b''
 
             self.extras = extras
             if extras and isinstance(extras, dict):
@@ -139,15 +159,17 @@ class raft_parse_xml():
     I_HEADERS_ENCODING = 2
     I_BODY_ENCODING = 3
 
-    re_request_line = re.compile(r'^(OPTIONS|GET|HEAD|POST|PUT|DELETE|TRACE|CONNECT|\w+)\s+((?:http|/).+)(?:\s+(HTTP/\d\.\d))?$')
-    re_status_line = re.compile(r'^(HTTP/\d\.\d)\s+(\d{3})(?:\s+(.*))?$')
+    re_request_line = re.compile(br'^(OPTIONS|GET|HEAD|POST|PUT|DELETE|TRACE|CONNECT|\w+)\s+((?:http|/).+?)(?:\s+(HTTP/\d\.\d))?$')
+    re_status_line = re.compile(br'^(HTTP/\d\.\d)\s+(\d{3})(?:\s+(.*))?$')
 
     def __init__(self, raftfile):
-        if raftfile.endswith('.xml.bz2'):
+        if raftfile.lower().endswith('.xml.bz2'):
             self.source = bz2.BZ2File(raftfile, 'rb')
-        elif raftfile.endswith('.xml.gz'):
+        elif raftfile.lower().endswith('.xml.gz'):
             self.source = gzip.GzipFile(raftfile, 'rb')
-        elif raftfile.endswith('.xml'):
+        elif raftfile.lower().endswith('.xml.xz'):
+            self.source = lzma.LZMAFile(raftfile, 'rb')
+        elif raftfile.lower().endswith('.xml'):
             self.source = open(raftfile, 'rb')
         else:
             raise Exception('Unsupported file type for %s' % (raftfile))
@@ -255,25 +277,25 @@ class raft_parse_xml():
         if not host or not url or not method:
             if request and request[0]:
                 request_headers = request[0]
-                request_url = ''
+                request_url = b''
                 for line in request_headers.splitlines():
                     line = line.rstrip()
                     m = self.re_request_line.search(line)
                     if m:
                         if not method:
-                            method = m.group(1)
+                            method = (m.group(1) or b'').decode('ascii', 'ignore')
                         request_url = m.group(2)
-                    elif ':' in line:
-                        name, value = line.split(':', 1)
+                    elif b':' in line:
+                        name, value = line.split(b':', 1)
                         lname = name.lower()
-                        if not host and 'host' == lname:
-                            host = value.strip()
+                        if not host and b'host' == lname:
+                            host = value.strip().decode('utf-8', 'ignore')
                 if not url:
                     splitted = urlparse.urlsplit(request_url)
                     if not host:
-                        host = splitted.hostname
-                    scheme = splitted.scheme or 'http'
-                    url = urlparse.urlunsplit((scheme, host, splitted.path, splitted.query, ''))
+                        host = (splitted.hostname or b'').decode('utf-8', 'ignore')
+                    scheme = (splitted.scheme or b'').decode('utf-8', 'ignore') or 'http'
+                    url = urlparse.urlunsplit((scheme, host, (splitted.path or b'').decode('utf-8', 'ignore'), (splitted.query or b'').decode('utf-8', 'ignore'), ''))
 
         if False:
             # TODO: some broken servers send the response headers in the request body :(
@@ -294,14 +316,14 @@ class raft_parse_xml():
                         m = self.re_status_line.search(line)
                         if m:
                             if not status:
-                                status = m.group(2)
-                        elif ':' in line:
-                            name, value = line.split(':', 1)
+                                status = (m.group(2) or b'').decode('utf-8', 'ignore')
+                        elif b':' in line:
+                            name, value = line.split(b':', 1)
                             lname = name.lower()
-                            if not datetime and 'date' == lname:
-                                datetime = value.strip()
-                            elif not content_type and 'content-type' == lname:
-                                content_type = value.strip()
+                            if not datetime and b'date' == lname:
+                                datetime = value.strip().decode('utf-8', 'ignore')
+                            elif not content_type and b'content-type' == lname:
+                                content_type = value.strip().decode('utf-8', 'ignore')
             if status and datetime and content_type:
                 break
 
@@ -316,6 +338,8 @@ class raft_parse_xml():
         try:
             status = int(cur['status'])
         except ValueError:
+            pass
+        except TypeError:
             pass
         url = cur['url']
         datetime = cur['datetime']
@@ -372,7 +396,7 @@ class raft_parse_xml():
         self.states.pop()
 
     def headers_start(self, elem):
-        if elem.attrib.has_key('encoding'):
+        if 'encoding' in elem.attrib:
             self.current_hb[self.I_HEADERS_ENCODING] = elem.attrib['encoding']
         self.states.append(self.S_HEADERS)
 
@@ -380,7 +404,7 @@ class raft_parse_xml():
         self.common_headers_body_end(elem, self.I_HEADERS, self.I_HEADERS_ENCODING)
 
     def body_start(self, elem):
-        if elem.attrib.has_key('encoding'):
+        if 'encoding' in elem.attrib:
             self.current_hb[self.I_BODY_ENCODING] = elem.attrib['encoding']
         self.states.append(self.S_BODY)
 
@@ -389,15 +413,16 @@ class raft_parse_xml():
 
     def common_headers_body_end(self, elem, i_content, i_encoding):
         content = elem.text
-        if not content:
-            content = ''
-        encoding = self.current_hb[i_encoding]
-        if 'none' == encoding:
-            pass
-        elif 'base64' == encoding:
-            content = content.decode('base64')
+        if content is None:
+            content = b''
         else:
-            raise Exception('unrecognized encoding: %s' % (encoding))
+            encoding = self.current_hb[i_encoding]
+            if 'none' == encoding:
+                content = content.encode('utf-8')
+            elif 'base64' == encoding:
+                content = base64.b64decode(content)
+            else:
+                raise Exception('unrecognized encoding: %s' % (encoding))
 
         self.current_hb[i_content] = content
         self.states.pop()
@@ -431,12 +456,12 @@ class raft_parse_xml():
         if not content:
             content = ''
         encoding = 'none'
-        if elem.attrib.has_key('encoding'):
+        if 'encoding' in elem.attrib:
             encoding = elem.attrib['encoding']
         if 'none' == encoding:
             self.current_cookie[elem.tag] = content
         elif 'base64' == encoding:
-            self.current_cookie[elem.tag] = content.decode('base64')
+            self.current_cookie[elem.tag] = base64.b64decode(content).decode('utf-8','ignore')
         else:
             raise Exception('unrecognized encoding: %s' % (encoding))
         self.states.pop()
@@ -459,12 +484,12 @@ class raft_parse_xml():
         if not content:
             content = ''
         encoding = 'none'
-        if elem.attrib.has_key('encoding'):
+        if 'encoding' in elem.attrib:
             encoding = elem.attrib['encoding']
         if 'none' == encoding:
             self.current[elem.tag] = content
         elif 'base64' == encoding:
-            self.current[elem.tag] = content.decode('base64')
+            self.current[elem.tag] = base64.b64decode(content).decode('utf-8','ignore')
         else:
             raise Exception('unrecognized encoding: %s' % (encoding))
         self.states.pop()
@@ -472,9 +497,9 @@ class raft_parse_xml():
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         while True:
-            event, elem = self.iterator.next()
+            event, elem = next(self.iterator)
             tag = elem.tag
             try:
                 state = self.states[-1]
@@ -504,5 +529,5 @@ if '__main__' == __name__:
         print(result)
         count += 1
 
-    print('processed count: %d' % (count))
+    print(('processed count: %d' % (count)))
 

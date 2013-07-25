@@ -1,7 +1,7 @@
 #
 # Author: Gregory Fleischer (gfleischer@gmail.com)
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2013 RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -21,10 +21,11 @@
 # This is a module that handles the importing of various formats in to the RAFT tool
 # project database format.
 
-from lib.parsers.burpparse import burp_parse_log, burp_parse_state, burp_parse_xml
+from lib.parsers.burpparse import burp_parse_log, burp_parse_state, burp_parse_xml, burp_parse_vuln_xml
 from lib.parsers.webscarabparse import webscarab_parse_conversation
 from lib.parsers.parosparse import paros_parse_message
 from lib.parsers.raftparse import raft_parse_xml
+from lib.parsers.appscanparse import appscan_parse_xml
 
 def process_import(proxy_log, framework, source):
     """ Performs the importing of log in to the RAFT database """
@@ -39,14 +40,18 @@ def process_import(proxy_log, framework, source):
         func = burp_parse_log
     elif 'burp_xml' == source:
         func = burp_parse_xml
+    elif 'burp_vuln_xml' == source:
+        func = burp_parse_vuln_xml
     elif 'paros_message' == source:
         func = paros_parse_message
     elif 'webscarab' == source:
         func = webscarab_parse_conversation
     elif 'raft_capture_xml' == source:
         func = raft_parse_xml
+    elif 'appscan_xml' == source:
+        func = appscan_parse_xml
     else:
-        raise(Exception('internal error; invalid source=' + source))
+        raise Exception
 
     raw_cookie_list = []
     cursor = Data.allocate_thread_cursor()
@@ -67,14 +72,14 @@ def process_import(proxy_log, framework, source):
                 if response:
                     response_headers, response_body = response[0], response[1]
                 else:
-                    response_headers, response_body = '', ''
+                    response_headers, response_body = b'', b''
 
-                if extras.has_key('notes'):
+                if 'notes' in extras:
                     notes = extras['notes']
                 else:
                     notes = None
 
-                if extras.has_key('confirmed'):
+                if 'confirmed' in extras:
                     try:
                         confirmed = bool(extras['confirmed'])
                     except ValueError:
@@ -82,12 +87,12 @@ def process_import(proxy_log, framework, source):
                 else:
                     confirmed = None
 
-                if extras.has_key('content_length') and extras['content_length']:
+                if 'content_length' in extras and extras['content_length']:
                     content_length = int(extras['content_length'])
                 else:
                     content_length = len(response_body)
 
-                if extras.has_key('elapsed'):
+                if 'elapsed' in extras:
                     elapsed = extras['elapsed']
                 else:
                     elapsed = ''

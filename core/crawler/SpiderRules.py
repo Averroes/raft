@@ -20,7 +20,7 @@
 #
 
 from PyQt4.QtCore import Qt, QObject, SIGNAL, QUrl
-from urllib2 import urlparse
+from urllib import parse as urlparse
 
 class SpiderRules(QObject):
     def __init__(self, framework, parent = None):

@@ -20,7 +20,7 @@
 #
 # Classes to support parsing Paros converstation log files
 import re, time, os
-from urllib2 import urlparse
+from urllib import parse as urlparse
 import logging
 
 class paros_parse_message():
@@ -28,14 +28,14 @@ class paros_parse_message():
 
     def __init__(self, parosfile):
 
-        self.re_message = re.compile(r'^==== (\d+) ==========\s*$')
+        self.re_message = re.compile(br'^==== (\d+) ==========\s*$')
         # XXX: copied from burp log parse, should refactor
-        self.re_request = re.compile(r'^(\S+)\s+((?:https?://(?:\S+\.)+\w+(?::\d+)?)?/.*)\s+HTTP/\d+\.\d+\s*$')
-        self.re_response = re.compile(r'^HTTP/\d+\.\d+\s+(\d{3}).*\s*$')
-        self.re_content_length = re.compile(r'^Content-Length:\s*(\d+)\s*$', re.I)
-        self.re_chunked = re.compile(r'^Transfer-Encoding:\s*chunked\s*$', re.I)
-        self.re_date = re.compile(r'^Date:\s*(\w+,.*\w+)\s*$', re.I)
-        self.re_content_type = re.compile(r'^Content-Type:\s*([-_+0-9a-z.]+/[-_+0-9a-z.]+(?:\s*;\s*\S+=\S+)*)\s*$', re.I)
+        self.re_request = re.compile(br'^(\S+)\s+((?:https?://(?:\S+\.)+\w+(?::\d+)?)?/.*)\s+HTTP/\d+\.\d+\s*$')
+        self.re_response = re.compile(br'^HTTP/\d+\.\d+\s+(\d{3}).*\s*$')
+        self.re_content_length = re.compile(br'^Content-Length:\s*(\d+)\s*$', re.I)
+        self.re_chunked = re.compile(br'^Transfer-Encoding:\s*chunked\s*$', re.I)
+        self.re_date = re.compile(br'^Date:\s*(\w+,.*\w+)\s*$', re.I)
+        self.re_content_type = re.compile(br'^Content-Type:\s*([-_+0-9a-z.]+/[-_+0-9a-z.]+(?:\s*;\s*\S+=\S+)*)\s*$', re.I)
 
         self.logger = logging.getLogger(__name__)
         self.logger.info('Processing Paros message log file: %s' % (parosfile))
@@ -54,40 +54,40 @@ class paros_parse_message():
         host = parsed.hostname
 
         # TODO: maybe change this to use hostname and port?
-        if 'http' == scheme:
-            netloc = netloc.replace(':80','')
-        elif 'https' == scheme:
-            netloc = netloc.replace(':443','')
+        if b'http' == scheme:
+            netloc = netloc.replace(b':80',b'')
+        elif b'https' == scheme:
+            netloc = netloc.replace(b':443',b'')
         
-        url = scheme + '://' + netloc + parsed.path
+        url = scheme + b'://' + netloc + parsed.path
         if parsed.query:
-            url += '?' + parsed.query
+            url += b'?' + parsed.query
         if parsed.fragment:
-            url += '#' + parsed.fragment
+            url += b'#' + parsed.fragment
 
         return (url, host)
 
     def __fixup_datetime(self, datetime):
         if datetime:
             try:
-                tm = time.strptime(datetime, '%a, %d %b %Y %H:%M:%S %Z')
+                tm = time.strptime(str(datetime,'ascii'), '%a, %d %b %Y %H:%M:%S %Z')
                 tm = time.localtime(time.mktime(tm)-time.timezone)
-                return time.asctime(tm)
-            except Exception, e:
+                return bytes(time.asctime(tm),'ascii')
+            except Exception as e:
                 self.logger.debug('Failed parsing datetime [%s]: %s' % (datetime, e))
-                return ''
+                return b''
         else:
-            return ''
+            return b''
         
     def __process_buf(self, buf):
-        method = ''
+        method = b''
         status = 0
-        url = ''
+        url = b''
         origin = 'PROXY'
-        host = ''
-        hostip = ''
-        datetime = ''
-        content_type = ''
+        host = b''
+        hostip = b''
+        datetime = b''
+        content_type = b''
         request, response = None, None
 
         request_buf = []
@@ -127,21 +127,24 @@ class paros_parse_message():
                         request_offset = len(request_buf)
 
         if len(request_buf) > 0:
-            request_header = ''.join(request_buf[0:request_offset])
-            request_body = ''.join(request_buf[request_offset:])
+            request_header = b''.join(request_buf[0:request_offset])
+            request_body = b''.join(request_buf[request_offset:])
             if 0 == len(request_body.rstrip()):
-                request_body = ''
+                request_body = b''
             request = (request_header, request_body)
         if len(response_buf) > 0:
-            response_header = ''.join(response_buf[0:response_offset])
-            response_body = ''.join(response_buf[response_offset:])
+            response_header = b''.join(response_buf[0:response_offset])
+            response_body = b''.join(response_buf[response_offset:])
             if 0 == len(response_body.rstrip()):
-                response_body = ''
+                response_body = b''
             response = (response_header, response_body)
 
-        return (origin, host, hostip, url, status, datetime, request, response, method, content_type, {})
+        if bytes == type(status):
+            status = int(status.decode('ascii','ignore'))
 
-    def next(self):
+        return (origin, host.decode('utf-8','ignore'), hostip.decode('utf-8','ignore'), url.decode('utf-8','ignore'), status, datetime.decode('utf-8','ignore'), request, response, method.decode('utf-8','ignore'), content_type.decode('utf-8','ignore'), {})
+
+    def __next__(self):
         have_http_request, have_http_response = False, False
         buf = []
         while True:
@@ -187,7 +190,7 @@ if '__main__' == __name__:
         for result in paros_parse_message(parosfile):
             print(result)
             count += 1
-        print('processed %d records' % (count))
+        print(('processed %d records' % (count)))
     else:
-        raise(Exception('unsupported mode: %s' % (mode)))
+        raise Exception
 

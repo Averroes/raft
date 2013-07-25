@@ -52,7 +52,7 @@ class SpiderWebPage(BaseWebPage):
         self.add_javascript_window_object(self.mainFrame())
 
     def handle_frame_loadFinished(self, frame, ok):
-        print('frame load finished', ok)
+        print(('frame load finished', ok))
         self.add_javascript_window_object(frame)
 
     def process_page_events(self, frame):
@@ -173,7 +173,7 @@ console.log(__RAFTSCRIPT__);
 
     @PyQt4.QtCore.pyqtSlot(QVariant, name='report_error')
     def report_error(self, message):
-        print('GOT ERROR: %s' % (str(message.toString())))
+        print(('GOT ERROR: %s' % (str(message.toString()))))
         
     def javaScriptAlert(self, frame, msg):
         self.pageController.log('alert', frame.url(), msg)
@@ -187,7 +187,7 @@ console.log(__RAFTSCRIPT__);
         return False
 
     def javaScriptConsoleMessage(self, message, lineNumber, sourceID):
-        print('CONSOLE--->', str(message))
+        print(('CONSOLE--->', str(message)))
         self.pageController.log('console', self.mainFrame().url(), 'log from [%s / %s]: %s' % (lineNumber, sourceID, message))
 
     def userAgentForUrl(self, url):

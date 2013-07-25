@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1169</width>
-    <height>738</height>
+    <width>1202</width>
+    <height>869</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -205,6 +205,16 @@
                    </widget>
                   </item>
                   <item>
+                   <widget class="QCheckBox" name="requesterUseGlobalCookieJar">
+                    <property name="text">
+                     <string>Global Cookie Jar?</string>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <spacer name="horizontalSpacer_9">
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
@@ -248,8 +258,7 @@
                   <property name="plainText">
                    <string>${method} ${request_uri} HTTP/1.1
 Host: ${host}
-User-Agent: ${user_agent}
-${global_cookie_jar}</string>
+User-Agent: ${user_agent}</string>
                   </property>
                  </widget>
                 </item>
@@ -363,6 +372,13 @@ ${global_cookie_jar}</string>
                    </widget>
                   </item>
                   <item>
+                   <widget class="QCheckBox" name="bulkRequestUseGlobalCookieJar">
+                    <property name="text">
+                     <string>Global Cookie Jar?</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <spacer name="horizontalSpacer_2">
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
@@ -407,8 +423,7 @@ ${global_cookie_jar}</string>
                   <property name="plainText">
                    <string>${method} ${request_uri} HTTP/1.1
 Host: ${host}
-User-Agent: ${user_agent}
-${global_cookie_jar}</string>
+User-Agent: ${user_agent}</string>
                   </property>
                  </widget>
                 </item>
@@ -479,6 +494,13 @@ ${global_cookie_jar}</string>
                   </widget>
                  </item>
                  <item>
+                  <widget class="QCheckBox" name="sequenceRunnerUseGlobalCookieJar">
+                   <property name="text">
+                    <string>Global Cookie Jar?</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <spacer name="horizontalSpacer_10">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
@@ -511,20 +533,21 @@ ${global_cookie_jar}</string>
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
               </property>
+              <layout class="QVBoxLayout" name="verticalLayout_16">
+               <item>
+                <widget class="QSplitter" name="splitter_17">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <widget class="QTreeView" name="sequenceRunnerTreeView"/>
+                 <widget class="QTabWidget" name="sequenceRunnerTabWidget"/>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="sequenceRunnerSearchResultsPlaceholder" native="true"/>
+               </item>
+              </layout>
              </widget>
-            </item>
-            <item>
-             <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </widget>
@@ -559,21 +582,50 @@ ${global_cookie_jar}</string>
             </property>
            </widget>
           </widget>
-          <widget class="QWidget" name="tab_11">
+          <widget class="QWidget" name="reqTabHistoryTab">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <attribute name="title">
             <string>History</string>
            </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_16">
+           <layout class="QVBoxLayout" name="verticalLayout_61">
+            <property name="margin">
+             <number>12</number>
+            </property>
             <item>
-             <widget class="QTreeView" name="requesterHistoryTreeView">
-              <property name="alternatingRowColors">
-               <bool>true</bool>
+             <widget class="QSplitter" name="splitter_16">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
               </property>
-              <property name="uniformRowHeights">
-               <bool>false</bool>
-              </property>
-              <property name="sortingEnabled">
-               <bool>false</bool>
+              <widget class="QTreeView" name="requesterHistoryTreeView">
+               <property name="alternatingRowColors">
+                <bool>true</bool>
+               </property>
+               <property name="uniformRowHeights">
+                <bool>false</bool>
+               </property>
+               <property name="sortingEnabled">
+                <bool>false</bool>
+               </property>
+              </widget>
+              <widget class="QTabWidget" name="requesterHistoryTabWidget">
+               <property name="currentIndex">
+                <number>-1</number>
+               </property>
+              </widget>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="requesterHistorySearchResultsPlaceholder" native="true"/>
+            </item>
+            <item>
+             <widget class="Line" name="line_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
@@ -595,7 +647,7 @@ ${global_cookie_jar}</string>
               <item>
                <widget class="QPushButton" name="requesterHistoryClearButton">
                 <property name="text">
-                 <string>Clear</string>
+                 <string>Clear History</string>
                 </property>
                </widget>
               </item>
@@ -1316,6 +1368,13 @@ ${global_cookie_jar}</string>
                   </spacer>
                  </item>
                  <item>
+                  <widget class="QPushButton" name="wfFunctionsDeleteButton">
+                   <property name="text">
+                    <string>Delete</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QPushButton" name="wfFunctionsSaveButton">
                    <property name="text">
                     <string>Save</string>
@@ -1445,11 +1504,314 @@ ${global_cookie_jar}</string>
            <attribute name="title">
             <string>CSRF</string>
            </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_34">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QLabel" name="label_21">
+                <property name="text">
+                 <string>URL: </string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="testerCSRFURLEdit"/>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="testerFormGen">
+                <property name="toolTip">
+                 <string>Generate CSRF Form</string>
+                </property>
+                <property name="text">
+                 <string>Form</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="testerImgGen">
+                <property name="toolTip">
+                 <string>Generate CSRF Image Tag</string>
+                </property>
+                <property name="text">
+                 <string>Image</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="testerRegenBtn">
+                <property name="toolTip">
+                 <string>Regenerate CSRF payload based on selection</string>
+                </property>
+                <property name="text">
+                 <string>Regenerate</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QSplitter" name="splitter_15">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QPlainTextEdit" name="csrfReqEdit"/>
+              <widget class="QsciScintilla" name="csrfGenEdit">
+               <property name="toolTip">
+                <string/>
+               </property>
+               <property name="whatsThis">
+                <string/>
+               </property>
+              </widget>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_36">
+              <item>
+               <spacer name="horizontalSpacer_8">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="csrfOpenBtn">
+                <property name="text">
+                 <string>Open In Browser</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
           </widget>
           <widget class="QWidget" name="testerClickJackingTab">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <attribute name="title">
             <string>Click Jacking</string>
            </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_64">
+            <item>
+             <widget class="QSplitter" name="splitter_18">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QFrame" name="testerClickjackingWorkFrameArea">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>250</height>
+                </size>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <widget class="QWidget" name="layoutWidget">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>612</width>
+                  <height>270</height>
+                 </rect>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_65">
+                 <item>
+                  <widget class="QWidget" name="widget_3" native="true">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_39">
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_37">
+                      <item>
+                       <widget class="QLabel" name="label_23">
+                        <property name="text">
+                         <string>Target URL:</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLineEdit" name="testerClickjackingTargetURL">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>400</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="testerClickjackingGenerateButton">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="text">
+                         <string>Generate</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QsciScintilla" name="testerClickjackingEditHtml">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>512</width>
+                     <height>180</height>
+                    </size>
+                   </property>
+                   <property name="toolTip">
+                    <string/>
+                   </property>
+                   <property name="whatsThis">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+              <widget class="QFrame" name="testerClickjackingBrowserFrameArea">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_60">
+                <item>
+                 <widget class="QWidget" name="widget_2" native="true">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <layout class="QHBoxLayout" name="horizontalLayout_38">
+                   <item>
+                    <widget class="QLabel" name="label_22">
+                     <property name="text">
+                      <string>Frame URL:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLineEdit" name="testerClickjackingUrlEdit"/>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="testerClickjackingSimulateButton">
+                     <property name="text">
+                      <string>Simulate</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="testerClickjackingOpenInBrowserButton">
+                     <property name="text">
+                      <string>Open in Browser</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QWidget" name="testerClickjackingEmbeddedBrowserPlaceholder" native="true">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>512</width>
+                    <height>200</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QTextEdit" name="testerClickjackingConsoleLogTextEdit">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>30</height>
+                   </size>
+                  </property>
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </widget>
         </item>
@@ -2438,17 +2800,36 @@ ${global_cookie_jar}</string>
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="cookiesCookieExportCookieJarButton">
-                 <property name="text">
-                  <string>Export Cookie Jar</string>
+                <widget class="QFrame" name="frame_8">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
                  </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="cookiesCookieImportCookieJarButton">
-                 <property name="text">
-                  <string>Import Cookie Jar</string>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
                  </property>
+                 <layout class="QGridLayout" name="gridLayout">
+                  <item row="0" column="0">
+                   <widget class="QPushButton" name="cookiesCookieExportCookieJarButton">
+                    <property name="text">
+                     <string>Export Cookie Jar</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QPushButton" name="cookiesCookieImportCookieJarButton">
+                    <property name="text">
+                     <string>Import Cookie Jar</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QPushButton" name="cookiesCookieClearCookieJarButton">
+                    <property name="text">
+                     <string>Clear Cookie Jar</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </widget>
                </item>
               </layout>
@@ -2665,7 +3046,7 @@ ${global_cookie_jar}</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_13">
            <item>
-            <widget class="QTableView" name="logTableView"/>
+            <widget class="QTableWidget" name="logTableWidget"/>
            </item>
           </layout>
          </widget>
@@ -2699,7 +3080,28 @@ ${global_cookie_jar}</string>
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_5"/>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <spacer name="horizontalSpacer_8">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="logTableClearLogButton">
+            <property name="text">
+             <string>Clear Log</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -3067,8 +3469,8 @@ ${global_cookie_jar}</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1169</width>
-     <height>20</height>
+     <width>1202</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -3083,9 +3485,13 @@ ${global_cookie_jar}</string>
     <addaction name="actionImport_BurpLog"/>
     <addaction name="actionImport_BurpState"/>
     <addaction name="actionImport_BurpXml"/>
+    <addaction name="actionImport_Burp_Vuln_XML"/>
+    <addaction name="actionImport_AppScan_XML"/>
     <addaction name="actionImport_WebScarab"/>
     <addaction name="actionImport_ParosMessages"/>
+    <addaction name="separator"/>
     <addaction name="actionRefresh_Responses"/>
+    <addaction name="actionClear_Responses"/>
     <addaction name="separator"/>
     <addaction name="actionExport_Settings"/>
     <addaction name="actionImport_Settings"/>
@@ -3375,7 +3781,29 @@ ${global_cookie_jar}</string>
     <string>Import Settings</string>
    </property>
   </action>
+  <action name="actionImport_Burp_Vuln_XML">
+   <property name="text">
+    <string>Import Burp Vuln XML</string>
+   </property>
+  </action>
+  <action name="actionImport_AppScan_XML">
+   <property name="text">
+    <string>Import AppScan XML</string>
+   </property>
+  </action>
+  <action name="actionClear_Responses">
+   <property name="text">
+    <string>Clear Responses</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QsciScintilla</class>
+   <extends>QFrame</extends>
+   <header>Qsci/qsciscintilla.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resources.qrc"/>
  </resources>

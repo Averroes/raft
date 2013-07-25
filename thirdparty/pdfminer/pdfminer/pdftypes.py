@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 import sys
 import zlib
-from lzw import lzwdecode
-from ascii85 import ascii85decode, asciihexdecode
-from runlength import rldecode
-from psparser import PSException, PSObject
-from psparser import LIT, KWD, STRICT
+from .lzw import lzwdecode
+from .ascii85 import ascii85decode, asciihexdecode
+from .runlength import rldecode
+from .psparser import PSException, PSObject
+from .psparser import LIT, KWD, STRICT
 
 LITERAL_CRYPT = LIT('Crypt')
 
@@ -71,7 +71,7 @@ def resolve_all(x):
     if isinstance(x, list):
         x = [ resolve_all(v) for v in x ]
     elif isinstance(x, dict):
-        for (k,v) in x.iteritems():
+        for (k,v) in x.items():
             x[k] = resolve_all(v)
     return x
 
@@ -83,7 +83,7 @@ def decipher_all(decipher, objid, genno, x):
     if isinstance(x, list):
         x = [ decipher_all(decipher, objid, genno, v) for v in x ]
     elif isinstance(x, dict):
-        for (k,v) in x.iteritems():
+        for (k,v) in x.items():
             x[k] = decipher_all(decipher, objid, genno, v)
     return x
 
@@ -209,7 +209,7 @@ class PDFStream(PDFObject):
                 # will get errors if the document is encrypted.
                 try:
                     data = zlib.decompress(data)
-                except zlib.error, e:
+                except zlib.error as e:
                     if STRICT:
                         raise PDFException('Invalid zlib bytes: %r, %r' % (e, data))
                     data = ''
@@ -239,7 +239,7 @@ class PDFStream(PDFObject):
                         raise PDFNotImplementedError('Unsupported predictor: %r' % pred)
                     buf = ''
                     ent0 = '\x00' * columns
-                    for i in xrange(0, len(data), columns+1):
+                    for i in range(0, len(data), columns+1):
                         pred = data[i]
                         ent1 = data[i+1:i+1+columns]
                         if pred == '\x02':

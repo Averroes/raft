@@ -13,12 +13,24 @@ The latest version should be retrieved from http://code.google.com/p/raft/
 
 To run RAFT, you will need several software packages.
 
+ - Python 3.3 or later
  - PyQT4
  - QScintilla2
  - LXML
 
-For example, on Ubuntu it is generally enough to use apt-get:
+For example, on Ubuntu 13.04 it is generally enough to use apt-get:
 
-   sudo apt-get install python-qt4 python-qscintilla2 python-lxml
+   sudo apt-get install python3-qt4 python3-pyqt4.qsci python3-lxml
    
+On Mac OS X, the following ports are available:
+
+   python33
+   qt4-mac
+   py33-pyqt4
+   py33-qscintilla
+   py33-pip
+
+Then to install lxml:
+
+  sudo pip-3.3 install lxml
 

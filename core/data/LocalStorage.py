@@ -20,7 +20,7 @@
 #
 
 from PyQt4.QtCore import QUrl
-from urllib2 import urlparse
+from urllib import parse as urlparse
 from sqlite3 import dbapi2 as sqlite
 
 import os
@@ -50,14 +50,16 @@ class LocalStorage():
 
     def read_storage(self):
         base_path = self.get_base_path()
-        self.localstorage_files = []
         self.localstorage = {}
-        os.path.walk(base_path, self.visit_localstorage_files, None)
+        self.localstorage_files = []
+        for dirpath, dirnames, filenames in os.walk(base_path):
+            self.visit_localstorage_files(None, dirpath, filenames)
+#        os.path.walk(base_path, self.visit_localstorage_files, None)
         for item in self.localstorage_files:
             scheme, domain_name, filename = item
             domain = urlparse.urlunsplit((scheme, domain_name, '', '', ''))
 
-            if not self.localstorage.has_key(domain):
+            if domain not in self.localstorage:
                 self.localstorage[domain] = []
 
             localstorage_db, cursor = None, None
@@ -73,7 +75,7 @@ class LocalStorage():
                 cursor = None
                 localstorage_db.close()
                 localstorage_db = None
-            except Exception, error:
+            except Exception as error:
                 self.framework.report_exception(error)
             finally:
                 if cursor:
@@ -88,7 +90,8 @@ class LocalStorage():
     def delete_storage_entry(self, domain, name):
         base_path = self.get_base_path()
         self.localstorage_files = []
-        os.path.walk(base_path, self.visit_localstorage_files, None)
+        for dirpath, dirnames, filenames in os.walk(base_path):
+            self.visit_localstorage_files(None, dirpath, filenames)
         for item in self.localstorage_files:
             scheme, domain_name, filename = item
             if domain == urlparse.urlunsplit((scheme, domain_name, '', '', '')):
@@ -102,7 +105,7 @@ class LocalStorage():
                     cursor = None
                     localstorage_db.close()
                     localstorage_db = None
-                except Exception, error:
+                except Exception as error:
                     self.framework.report_exception(error)
                 finally:
                     if cursor:
@@ -115,7 +118,8 @@ class LocalStorage():
     def update_storage_entry(self, domain, name, value):
         base_path = self.get_base_path()
         self.localstorage_files = []
-        os.path.walk(base_path, self.visit_localstorage_files, None)
+        for dirpath, dirnames, filenames in os.walk(base_path):
+            self.visit_localstorage_files(None, dirpath, filenames)
         found = False
         for item in self.localstorage_files:
             scheme, domain_name, filename = item
@@ -128,7 +132,7 @@ class LocalStorage():
             filename = found_filename
         else:
             qurl = QUrl.fromUserInput(domain)
-            splitted = urlparse.urlsplit(str(qurl.toEncoded()).encode('ascii', 'ignore'))
+            splitted = urlparse.urlsplit(qurl.toEncoded().data().decode('utf-8'))
             scheme = splitted.scheme or 'http'
             domain_name = splitted.hostname or splitted.path
             filename = os.path.join(self.get_base_path(), '%s_%s_0.localstorage' % (scheme, domain_name))
@@ -143,7 +147,7 @@ class LocalStorage():
                 cursor = None
                 localstorage_db.close()
                 localstorage_db = None
-            except Exception, error:
+            except Exception as error:
                 self.framework.report_exception(error)
             finally:
                 if cursor:
@@ -168,7 +172,7 @@ class LocalStorage():
             cursor = None
             localstorage_db.close()
             localstorage_db = None
-        except Exception, error:
+        except Exception as error:
             self.framework.report_exception(error)
         finally:
             if cursor:

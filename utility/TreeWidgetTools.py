@@ -20,6 +20,7 @@
 #
 from PyQt4.QtCore import (Qt, SIGNAL, pyqtSignature, QUrl, QSettings, QDir, QThread)
 from PyQt4.QtGui import *
+import collections
 
 def populate_tree_widget(treewidget,treedict):
     """
@@ -57,7 +58,7 @@ def recursive_generate_tree_widget_helper(currentsrcnode, currentdestnode):
         #print "----------------------"
         #print currentsrcnode
         #print currentdestnode
-        for key in currentsrcnode.keys():
+        for key in list(currentsrcnode.keys()):
             tempitem=QTreeWidgetItem(currentdestnode)
             tempitem.setText(0,str(key))
             tempitem.setFlags(Qt.ItemIsEditable|Qt.ItemIsEnabled|Qt.ItemIsSelectable)
@@ -87,7 +88,7 @@ def recursive_generate_tree_widget_helper(currentsrcnode, currentdestnode):
             currentdestnode.customdata=currentsrcnode[1]
             
         
-        elif callable(currentsrcnode):
+        elif isinstance(currentsrcnode, collections.Callable):
             currentdestnode=currentsrcnode()
         
         else:

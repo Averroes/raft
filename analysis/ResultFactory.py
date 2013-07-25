@@ -21,11 +21,10 @@
 
 import ast
 
-import resultsclasses.AnalysisRun
-import resultsclasses.AnalysisResults
-import resultsclasses.ResultSet
-import resultsclasses.SingleResult
-
+from .resultsclasses import AnalysisRun
+from .resultsclasses import AnalysisResults
+from .resultsclasses import ResultSet
+from .resultsclasses import SingleResult
 
 class ResultFactory(object):
     
@@ -43,16 +42,16 @@ class ResultFactory(object):
         #print "requesterclass:",requesterclass
         #print "requesterclass.type:",requesterclass.__class__
         #print "itemid:",itemid
-        if isinstance(requesterclass,resultsclasses.AnalysisRun.AnalysisRun):
+        if isinstance(requesterclass,AnalysisRun.AnalysisRun):
             return self.createItemsAnalysisRun(requesterclass, itemid ,db ,cursor)
-        elif isinstance(requesterclass,resultsclasses.AnalysisResults.AnalysisResults):
+        elif isinstance(requesterclass,AnalysisResults.AnalysisResults):
             return self.createItemsAnalysisResults(requesterclass, itemid ,db ,cursor)
-        elif isinstance(requesterclass,resultsclasses.ResultSet.ResultSet):
+        elif isinstance(requesterclass,ResultSet.ResultSet):
             return self.createItemsResultSet(requesterclass, itemid ,db ,cursor)
-        elif isinstance(requesterclass,resultsclasses.SingleResult.SingleResult):
+        elif isinstance(requesterclass,SingleResult.SingleResult):
             return self.createItemsSingleResult(requesterclass, itemid ,db ,cursor)
         else:
-            raise()
+            raise Exception('unsupported instance type %s' % (type(requesterclass)))
 
     def createItemsAnalysisRun(self, requesterclass, itemid ,db ,cursor):
         #print "Starting createItemsAnalysisRun"

@@ -28,13 +28,13 @@ class LRUCache():
         self.cache = {}
 
     def has_key(self, key):
-        return self.cache.has_key(key)
+        return key in self.cache
 
     def getitem(self, key):
         return self.cache[key]
 
     def setitem(self, key, value):
-        if not self.cache.has_key(key):
+        if key not in self.cache:
             size = len(self.cache)
             if size > self.maxsize:
                 k = self.lru[self.offset]

@@ -31,7 +31,7 @@ from core.web.StandardPageFactory import StandardPageFactory
 from core.network.StandardNetworkAccessManager import StandardNetworkAccessManager
 
 class RaftBrowserDialog(QDialog, RaftBrowser.Ui_RaftBrowserDialog):
-    def __init__(self, framework, parent = None):
+    def __init__(self, framework, parent = None, options = None):
         super(RaftBrowserDialog, self).__init__(parent)
         self.setupUi(self)
 
@@ -39,5 +39,14 @@ class RaftBrowserDialog(QDialog, RaftBrowser.Ui_RaftBrowserDialog):
         self.networkAccessManager = StandardNetworkAccessManager(self.framework, self.framework.get_global_cookie_jar())
         self.standardPageFactory = StandardPageFactory(self.framework, self.networkAccessManager, self)
         self.embedded = EmbeddedWebkitWidget(self.framework, self.networkAccessManager, self.standardPageFactory, self.raftBrowserWebFrame, self)
+
+        if options:
+           if 'body' in options and 'url' in options:
+               mimetype = options.get('mimetype') or ''
+               self.embedded.open_with_content(options['url'], options['body'], mimetype)
+           elif 'url' in options:
+               self.embedded.open_with_url(options['url'])
+
+        
 
         

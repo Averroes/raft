@@ -36,12 +36,12 @@ class NetworkRequester(QObject):
         self.send('GET', url, headers, None)
 
     def POST(self, url, body, headers = {}, enctype = 'application/x-www-form-urlencoded'):
-        content_encoding = None
-        for name, value in headers.iteritems():
-            if 'content-encoding' == name.lower():
-                content_encoding = value
-        if not content_encoding:
-            headers['Content-Encoding'] = enctype
+        content_type = None
+        for name, value in headers.items():
+            if 'content-type' == name.lower():
+                content_type = value
+        if not content_type:
+            headers['Content-Type'] = enctype
 
         self.send('POST', url, headers, body)
 
@@ -51,15 +51,15 @@ class NetworkRequester(QObject):
         request.setUrl(qurl)
         method = self.translate_method(method, request)
 
-        host, useragent, content_encoding = None, None, None
-        for name, value in headers.iteritems():
+        host, useragent, content_type = None, None, None
+        for name, value in headers.items():
             lname = name.lower()
             if 'user-agent' == lname:
                 useragent = value
             elif 'host' == lname:
                 host = value
-            elif 'content-encoding' == lname:
-                content_encoding = value
+            elif 'content-type' == lname:
+                content_type = value
             elif 'content-length' == lname: 
                 continue
             request.setRawHeader(name, value)
@@ -68,8 +68,8 @@ class NetworkRequester(QObject):
             request.setRawHeader('Host', str(qurl.host()))
         if not useragent:
             request.setRawHeader('User-Agent', self.framework.useragent())
-        if 'POST' == method and not content_encoding:
-            request.setRawHeader('Content-Encoding', 'application/x-www-form-urlencoded')
+        if 'POST' == method and not content_type:
+            request.setRawHeader('Content-Type', 'application/x-www-form-urlencoded')
 
         if not body:
             if method in ('POST', 'PUT', 'CUSTOM'): # TODO: determine specific methods that expect content?

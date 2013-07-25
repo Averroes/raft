@@ -154,8 +154,8 @@ class DataTableDataModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return QVariant(self.item_definition[section][0])
-        return QVariant()
+            return self.item_definition[section][0]
+        return None # QVariant()
 
     def rowCount(self, parent = QModelIndex()):
         if parent.isValid():
@@ -173,15 +173,15 @@ class DataTableDataModel(QAbstractTableModel):
     def data(self, index, role = Qt.DisplayRole):
         try:
             if not index.isValid():
-                return QVariant()
+                return None # QVariant()
             if role == Qt.DisplayRole:
                 row = index.row()
                 column = self.column_offset[index.column()]
                 data = self.rows[row][column]
-                return QVariant(data)
-            return QVariant()
+                return data # QVariant(data)
+            return None # QVariant()
         except IndexError:
-            return QVariant()
+            return None # QVariant()
 
     def sort(self, column, order):
         # TODO: should lock rows before manipulating

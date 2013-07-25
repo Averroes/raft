@@ -49,7 +49,7 @@ STATUS_CODES = {
 #: AMF mimetype.
 CONTENT_TYPE = 'application/x-amf'
 
-ERROR_CALL_FAILED, = range(1)
+ERROR_CALL_FAILED, = list(range(1))
 ERROR_CODES = {
     ERROR_CALL_FAILED: 'Server.Call.Failed'
 }
@@ -106,7 +106,7 @@ class HeaderCollection(dict):
             self.required.append(idx)
 
     def __len__(self):
-        return len(self.keys())
+        return len(list(self.keys()))
 
 
 class Envelope(object):
@@ -169,7 +169,7 @@ class Envelope(object):
 
         raise KeyError("'%r'" % (name,))
 
-    def __nonzero__(self):
+    def __bool__(self):
         return len(self.bodies) != 0 or len(self.headers) != 0
 
     def __iter__(self):
@@ -207,7 +207,7 @@ class Envelope(object):
                 self.bodies == other.bodies)
 
         if hasattr(other, 'keys') and hasattr(other, 'items'):
-            keys, o_keys = self.keys(), other.keys()
+            keys, o_keys = list(self.keys()), list(other.keys())
 
             if len(o_keys) != len(keys):
                 return False
@@ -218,7 +218,7 @@ class Envelope(object):
 
                 keys.remove(k)
 
-            for k, v in other.items():
+            for k, v in list(other.items()):
                 if self[k] != v:
                     return False
 
@@ -328,7 +328,7 @@ class BaseFault(object):
         Raises an exception based on the fault object. There is no traceback
         available.
         """
-        raise get_exception_from_fault(self), self.description, None
+        raise get_exception_from_fault(self)(self.description).with_traceback(None)
 
 
 class ErrorFault(BaseFault):
@@ -431,7 +431,7 @@ def _read_body(stream, decoder, strict=False, logger=None):
         stream.read(1)
         x = stream.read_ulong()
 
-        return [decoder.readElement() for i in xrange(x)]
+        return [decoder.readElement() for i in range(x)]
 
     target = stream.read_utf8_string(stream.read_ushort())
     response = stream.read_utf8_string(stream.read_ushort())
@@ -439,7 +439,7 @@ def _read_body(stream, decoder, strict=False, logger=None):
     status = STATUS_OK
     is_request = True
 
-    for code, s in STATUS_CODES.iteritems():
+    for code, s in STATUS_CODES.items():
         if not target.endswith(s):
             continue
 
@@ -498,9 +498,9 @@ def _write_body(name, message, stream, encoder, strict=False):
     target = None
 
     if isinstance(message, Request):
-        target = unicode(message.target)
+        target = str(message.target)
     else:
-        target = u"%s%s" % (name, _get_status(message.status))
+        target = "%s%s" % (name, _get_status(message.status))
 
     target = target.encode('utf8')
 
@@ -562,8 +562,8 @@ def get_fault(data):
 
     e = {}
 
-    for x, y in data.iteritems():
-        if isinstance(x, unicode):
+    for x, y in data.items():
+        if isinstance(x, str):
             e[str(x)] = y
         else:
             e[x] = y
@@ -611,7 +611,7 @@ def decode(stream, strict=False, logger=None, timezone_offset=None):
     decoder.use_amf3 = msg.amfVersion == pyamf.AMF3
     header_count = stream.read_ushort()
 
-    for i in xrange(header_count):
+    for i in range(header_count):
         name, required, data = _read_header(stream, decoder, strict)
         msg.headers[name] = data
 
@@ -620,7 +620,7 @@ def decode(stream, strict=False, logger=None, timezone_offset=None):
 
     body_count = stream.read_short()
 
-    for i in xrange(body_count):
+    for i in range(body_count):
         context.clear()
 
         target, payload = _read_body(stream, decoder, strict, logger)
@@ -664,13 +664,13 @@ def encode(msg, strict=False, logger=None, timezone_offset=None):
     stream.write_ushort(msg.amfVersion)
     stream.write_ushort(len(msg.headers))
 
-    for name, header in msg.headers.iteritems():
+    for name, header in msg.headers.items():
         _write_header(name, header, int(msg.headers.is_required(name)),
             stream, encoder, strict)
 
     stream.write_short(len(msg))
 
-    for name, message in msg.iteritems():
+    for name, message in msg.items():
         encoder.context.clear()
 
         _write_body(name, message, stream, encoder, strict)

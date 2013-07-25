@@ -22,7 +22,7 @@ UnmappedInstanceError = None
 
 try:
     class_mapper(dict)
-except Exception, e:
+except Exception as e:
     UnmappedInstanceError = e.__class__
 
 

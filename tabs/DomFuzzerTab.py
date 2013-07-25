@@ -114,8 +114,8 @@ class DomFuzzerTab(QObject):
         index = dataModel.index(index.row(), 5) # TODO: use constant
         if index.isValid():
             currentItem = dataModel.data(index)
-            if currentItem.isValid():
-                url = str(currentItem.toString())
+            if currentItem is not None:
+                url = currentItem
                 return url
         return None
 
@@ -125,7 +125,7 @@ class DomFuzzerTab(QObject):
         for index in self.resultsTreeViewSelectionModel.selectedRows():
             curUrl = self.fuzzer_results_index_to_url(dataModel, index)
             if curUrl:
-                url_list.append('%s' % (str(curUrl)))
+                url_list.append(curUrl)
 
         QApplication.clipboard().setText('\n'.join(url_list))
 
@@ -152,7 +152,7 @@ class DomFuzzerTab(QObject):
 
     def handle_fuzzItemAvailable(self, fuzzId, htmlContent, qurl):
         self.currentFuzzId = fuzzId
-        self.currentFuzzUrl = str(qurl.toEncoded())
+        self.currentFuzzUrl = qurl.toEncoded().data().decode('utf-8')
         self.callbackLogger.clear_messages()
         self.qtimer.start(3000) # 3 seconds to finish
         self.domFuzzerWebView.setHtml(htmlContent, qurl)
@@ -161,7 +161,7 @@ class DomFuzzerTab(QObject):
         print('loading started')
 
     def handle_webView_loadFinished(self, ok):
-        print('handle_webView_loadFinished', ok)
+        print(('handle_webView_loadFinished', ok))
         if self.qtimer.isActive():
             self.qtimer.stop()
         if self.qtimer2.isActive():
@@ -189,7 +189,7 @@ class DomFuzzerTab(QObject):
         if self.currentFuzzId is not None:
             mainFrame = self.domFuzzerWebView.page().mainFrame()
             dom = mainFrame.documentElement()
-            html = str(dom.toOuterXml().toUtf8()) # TODO: fix encoding issues
+            html = dom.toOuterXml() # TODO: decideo on str versus bytes?
             self.domFuzzerThread.fuzzItemFinished(self.currentFuzzId, self.currentFuzzUrl, html, self.callbackLogger.get_messages())
             self.currentFuzzId = None
 
@@ -202,18 +202,18 @@ class DomFuzzerTab(QObject):
         index = self.mainWindow.domFuzzerResultsDataModel.index(index.row(), DomFuzzerResultsTable.ID)
         if index.isValid():
             currentItem = self.mainWindow.domFuzzerResultsDataModel.data(index)
-            if currentItem.isValid():
-                fuzzId = str(currentItem.toString())
+            if currentItem is not None:
+                fuzzId = str(currentItem)
                 self.populate_results_response_render(fuzzId)
 
     def populate_results_response_render(self, fuzzId):
         results = self.Data.read_dom_fuzzer_results_by_id(self.cursor, int(fuzzId))
         if results:
             resultsItems = [m or '' for m in results]
-            self.miniResponseRenderWidget.populate_response_text(
-                str(resultsItems[DomFuzzerResultsTable.URL]),
-                '',
-                str(resultsItems[DomFuzzerResultsTable.RENDERED_DATA]),
+            self.miniResponseRenderWidget.populate_response_content(
+                resultsItems[DomFuzzerResultsTable.URL],
+                b'',
+                bytes(resultsItems[DomFuzzerResultsTable.RENDERED_DATA]),
                 ''
                 )
                 
