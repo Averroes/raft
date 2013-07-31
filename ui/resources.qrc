@@ -1,0 +1,22 @@
+<RCC>
+  <qresource>
+    <file>icons/RAFT.ico</file>
+    <file>images/RAFT_app_icon.png</file>
+    <file>images/Analyze-icon-16.png</file>
+    <file>images/analyze-icon-32.png</file>
+    <file>images/browser-icon-32.png</file>
+    <file>images/config-icon-32.png</file>
+    <file>images/diff-icon-16.png</file>
+    <file>images/diff-icon-32.png</file>
+    <file>images/New-16.png</file>
+    <file>images/Open-16.png</file>
+    <file>images/open-icon-32.png</file>
+    <file>images/raft_image.png</file>
+    <file>images/search-icon-32.png</file>
+    <file>images/seq-icon-32.png</file>
+    <file>images/Zoom-In-16.png</file>
+    <file>images/zoom-in-32.png</file>
+    <file>images/Zoom-Out-16.png</file>
+    <file>images/zoom-out-32.png</file>
+  </qresource>
+</RCC>
