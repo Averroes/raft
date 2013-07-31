@@ -1,0 +1,3448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1169</width>
+    <height>738</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>RAFT - Response Analysis and Further Testing</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTabWidget" name="mainTabWidget">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabMainResponses">
+       <attribute name="title">
+        <string>Responses</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_9">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="QSplitter" name="splitter_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <widget class="QSplitter" name="splitter">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QTreeView" name="responsesDataTree">
+            <property name="alternatingRowColors">
+             <bool>true</bool>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::SingleSelection</enum>
+            </property>
+            <property name="itemsExpandable">
+             <bool>true</bool>
+            </property>
+           </widget>
+           <widget class="QTabWidget" name="responseTabPlaceholder"/>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="responseSearchControlPlaceholder" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainAnalysis">
+       <attribute name="title">
+        <string>Analysis</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_10">
+        <item>
+         <widget class="QSplitter" name="splitter_8">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QTreeWidget" name="mainAnalysisTreeWidget">
+           <property name="minimumSize">
+            <size>
+             <width>500</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="columnCount">
+            <number>2</number>
+           </property>
+           <attribute name="headerDefaultSectionSize">
+            <number>250</number>
+           </attribute>
+           <attribute name="headerStretchLastSection">
+            <bool>false</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">Name</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string notr="true">Summary</string>
+            </property>
+           </column>
+          </widget>
+          <widget class="QSplitter" name="splitter_7">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QTextEdit" name="mainAnalysisEdit"/>
+           <widget class="QTabWidget" name="mainAnalysisTabPlaceholder"/>
+           <widget class="QWidget" name="mainAnalysisSearchControlPlaceholder" native="true"/>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainRequester">
+       <attribute name="title">
+        <string>Requester</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_11">
+        <item>
+         <widget class="QTabWidget" name="reqTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab_7">
+           <attribute name="title">
+            <string>Request</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <widget class="QSplitter" name="splitter_request_tab">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QFrame" name="requestor_request_frame">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Sunken</enum>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_requestor_request_frame">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QLabel" name="label">
+                    <property name="text">
+                     <string>Method:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="requesterRequestMethod">
+                    <property name="editable">
+                     <bool>true</bool>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>GET</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>POST</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>HEAD</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>PUT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>DELETE</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="requesterSequenceCheckBox">
+                    <property name="text">
+                     <string>Run with Sequence:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="requesterSequenceComboBox">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_9">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="requesterSendButton">
+                    <property name="text">
+                     <string>Send</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_requestUrlEdit">
+                  <item>
+                   <widget class="QLabel" name="label_requestUrlEdit">
+                    <property name="text">
+                     <string>URL:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="requesterUrlEdit"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QPlainTextEdit" name="requesterTemplateEdit">
+                  <property name="toolTip">
+                   <string>Add method, headers, and associated data</string>
+                  </property>
+                  <property name="plainText">
+                   <string>${method} ${request_uri} HTTP/1.1
+Host: ${host}
+User-Agent: ${user_agent}
+${global_cookie_jar}</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="layoutWidget">
+               <layout class="QVBoxLayout" name="verticalLayout_12">
+                <item>
+                 <widget class="QTabWidget" name="reqRespTabWidget">
+                  <property name="currentIndex">
+                   <number>-1</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab">
+           <attribute name="title">
+            <string>Bulk Request</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <widget class="QSplitter" name="splitter_bulk_requester">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QFrame" name="frame_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_7">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout">
+                  <item>
+                   <widget class="QLabel" name="label_3">
+                    <property name="text">
+                     <string>Method:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="bulkRequestMethodEdit">
+                    <property name="editable">
+                     <bool>true</bool>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>GET</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>POST</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>HEAD</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>PUT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>DELETE</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_45">
+                    <property name="text">
+                     <string/>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="bulkRequestSequenceCheckBox">
+                    <property name="text">
+                     <string>Run with Sequence:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="bulkRequestSequenceComboBox">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_2">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="bulkRequestPushButton">
+                    <property name="text">
+                     <string>Send</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_19">
+                  <item>
+                   <widget class="QLabel" name="label_44">
+                    <property name="text">
+                     <string>URL:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="bulkRequestUrlEdit">
+                    <property name="text">
+                     <string>${url}</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QPlainTextEdit" name="bulkRequestTemplateEdit">
+                  <property name="plainText">
+                   <string>${method} ${request_uri} HTTP/1.1
+Host: ${host}
+User-Agent: ${user_agent}
+${global_cookie_jar}</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QFrame" name="frame_3">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_4">
+                <item>
+                 <widget class="QLabel" name="label_14">
+                  <property name="text">
+                   <string>URLs:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPlainTextEdit" name="bulkRequestUrlListEdit"/>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+            <item>
+             <widget class="QProgressBar" name="bulkRequestProgressBar">
+              <property name="value">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="requesterSequenceRunnerTab">
+           <attribute name="title">
+            <string>Sequence Runner</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_36">
+            <item>
+             <widget class="QFrame" name="frame_10">
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_35">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_20">
+                 <item>
+                  <widget class="QLabel" name="label_2">
+                   <property name="text">
+                    <string>Run Sequence:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="sequenceRunnerSequenceComboBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_10">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="sequenceRunnerRunButton">
+                   <property name="text">
+                    <string>Run</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QFrame" name="sequenceRunnerDisplayFrame">
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="reqTabRawRequestTab">
+           <attribute name="title">
+            <string>Raw Request</string>
+           </attribute>
+           <widget class="QFrame" name="frame_4">
+            <property name="geometry">
+             <rect>
+              <x>410</x>
+              <y>50</y>
+              <width>120</width>
+              <height>80</height>
+             </rect>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+           </widget>
+           <widget class="QPlainTextEdit" name="plainTextEdit_2">
+            <property name="geometry">
+             <rect>
+              <x>330</x>
+              <y>400</y>
+              <width>104</width>
+              <height>78</height>
+             </rect>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_11">
+           <attribute name="title">
+            <string>History</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_16">
+            <item>
+             <widget class="QTreeView" name="requesterHistoryTreeView">
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="uniformRowHeights">
+               <bool>false</bool>
+              </property>
+              <property name="sortingEnabled">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <spacer name="horizontalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="requesterHistoryClearButton">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainWebFuzzer">
+       <attribute name="title">
+        <string>Web Fuzzer</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_23">
+        <item>
+         <widget class="QTabWidget" name="webFuzzTab">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab_16">
+           <attribute name="title">
+            <string>Standard</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_26">
+            <item>
+             <widget class="QTabWidget" name="stdFuzzTab">
+              <property name="currentIndex">
+               <number>0</number>
+              </property>
+              <widget class="QWidget" name="tab_19">
+               <attribute name="title">
+                <string>Request</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_27">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_13">
+                  <item>
+                   <widget class="QLabel" name="label_46">
+                    <property name="text">
+                     <string>Method: </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="stdFuzzerReqMethod">
+                    <property name="editable">
+                     <bool>true</bool>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>GET</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>POST</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>HEAD</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>PUT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>DELETE</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="wfGenHostLabel">
+                    <property name="text">
+                     <string>URL:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="wfStdUrlEdit"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_21">
+                  <item>
+                   <widget class="QCheckBox" name="wfStdPreChk">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Pre Sequence</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="wfStdPreBox">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="wfStdPostChk">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Post Sequence</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="wfStdPostBox">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_15">
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QPushButton" name="wfStdAddButton">
+                    <property name="maximumSize">
+                     <size>
+                      <width>125</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>Add Marker</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="stdFuzzPayloadBox">
+                    <property name="toolTip">
+                     <string>Choose a payload from the dropbown box</string>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>payload_1</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>payload_2</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>payload_3</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>payload_4</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>payload_5</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_16">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="wfStdStartButton">
+                    <property name="text">
+                     <string>Start Attack</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QPlainTextEdit" name="wfStdEdit"/>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_16">
+                  <item>
+                   <widget class="QLabel" name="wfGenSearchLabel">
+                    <property name="text">
+                     <string>Search: </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="wfStdSearchEdit"/>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="wfStdReBox">
+                    <property name="text">
+                     <string>RE</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QProgressBar" name="fuzzerStandardProgressBar">
+                  <property name="value">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="tab_20">
+               <attribute name="title">
+                <string>Results</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_28">
+                <item>
+                 <widget class="QSplitter" name="splitter_5">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <widget class="QTreeView" name="fuzzerHistoryTreeView">
+                   <property name="alternatingRowColors">
+                    <bool>true</bool>
+                   </property>
+                   <attribute name="headerShowSortIndicator" stdset="0">
+                    <bool>false</bool>
+                   </attribute>
+                  </widget>
+                  <widget class="QTabWidget" name="stdFuzzResultsTabWidget">
+                   <property name="currentIndex">
+                    <number>-1</number>
+                   </property>
+                  </widget>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_32">
+                  <item>
+                   <spacer name="horizontalSpacer_19">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="fuzzerHistoryClearButton">
+                    <property name="text">
+                     <string>Clear Results</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_17">
+           <attribute name="title">
+            <string>Sequence</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_5">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_22">
+                <item>
+                 <widget class="QCheckBox" name="wfTempSeqChk">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Template Sequence</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="wfStdBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="toolTip">
+                   <string>Choose previously recorded sequence</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QTreeWidget" name="wfStdSeqTree">
+                <column>
+                 <property name="text">
+                  <string>#</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>New Column</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>URL</string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_18">
+           <attribute name="title">
+            <string>Payload Config</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_57">
+            <item>
+             <widget class="QGroupBox" name="wfPay1GroupBox">
+              <property name="title">
+               <string>Payload 1</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_52">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_27">
+                 <item>
+                  <widget class="QLabel" name="wfPay1Label">
+                   <property name="text">
+                    <string>payload_1</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay1NoneRadio">
+                   <property name="text">
+                    <string>none</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay1FuzzRadio">
+                   <property name="text">
+                    <string>fuzz</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay1StaticRadio">
+                   <property name="text">
+                    <string>static</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay1DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="wfPay1PayloadBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="wfPay1StaticEdit">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="wfPay2GroupBox">
+              <property name="title">
+               <string>Payload 2</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_53">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_28">
+                 <item>
+                  <widget class="QLabel" name="wfPay2Label">
+                   <property name="text">
+                    <string>payload_2</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay2NoneRadio">
+                   <property name="text">
+                    <string>none</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay2FuzzRadio">
+                   <property name="text">
+                    <string>fuzz</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay2StaticRadio">
+                   <property name="text">
+                    <string>static</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay2DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="wfPay2PayloadBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="wfPay2StaticEdit">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="wfPay3GroupBox">
+              <property name="title">
+               <string>Payload 3</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_54">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_29">
+                 <item>
+                  <widget class="QLabel" name="wfPay3Label">
+                   <property name="text">
+                    <string>payload_3</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay3NoneRadio">
+                   <property name="text">
+                    <string>none</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay3FuzzRadio">
+                   <property name="text">
+                    <string>fuzz</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay3StaticRadio">
+                   <property name="text">
+                    <string>static</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay3DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="wfPay3PayloadBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="wfPay3StaticEdit">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="wfPay3GroupBox_2">
+              <property name="title">
+               <string>Payload 4</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_55">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_30">
+                 <item>
+                  <widget class="QLabel" name="wfPay4Label">
+                   <property name="text">
+                    <string>payload_4</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay4NoneRadio">
+                   <property name="text">
+                    <string>none</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay4FuzzRadio">
+                   <property name="text">
+                    <string>fuzz</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay4StaticRadio">
+                   <property name="text">
+                    <string>static</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay4DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="wfPay4PayloadBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="wfPay4StaticEdit">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="wfPay4GroupBox">
+              <property name="title">
+               <string>Payload 5</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_56">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_31">
+                 <item>
+                  <widget class="QLabel" name="wfPay5Label">
+                   <property name="text">
+                    <string>payload_5</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay5NoneRadio">
+                   <property name="text">
+                    <string>none</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay5FuzzRadio">
+                   <property name="text">
+                    <string>fuzz</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay5StaticRadio">
+                   <property name="text">
+                    <string>static</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="wfPay5DynamicRadio">
+                   <property name="text">
+                    <string>dynamic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="wfPay5PayloadBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="wfPay5StaticEdit">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="wfFunctionsTab">
+           <attribute name="title">
+            <string>Functions</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_63">
+            <item>
+             <widget class="QWidget" name="widget" native="true">
+              <layout class="QVBoxLayout" name="verticalLayout_62">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_33">
+                 <item>
+                  <widget class="QLabel" name="label_50">
+                   <property name="text">
+                    <string>Function:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="wfFunctionsComboBox">
+                   <property name="editable">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_20">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="wfFunctionsSaveButton">
+                   <property name="text">
+                    <string>Save</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QWidget" name="wfFunctionsEditPlaceholder" native="true"/>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainDOMFuzzer">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <attribute name="title">
+        <string>DOM Fuzzer</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_37">
+        <item>
+         <widget class="QTabWidget" name="domFuzzerTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="domFuzzerFuzzQueueTab">
+           <attribute name="title">
+            <string>Fuzz Queue</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_38">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_23">
+              <item>
+               <widget class="QPushButton" name="domFuzzerStartButton">
+                <property name="text">
+                 <string>Start Fuzzing</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="domFuzzerStopButton">
+                <property name="text">
+                 <string>Stop Fuzzing</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_12">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="domFuzzerClearQueueButton">
+                <property name="text">
+                 <string>Clear Queue</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTreeView" name="domFuzzerFuzzQueueTable"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="domFuzzerResultsTab">
+           <attribute name="title">
+            <string>Results</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_40">
+            <item>
+             <widget class="QSplitter" name="splitter_9">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QTreeView" name="domFuzzerResultsTreeView"/>
+              <widget class="QTabWidget" name="domFuzzerResultsTabWidget">
+               <property name="currentIndex">
+                <number>-1</number>
+               </property>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="domFuzzerFuzzWindowTab">
+           <attribute name="title">
+            <string>Fuzz Window</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_39">
+            <item>
+             <widget class="QWidget" name="domFuzzerFuzzPlaceholder" native="true"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainTester">
+       <attribute name="title">
+        <string>Tester</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_33">
+        <item>
+         <widget class="QTabWidget" name="testerTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="testerCSRFTab">
+           <attribute name="title">
+            <string>CSRF</string>
+           </attribute>
+          </widget>
+          <widget class="QWidget" name="testerClickJackingTab">
+           <attribute name="title">
+            <string>Click Jacking</string>
+           </attribute>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainCrawler">
+       <attribute name="title">
+        <string>Crawler</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_41">
+        <item>
+         <widget class="QTabWidget" name="crawlerTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="crawlerSpiderQueueTab">
+           <attribute name="title">
+            <string>Spider Queue</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_42">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_24">
+              <item>
+               <widget class="QPushButton" name="crawlerSpiderStartButton">
+                <property name="text">
+                 <string>Start Spider</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="crawlerSpiderStopButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Stop Spider</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="crawlerSpiderSequenceCheckBox">
+                <property name="text">
+                 <string>Run with Sequence:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="crawlerSpiderSequenceComboBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_11">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="crawlerSpiderClearQueueButton">
+                <property name="text">
+                 <string>Clear Queue</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTreeView" name="crawlerSpiderQueueTreeView"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="crawlerSpiderPendingResponsesTab">
+           <attribute name="title">
+            <string>Spider Pending Responses</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_51">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_25">
+              <item>
+               <spacer name="horizontalSpacer_14">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="crawlerSpiderPendingResponsesClearButton">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="crawlerSpiderPendingResponsesResetButton">
+                <property name="text">
+                 <string>Reset</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTreeView" name="crawlerSpiderPendingResponsesTreeView"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="crawlerSpiderPendingAnalysisTab">
+           <attribute name="title">
+            <string>Spider Pending Analysis</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_44">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_26">
+              <item>
+               <spacer name="horizontalSpacer_15">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="crawlerSpiderPendingAnalysisClearButton">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTreeView" name="crawlerSpiderPendingAnalysisTreeView"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_4">
+           <attribute name="title">
+            <string>Spider Internal State</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_29">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_17">
+              <item>
+               <spacer name="horizontalSpacer_13">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="crawlerSpiderInternalStateResetButton">
+                <property name="text">
+                 <string>Reset</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTreeView" name="crawlerSpiderInternalStateTreeView"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="crawlerSpiderWindowTab">
+           <attribute name="title">
+            <string>Spider Window</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_43">
+            <item>
+             <widget class="QWidget" name="crawlerSpiderWindowPlaceholder" native="true"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainEncoder">
+       <attribute name="title">
+        <string>Encoder</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_19">
+        <item>
+         <widget class="QSplitter" name="splitter_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <widget class="QWidget" name="layoutWidget">
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetDefaultConstraint</enum>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_17">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="encodingMethodLabel">
+                <property name="text">
+                 <string>Select Encode Method</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="encodingMethodCombo">
+                <item>
+                 <property name="text">
+                  <string>URL</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Full URL</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Base64</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>HTML Entity</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Hex</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Hex Entity</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Hexadecimal Escape</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Octal Escape</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>MD5 Hash</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>SHA1 Hash</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>SQL CHAR String</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Oracle chr String</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Unicode %u00</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Escape HTML/XML</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Decimal</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Decimal Entity</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>ROT13</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>UTF-7</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>UTF-7 (Malformed)</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="encodeButton">
+                <property name="text">
+                 <string>Encode</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="encodingWrapLabel">
+                <property name="text">
+                 <string>Select Wrap Chars</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="encodingWrapCombo">
+                <item>
+                 <property name="text">
+                  <string>&lt;script&gt;&lt;/script&gt;</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>&lt;ScRiPt&gt;&lt;/ScRiPt&gt;</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>alert(...)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>&quot;Javascript:...&quot;</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>&lt;img src=&quot;...&quot;</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="encodeWrapButton">
+                <property name="text">
+                 <string>Wrap</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="encodeClearButton">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextEdit" name="encodeEdit"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="layoutWidget_2">
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetDefaultConstraint</enum>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_18">
+              <item>
+               <widget class="QLabel" name="decodeMethodLabel">
+                <property name="text">
+                 <string>Select Decode Method</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="decodeMethodCombo">
+                <item>
+                 <property name="text">
+                  <string>URL</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Full URL</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Base64</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Hex</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Hex Entity</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Hexadecimal Unescape</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Octal Unescape</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Unescape HTML/XML</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Unicode %u00</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>ROT13</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>UTF-7</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="decodeButton">
+                <property name="text">
+                 <string>Decode</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="decodeWrapLabel">
+                <property name="text">
+                 <string>Select Wrap Chars</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="decodeWrapCombo">
+                <item>
+                 <property name="text">
+                  <string>&lt;script&gt;&lt;/script&gt;</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>&lt;ScRiPt&gt;&lt;/ScRiPt&gt;</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>alert(...)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>&quot;javascript:...&quot;</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>&lt;img src=&quot;...&quot;</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="decodeWrapButton">
+                <property name="text">
+                 <string>Wrap</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="decodeClearButton">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextEdit" name="decodeEdit"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainScoping">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <attribute name="title">
+        <string>Scoping</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_21">
+        <item>
+         <widget class="QTabWidget" name="tabScoping">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="scopingUrlPathsTab">
+           <attribute name="title">
+            <string>URL Paths</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_32">
+            <item>
+             <widget class="QSplitter" name="splitter_11">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QGroupBox" name="groupBox">
+               <property name="minimumSize">
+                <size>
+                 <width>400</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="title">
+                <string>Include URL Paths</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_30">
+                <item>
+                 <widget class="QPlainTextEdit" name="scopingUrlPathsIncludeEdit">
+                  <property name="minimumSize">
+                   <size>
+                    <width>360</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QGroupBox" name="groupBox_2">
+               <property name="minimumSize">
+                <size>
+                 <width>400</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="title">
+                <string>Exclude URL Paths</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_31">
+                <item>
+                 <widget class="QPlainTextEdit" name="scopingUrlPathsExcludeEdit">
+                  <property name="minimumSize">
+                   <size>
+                    <width>360</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="scopingHostnamesTab">
+           <attribute name="title">
+            <string>Hostnames</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_47">
+            <item>
+             <widget class="QSplitter" name="splitter_12">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QGroupBox" name="groupBox_3">
+               <property name="title">
+                <string>Include Hostnames</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_45">
+                <item>
+                 <widget class="QPlainTextEdit" name="scopingHostnamesIncludeEdit"/>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QGroupBox" name="groupBox_4">
+               <property name="title">
+                <string>Exclude Hostnames</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_46">
+                <item>
+                 <widget class="QPlainTextEdit" name="scopingHostnamesExcludeEdit"/>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="scopingIPAddressesTab">
+           <attribute name="title">
+            <string>IP Addresses</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_49">
+            <item>
+             <widget class="QSplitter" name="splitter_13">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QGroupBox" name="groupBox_5">
+               <property name="title">
+                <string>Include IP Addresses</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_48">
+                <item>
+                 <widget class="QPlainTextEdit" name="scopingIPAddressesIncludeEdit">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QGroupBox" name="groupBox_6">
+               <property name="title">
+                <string>Exclude IP Addresses</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_50">
+                <item>
+                 <widget class="QPlainTextEdit" name="scopingIPAddressesExcludeEdit">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tabScopingReport">
+           <attribute name="title">
+            <string>Report</string>
+           </attribute>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="scopingSaveButton">
+            <property name="text">
+             <string>Save</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainPageSitemap">
+       <attribute name="title">
+        <string>Sitemap</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_22">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="QSplitter" name="splitter_4">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <widget class="QTreeView" name="treeViewSitemap"/>
+          <widget class="QTabWidget" name="sitemapTabPlaceholder"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="sitemapSearchControlPlaceholder" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainCookies">
+       <attribute name="title">
+        <string>Cookies</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_14">
+        <item>
+         <widget class="QTabWidget" name="cookiesTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="cookiesCookieJarTab">
+           <attribute name="title">
+            <string>Cookie Jar</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_15">
+            <item>
+             <widget class="QTreeWidget" name="cookiesCookieJarTreeWidget">
+              <column>
+               <property name="text">
+                <string>Domain</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Value</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Path</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Expiry</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Session Cookie</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>HttpOnly</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Secure</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+            <item>
+             <widget class="QFrame" name="frame_7">
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_8">
+               <item>
+                <widget class="QFrame" name="frame_6">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QFormLayout" name="formLayout_3">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_18">
+                    <property name="text">
+                     <string>Domain</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLineEdit" name="cookiesCookieJarDomainEdit">
+                    <property name="minimumSize">
+                     <size>
+                      <width>256</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_16">
+                    <property name="text">
+                     <string>Name</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLineEdit" name="cookiesCookieJarNameEdit">
+                    <property name="minimumSize">
+                     <size>
+                      <width>256</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_17">
+                    <property name="text">
+                     <string>Value</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLineEdit" name="cookiesCookieJarValueEdit">
+                    <property name="minimumSize">
+                     <size>
+                      <width>512</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_19">
+                    <property name="text">
+                     <string>Path</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLineEdit" name="cookiesCookieJarPathEdit">
+                    <property name="minimumSize">
+                     <size>
+                      <width>256</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_20">
+                    <property name="text">
+                     <string>Expiry</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QDateTimeEdit" name="cookiesCookieJarExpiryEdit"/>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QCheckBox" name="cookiesCookieJarSessionCookieCheckbox">
+                    <property name="text">
+                     <string>Session Cookie</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QCheckBox" name="cookiesCookieJarHttpOnlyCheckbox">
+                    <property name="text">
+                     <string>HttpOnly</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QCheckBox" name="cookiesCookieJarSecureCheckbox">
+                    <property name="text">
+                     <string>Secure</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <layout class="QHBoxLayout" name="horizontalLayout_18">
+                    <item>
+                     <widget class="QPushButton" name="cookiesCookieJarSaveButton">
+                      <property name="text">
+                       <string>Save</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="cookiesCookieJarDeleteButton">
+                      <property name="text">
+                       <string>Delete</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_16">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_7">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>404</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="cookiesCookieExportCookieJarButton">
+                 <property name="text">
+                  <string>Export Cookie Jar</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="cookiesCookieImportCookieJarButton">
+                 <property name="text">
+                  <string>Import Cookie Jar</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="cookiesFlashCookiesTab">
+           <attribute name="title">
+            <string>Flash Cookies</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_59">
+            <item>
+             <widget class="QSplitter" name="splitter_10">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QTreeWidget" name="cookiesFlashCookiesTreeWidget">
+               <column>
+                <property name="text">
+                 <string>Domain</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Name</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Value</string>
+                </property>
+               </column>
+              </widget>
+              <widget class="QFrame" name="frame_13">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="cookiesLocalStorageTab">
+           <attribute name="title">
+            <string>localStorage</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_58">
+            <item>
+             <widget class="QSplitter" name="splitter_6">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QTreeWidget" name="cookiesLocalStorageTreeWidget">
+               <column>
+                <property name="text">
+                 <string>Domain</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Name</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Value</string>
+                </property>
+               </column>
+              </widget>
+              <widget class="QFrame" name="frame_11">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_35">
+                <item>
+                 <widget class="QFrame" name="frame_12">
+                  <property name="frameShape">
+                   <enum>QFrame::StyledPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Raised</enum>
+                  </property>
+                  <layout class="QFormLayout" name="formLayout_6">
+                   <property name="fieldGrowthPolicy">
+                    <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+                   </property>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_47">
+                     <property name="text">
+                      <string>Domain</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="cookiesLocalStorageDomainEdit">
+                     <property name="minimumSize">
+                      <size>
+                       <width>256</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_48">
+                     <property name="text">
+                      <string>Name</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="cookiesLocalStorageNameEdit">
+                     <property name="minimumSize">
+                      <size>
+                       <width>256</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_49">
+                     <property name="text">
+                      <string>Value</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QLineEdit" name="cookiesLocalStorageValueEdit">
+                     <property name="minimumSize">
+                      <size>
+                       <width>512</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_34">
+                     <item>
+                      <widget class="QPushButton" name="cookiesLocalStorageSaveButton">
+                       <property name="text">
+                        <string>Save</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="cookiesLocalStorageDeleteButton">
+                       <property name="text">
+                        <string>Delete</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_18">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_17">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>519</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="mainTabLog">
+       <attribute name="title">
+        <string>Log</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_8">
+        <item>
+         <widget class="QFrame" name="frame_5">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_13">
+           <item>
+            <widget class="QTableView" name="logTableView"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>Search:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="logSearchLineEdit"/>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="logSearchRECheckbox">
+            <property name="text">
+             <string>RE</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="logSearchFindButton">
+            <property name="text">
+             <string>Find</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabMainVulnerabilities">
+       <attribute name="title">
+        <string>Vulnerabilities</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_25">
+        <item>
+         <widget class="QSplitter" name="splitter_14">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <widget class="QTreeWidget" name="treeWidgetVulnerabilities">
+           <attribute name="headerStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string>#</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Hostname</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Port</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Vulnerability</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Severity</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>URL</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>False Positive?</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Remediation</string>
+            </property>
+           </column>
+          </widget>
+          <widget class="QFrame" name="frame">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_24">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item>
+             <layout class="QFormLayout" name="formLayout">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetMinimumSize</enum>
+              </property>
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::ExpandingFieldsGrow</enum>
+              </property>
+              <property name="verticalSpacing">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Hostname:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="editVulnerabilityHostname"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>Port:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="editVulnerabilityPort"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>Vulnerability:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLineEdit" name="editVulnerabilityCategory"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Severity:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QComboBox" name="comboBoxVulnerbalitySeverity">
+                <item>
+                 <property name="text">
+                  <string>High</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Medium</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Low</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Informational</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Remediated</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>URL:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QLineEdit" name="editVulnerabilityUrl"/>
+              </item>
+              <item row="7" column="0">
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="0">
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string>Remediation:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="1">
+               <widget class="QPlainTextEdit" name="editVulnerabilityRemediation">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>48</height>
+                 </size>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOn</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="1">
+               <widget class="QCheckBox" name="cbVulnerabilityFalsePositive">
+                <property name="text">
+                 <string>False Positive?</string>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="1">
+               <widget class="QTabWidget" name="tabWidget">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
+                <widget class="QWidget" name="tab_14">
+                 <attribute name="title">
+                  <string>Parameter...</string>
+                 </attribute>
+                 <layout class="QVBoxLayout" name="verticalLayout_20">
+                  <item>
+                   <layout class="QFormLayout" name="formLayout_2">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_10">
+                      <property name="text">
+                       <string>Parameter:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QLineEdit" name="editVulnerabilityParameterName"/>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_11">
+                      <property name="text">
+                       <string>Payload:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_12">
+                      <property name="text">
+                       <string>Example:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QLineEdit" name="editVulnerabilityParameterPayload"/>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QLineEdit" name="editVulnerabilityParameterExample"/>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_14">
+                    <item>
+                     <spacer name="horizontalSpacer_5">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButtonVulnerabilityAddParameter">
+                      <property name="text">
+                       <string>Add Parameter</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButtonVulnerabilitySaveParameter">
+                      <property name="text">
+                       <string>Save</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButtonVulnerabilityDeleteParameter">
+                      <property name="text">
+                       <string>Delete</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_12">
+              <item>
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonVulnerabilitySave">
+                <property name="text">
+                 <string>Save Vulnerability</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonVulnerabilityReset">
+                <property name="text">
+                 <string>Reset</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonVulnerabilityDelete">
+                <property name="text">
+                 <string>Delete</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="quitButton">
+        <property name="text">
+         <string>Quit</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1169</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionNew_Project"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave_As"/>
+    <addaction name="separator"/>
+    <addaction name="actionImport_RaftCaptureXml"/>
+    <addaction name="actionImport_BurpLog"/>
+    <addaction name="actionImport_BurpState"/>
+    <addaction name="actionImport_BurpXml"/>
+    <addaction name="actionImport_WebScarab"/>
+    <addaction name="actionImport_ParosMessages"/>
+    <addaction name="actionRefresh_Responses"/>
+    <addaction name="separator"/>
+    <addaction name="actionExport_Settings"/>
+    <addaction name="actionImport_Settings"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuConfiguration">
+    <property name="title">
+     <string>Configuration</string>
+    </property>
+    <addaction name="actionConfiguration_BlackHoleNetwork"/>
+    <addaction name="actionAnalysisConfiguration"/>
+   </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>About</string>
+    </property>
+    <addaction name="actionAbout_RAFT"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionEncoder_Decoder"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuConfiguration"/>
+   <addaction name="menuAbout"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionButtonOpen"/>
+   <addaction name="actionZoomIn"/>
+   <addaction name="actionZoomOut"/>
+   <addaction name="actionDiff"/>
+   <addaction name="actionAnalyze"/>
+   <addaction name="actionSequence"/>
+   <addaction name="actionSearch"/>
+   <addaction name="actionBrowser"/>
+   <addaction name="separator"/>
+   <addaction name="actionConfig"/>
+  </widget>
+  <action name="actionNew_Project">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+   <property name="toolTip">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open Project</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Project</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionImport_RaftCaptureXml">
+   <property name="text">
+    <string>Import Raft Capture XML</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Raft Capture XML</string>
+   </property>
+  </action>
+  <action name="actionImport_BurpLog">
+   <property name="text">
+    <string>Import Burp Log</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Burp Proxy Log</string>
+   </property>
+  </action>
+  <action name="actionImport_BurpState">
+   <property name="text">
+    <string>Import Burp State</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Burp Saved State</string>
+   </property>
+  </action>
+  <action name="actionImport_BurpXml">
+   <property name="text">
+    <string>Import Burp XML</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Burp XML</string>
+   </property>
+  </action>
+  <action name="actionImport_WebScarab">
+   <property name="text">
+    <string>Import WebScarab</string>
+   </property>
+   <property name="toolTip">
+    <string>Import WebScarab Conversation Log</string>
+   </property>
+  </action>
+  <action name="actionImport_ParosMessages">
+   <property name="text">
+    <string>Import Paros Messages</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Paros Messages Log</string>
+   </property>
+  </action>
+  <action name="actionRefresh_Responses">
+   <property name="text">
+    <string>Refresh Responses</string>
+   </property>
+   <property name="toolTip">
+    <string>Refresh All Responses</string>
+   </property>
+  </action>
+  <action name="actionSave_As">
+   <property name="text">
+    <string>Save As</string>
+   </property>
+  </action>
+  <action name="actionButtonOpen">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/open-icon-32.png</normaloff>:/images/open-icon-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionButtonOpen</string>
+   </property>
+   <property name="toolTip">
+    <string>Open a previous project</string>
+   </property>
+  </action>
+  <action name="actionZoomIn">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/zoom-in-32.png</normaloff>:/images/zoom-in-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionZoomIn</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom In</string>
+   </property>
+  </action>
+  <action name="actionZoomOut">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/zoom-out-32.png</normaloff>:/images/zoom-out-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionZoomOut</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom out</string>
+   </property>
+  </action>
+  <action name="actionDiff">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/diff-icon-32.png</normaloff>:/images/diff-icon-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionDiff</string>
+   </property>
+   <property name="toolTip">
+    <string>Diff responses</string>
+   </property>
+  </action>
+  <action name="actionAnalyze">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/analyze-icon-32.png</normaloff>:/images/analyze-icon-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionAnalyze</string>
+   </property>
+   <property name="toolTip">
+    <string>Start analysis</string>
+   </property>
+  </action>
+  <action name="actionConfiguration_BlackHoleNetwork">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Black Hole Network</string>
+   </property>
+   <property name="toolTip">
+    <string>Black Hole network traffic when rendering responses</string>
+   </property>
+  </action>
+  <action name="actionAbout_RAFT">
+   <property name="text">
+    <string>About RAFT</string>
+   </property>
+  </action>
+  <action name="actionEncoder_Decoder">
+   <property name="text">
+    <string>Encoder/Decoder</string>
+   </property>
+  </action>
+  <action name="actionRequest">
+   <property name="text">
+    <string>Request</string>
+   </property>
+  </action>
+  <action name="actionConfig">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/config-icon-32.png</normaloff>:/images/config-icon-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionConfig</string>
+   </property>
+   <property name="toolTip">
+    <string>Open configuration dialog</string>
+   </property>
+   <property name="iconVisibleInMenu">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actionSequence">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/seq-icon-32.png</normaloff>:/images/seq-icon-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionSequence</string>
+   </property>
+   <property name="toolTip">
+    <string>Launch the sequence builder dialog</string>
+   </property>
+  </action>
+  <action name="actionSearch">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/search-icon-32.png</normaloff>:/images/search-icon-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionSearch</string>
+   </property>
+   <property name="toolTip">
+    <string>Launch the Search dialog</string>
+   </property>
+  </action>
+  <action name="actionAnalysisConfiguration">
+   <property name="text">
+    <string>Analysis Configuration</string>
+   </property>
+  </action>
+  <action name="actionBrowser">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/browser-icon-32.png</normaloff>:/images/browser-icon-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>actionBrowser</string>
+   </property>
+   <property name="toolTip">
+    <string>Launch the web browser</string>
+   </property>
+  </action>
+  <action name="actionExport_Settings">
+   <property name="text">
+    <string>Export Settings</string>
+   </property>
+  </action>
+  <action name="actionImport_Settings">
+   <property name="text">
+    <string>Import Settings</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>actionQuit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>347</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>quitButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>768</x>
+     <y>617</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>347</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>encodeClearButton</sender>
+   <signal>clicked()</signal>
+   <receiver>encodeEdit</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>140</x>
+     <y>329</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>451</x>
+     <y>216</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>decodeClearButton</sender>
+   <signal>clicked()</signal>
+   <receiver>decodeEdit</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>145</x>
+     <y>572</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>457</x>
+     <y>436</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

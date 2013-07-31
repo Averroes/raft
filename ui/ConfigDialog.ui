@@ -1,0 +1,1074 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>configDialog</class>
+ <widget class="QDialog" name="configDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>693</width>
+    <height>627</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>RAFT - Configuration</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="configTab">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="configGeneralTab">
+      <attribute name="title">
+       <string>General</string>
+      </attribute>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>328</width>
+         <height>141</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Network Communication</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="bhNetworkBox">
+          <property name="toolTip">
+           <string>Do not make requests to site while rendering captured content</string>
+          </property>
+          <property name="text">
+           <string>Black Hole Network</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="checkBoxUseProxy">
+          <property name="text">
+           <string>Use Proxy</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>HTTP/HTTPS Proxy</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Proxy Port</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLineEdit" name="confProxyEdit">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>Specifying a proxy is not available in this release</string>
+          </property>
+          <property name="text">
+           <string>localhost</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="confProxyPort">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>8080</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>160</y>
+         <width>331</width>
+         <height>251</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Browser Configuration</string>
+       </property>
+       <widget class="QCheckBox" name="browserAutoLoadImagesCheckBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>150</y>
+          <width>181</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Auto Load Images?</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="browserEnablePluginsCheckBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>90</y>
+          <width>191</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Enable Plugins?</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="browserEnableJavaCheckBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>120</y>
+          <width>151</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Enable Java?</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="browserEnableWebStorageCheckBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>60</y>
+          <width>181</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Enable Web Storage?</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="browserEnableJavaScriptCheckBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>181</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Enable JavaScript?</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="browserUserAgentEdit">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>210</y>
+          <width>311</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="text">
+         <string>Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1</string>
+        </property>
+        <property name="cursorPosition">
+         <number>0</number>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="browserCustomUserAgentCheckBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>180</y>
+          <width>161</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Custom User-Agent?</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="configCrawlerTab">
+      <attribute name="title">
+       <string>Crawler</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QGroupBox" name="spiderConfigGroupBox">
+         <property name="title">
+          <string>Spider</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QCheckBox" name="spiderSubmitFormsCheckBox">
+            <property name="text">
+             <string>Submit Forms</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="spiderUseDataBankCheckBox">
+            <property name="text">
+             <string>Use Data Bank Fill Values</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="spiderSubmitUsernamePasswordCheckBox">
+            <property name="text">
+             <string>Submit Username and Password</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="spiderEvaluateJavascriptCheckBox">
+            <property name="text">
+             <string>Evaluate JavaScript</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="spiderRetrieveMediaFilesCheckBox">
+            <property name="text">
+             <string>Retrieve Media Files</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="spiderExcludeDangerouPathCheckBox">
+            <property name="text">
+             <string>Exclude Dangerous Paths</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QFormLayout" name="formLayout">
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>Max Children:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="spiderMaxChildrenEdit">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="cursorPosition">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="0">
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>Redundant Content Limit:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>Max Unique Parameters:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Redundant Structure Limit:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLineEdit" name="spiderMaxUniqueParametersEdit">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QLineEdit" name="spiderRedundantContentLimit">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1">
+             <widget class="QLineEdit" name="spiderRedundantStructureLimit">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_7">
+              <property name="text">
+               <string>Dangerous Path (Regex):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="spiderDangerousPathEdit">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>360</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="cursorPosition">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1">
+             <widget class="QLineEdit" name="spiderMediaExtensionsEdit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>360</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="0">
+             <widget class="QLabel" name="label_8">
+              <property name="text">
+               <string>Media Extensions</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>Max Links:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>Max Link Depth:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="spiderMaxLinksEdit">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="spiderMaxLinkDepthEdit">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="contentDiscoveryGroupBox">
+         <property name="title">
+          <string>Content Discovery</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QCheckBox" name="spiderIterateUserAgentsCheckBox">
+            <property name="text">
+             <string>Iterate User-Agents</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabConfigDataBank">
+      <attribute name="title">
+       <string>Data Bank</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_33">
+       <item>
+        <widget class="QTabWidget" name="tabDataBank">
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <widget class="QWidget" name="tabDataBankFormFill">
+          <attribute name="title">
+           <string>Form Fill</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_34">
+           <item>
+            <widget class="QTabWidget" name="tabWidgetDataBankFormFill">
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <widget class="QWidget" name="tabDataBankFormFillValues">
+              <attribute name="title">
+               <string>Fill Values</string>
+              </attribute>
+              <layout class="QGridLayout" name="gridLayout">
+               <item row="0" column="0">
+                <widget class="QFrame" name="frame_8">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QFormLayout" name="formLayout_4">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_21">
+                    <property name="text">
+                     <string>First Name</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLineEdit" name="formFillFirstNameEdit"/>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_22">
+                    <property name="text">
+                     <string>Last Name</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLineEdit" name="formFillLastNameEdit"/>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_23">
+                    <property name="text">
+                     <string>Email Address</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLineEdit" name="formFillEmailAddressEdit"/>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_24">
+                    <property name="text">
+                     <string>Company</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLineEdit" name="formFillCompanyEdit"/>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_25">
+                    <property name="text">
+                     <string>Address 1</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLineEdit" name="formFillAddress1Edit"/>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_26">
+                    <property name="text">
+                     <string>Address 2</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QLineEdit" name="formFillAddress2Edit"/>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="label_27">
+                    <property name="text">
+                     <string>City</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QLineEdit" name="formFillCityEdit"/>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_28">
+                    <property name="text">
+                     <string>State</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QLineEdit" name="formFillStateEdit"/>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="label_29">
+                    <property name="text">
+                     <string>Zip Code</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QLineEdit" name="formFillZipCodeEdit"/>
+                  </item>
+                  <item row="9" column="0">
+                   <widget class="QLabel" name="label_30">
+                    <property name="text">
+                     <string>Country</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1">
+                   <widget class="QLineEdit" name="formFillCountryEdit"/>
+                  </item>
+                  <item row="10" column="0">
+                   <widget class="QLabel" name="label_31">
+                    <property name="text">
+                     <string>Phone</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="1">
+                   <widget class="QLineEdit" name="formFillPhoneEdit"/>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QFrame" name="frame_9">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QFormLayout" name="formLayout_5">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_32">
+                    <property name="text">
+                     <string>SSN</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLineEdit" name="formFillSSNEdit"/>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_33">
+                    <property name="text">
+                     <string>Birth Date</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLineEdit" name="formFillBirthDateEdit"/>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_34">
+                    <property name="text">
+                     <string>Passport</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLineEdit" name="formFillPassportEdit"/>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_35">
+                    <property name="text">
+                     <string>Credit Card</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLineEdit" name="formFillCreditCardEdit"/>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_36">
+                    <property name="text">
+                     <string>Postal Code</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLineEdit" name="formFillPostalCodeEdit"/>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_37">
+                    <property name="text">
+                     <string>ID Number</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QLineEdit" name="formFillIDNumberEdit"/>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="label_38">
+                    <property name="text">
+                     <string>Home Page URL</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QLineEdit" name="formFillHomePageUrlEdit"/>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_39">
+                    <property name="text">
+                     <string>Username</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QLineEdit" name="formFillUsernameEdit"/>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="label_40">
+                    <property name="text">
+                     <string>Password</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QLineEdit" name="formFillPasswordEdit"/>
+                  </item>
+                  <item row="9" column="0">
+                   <widget class="QLabel" name="label_41">
+                    <property name="text">
+                     <string>Unknown Text</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1">
+                   <widget class="QLineEdit" name="formFillUnknownTextEdit"/>
+                  </item>
+                  <item row="10" column="0">
+                   <widget class="QLabel" name="label_42">
+                    <property name="text">
+                     <string>Unknown Number</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="1">
+                   <widget class="QLineEdit" name="formFillUnknownNumberEdit"/>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tabDataBankFormFillPatterns">
+              <attribute name="title">
+               <string>Fill Patterns</string>
+              </attribute>
+              <layout class="QGridLayout" name="gridLayout_fillpatterns">
+               <item row="0" column="0">
+                <widget class="QFrame" name="frame_8_fillpatterns">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QFormLayout" name="formLayout_4_fillpatterns">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_21">
+                    <property name="text">
+                     <string>First Name</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLineEdit" name="formFillFirstNamePattern"/>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_22">
+                    <property name="text">
+                     <string>Last Name</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLineEdit" name="formFillLastNamePattern"/>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_23">
+                    <property name="text">
+                     <string>Email Address</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLineEdit" name="formFillEmailAddressPattern"/>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_24">
+                    <property name="text">
+                     <string>Company</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLineEdit" name="formFillCompanyPattern"/>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_25">
+                    <property name="text">
+                     <string>Address 1</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLineEdit" name="formFillAddress1Pattern"/>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_26">
+                    <property name="text">
+                     <string>Address 2</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QLineEdit" name="formFillAddress2Pattern"/>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_27">
+                    <property name="text">
+                     <string>City</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QLineEdit" name="formFillCityPattern"/>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_28">
+                    <property name="text">
+                     <string>State</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QLineEdit" name="formFillStatePattern"/>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_29">
+                    <property name="text">
+                     <string>Zip Code</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QLineEdit" name="formFillZipCodePattern"/>
+                  </item>
+                  <item row="9" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_30">
+                    <property name="text">
+                     <string>Country</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1">
+                   <widget class="QLineEdit" name="formFillCountryPattern"/>
+                  </item>
+                  <item row="10" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_31">
+                    <property name="text">
+                     <string>Phone</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="1">
+                   <widget class="QLineEdit" name="formFillPhonePattern"/>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QFrame" name="frame_9">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QFormLayout" name="formLayout_5_fillpatterns">
+                  <property name="fieldGrowthPolicy">
+                   <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+                  </property>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_32">
+                    <property name="text">
+                     <string>SSN</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLineEdit" name="formFillSSNPattern"/>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_33">
+                    <property name="text">
+                     <string>Birth Date</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLineEdit" name="formFillBirthDatePattern"/>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_34">
+                    <property name="text">
+                     <string>Passport</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLineEdit" name="formFillPassportPattern"/>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_35">
+                    <property name="text">
+                     <string>Credit Card</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLineEdit" name="formFillCreditCardPattern"/>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_36">
+                    <property name="text">
+                     <string>Postal Code</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLineEdit" name="formFillPostalCodePattern"/>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_37">
+                    <property name="text">
+                     <string>ID Number</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QLineEdit" name="formFillIDNumberPattern"/>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_38">
+                    <property name="text">
+                     <string>Home Page URL</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QLineEdit" name="formFillHomePageUrlPattern"/>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_39">
+                    <property name="text">
+                     <string>Username</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QLineEdit" name="formFillUsernamePattern"/>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="label_fillpatterns_40">
+                    <property name="text">
+                     <string>Password</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QLineEdit" name="formFillPasswordPattern"/>
+                  </item>
+                  <item row="9" column="0">
+                   <widget class="QLabel" name="label_43">
+                    <property name="text">
+                     <string>Full Name</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1">
+                   <widget class="QLineEdit" name="formFillFullNamePattern"/>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tabDataBankDataLists">
+          <attribute name="title">
+           <string>Data Lists</string>
+          </attribute>
+         </widget>
+         <widget class="QWidget" name="tabDataBankFuzzPayloads">
+          <attribute name="title">
+           <string>Fuzz Payloads</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_61">
+           <item>
+            <widget class="QSplitter" name="splitter_14">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <widget class="QWidget" name="verticalLayoutWidget">
+              <layout class="QVBoxLayout" name="verticalLayout_60">
+               <item>
+                <widget class="QComboBox" name="dbankPayloadsBox"/>
+               </item>
+               <item>
+                <spacer name="verticalSpacer_2">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QPlainTextEdit" name="dbankFuzzValuesEdit">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tab_5">
+          <attribute name="title">
+           <string>Page</string>
+          </attribute>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>configDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>configDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
