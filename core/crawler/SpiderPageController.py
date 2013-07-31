@@ -61,7 +61,7 @@ class SpiderPageController(QObject):
     def reset_state(self, page_url):
         self.page_url = page_url
         if page_url:
-            self.page_url_encoded = str(page_url.toEncoded()).encode('ascii', 'ignore')
+            self.page_url_encoded = page_url.toEncoded().data().decode('utf-8')
         else:
             self.page_url_encoded = ''
         self.phase = self.PHASE_EXTRACT
@@ -123,9 +123,9 @@ class SpiderPageController(QObject):
 
     def acceptNavigation(self, frame, request, navigationType):
         request_url = request.url()
-        link = str(request_url.toEncoded()).encode('ascii', 'ignore')
+        link = request_url.toEncoded().data().decode('utf-8')
         if frame:
-            base_url = str(frame.url().toEncoded()).encode('ascii', 'ignore')
+            base_url = frame.url().toEncoded().data().decode('utf-8')
         else:
             base_url = self.page_url_encoded
 
@@ -143,7 +143,7 @@ class SpiderPageController(QObject):
         if self.extraction_finished:
             return True
 
-        print('rejected navigation -->', self.page_url, frame, link, navigationType)
+        print(('rejected navigation -->', self.page_url, frame, link, navigationType))
 
         # TODO: allow other?
         return False

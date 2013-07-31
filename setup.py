@@ -2,7 +2,7 @@
 #
 # Author: Gregory Fleischer (gfleischer@gmail.com)
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2013 RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -20,87 +20,144 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from distutils.core import setup
 import sys
 import os
-import glob
+from cx_Freeze import setup, Executable
 
-def walk_datalist(obj, dirname, entries):
-    if '.svn' in dirname:
-        return
-    items = []
-    for entry in entries:
-        if '.svn' != entry:
-            filename = os.path.join(dirname, entry)
-            if os.path.isfile(filename):
-                items.append(filename)
-    obj[dirname] = items
+# TODO: determine cleaner method for maintaining version
+from raft import __version__
+version = __version__
 
-def walk_MSVCP90(obj, dirname, entries):
-    if obj['found']:
-        return
-    for entry in entries:
-        if entry.lower() == 'msvcp90.dll':
-            sys.path.append(dirname)
-            obj['found'] = True
-            return
+if 'win32' == sys.platform:
+    if os.path.exists('setup.iss'):
+        fh = open('setup.iss', 'r')
+        lines = fh.read().splitlines()
+        fh.close()
+        for i in range(0, len(lines)):
+            line = lines[i]
+            if line.startswith('#define MyAppVersion'):
+                lines[i] = '#define MyAppVersion "' + __version__ + '"'
 
-def find_MSVCP90():
-    obj = {'found': False}
-    os.path.walk(os.environ.get('SystemRoot'), walk_MSVCP90, obj)
-    if not obj['found']:
-        os.path.walk(os.environ.get('ProgramFiles'), walk_MSVCP90, obj)
+        fh = open('setup.iss', 'w')
+        fh.write('\n'.join(lines))
+        fh.close()
 
-def get_datafiles():
-    datalist = {}
-    os.path.walk('thirdparty', walk_datalist, datalist)
-    os.path.walk('data', walk_datalist, datalist)
-    os.path.walk('analyzers', walk_datalist, datalist)
-    data_files = []
-    keys = datalist.keys()
-    keys.sort()
-    for key in keys:
-        if len(datalist[key]) > 0:
-            data_files.append((key, datalist[key]))
-    return data_files
+includes = ['lxml.etree', 'lxml._elementpath', 'lxml.html', 'gzip', 'sip', 'PyQt4.QtWebKit', 'PyQt4.Qsci', 're']
 
-data_files = get_datafiles()
-data_files.append(('extras', [os.path.join('extras', f) for f in ('RaftCapture.dtd', 'RaftCaptureProcessor.py')]))
+def gather_include_files(dirname):
+    files = []
+    for (dirpath, dirnames, filenames) in os.walk(dirname):
+        for filename in filenames:
+            if filename.endswith('.py'):
+                source = target = os.path.join(dirpath, filename)
+                files.append((source, target))
 
-if 'darwin' == sys.platform:
-    import py2app
-    setup(
-        name = 'RAFT',
-        app = ['raft.pyw'],
-        data_files = data_files,
-          options = {
-            'py2app': 
-            {
-                'includes': ['lxml.etree', 'lxml._elementpath', 'gzip', 'sip'],
-                }
-            }
-        )
-    # need to customize qt.conf to avoid dup library loading
-    fh = open('dist/RAFT.app/Contents/Resources/qt.conf', 'wb')
-    fh.write('')
-    fh.close()
+    return files
 
-elif 'win32' == sys.platform:
-    import py2exe
+zip_includes = []
+zip_includes.extend(gather_include_files('thirdparty'))
 
-    find_MSVCP90()
+include_files = []
+include_files.extend(gather_include_files('analyzers'))
+include_files.extend(('data', 'data'))
+include_files.extend(gather_include_files('thirdparty'))
+for f in ('RaftCapture.dtd', 'RaftCaptureProcessor.py'):
+    include_files.append((os.path.join('extras', f), os.path.join('extras', f)))
 
-    setup(
-        name = 'RAFT',
-        console = ['raft.pyw'],
-          data_files = data_files,
-          options = {
-            'py2exe': 
-            {
-                'includes': ['lxml.etree', 'lxml._elementpath', 'gzip', 'sip'],
-                }
-            }
-          )
-else:
-    pass
+bin_excludes = []
 
+bdist_msi_options = {}
+
+raft_ico = os.path.join('ui', os.path.join('icons', 'RAFT.ico'))
+raft_icon_target = None
+
+base = None
+include_msvcr = False
+if 'win32' == sys.platform:
+    base = 'Win32GUI'
+    targetName = 'raft.exe'
+    include_msvcr = True
+    raft_icon_target = raft_ico
+
+    if '-' in version:
+        version = version[0:version.find('-')] + '.0'
+
+    # for MSI, need to add shortcut to program menu or desktop (http://stackoverflow.com/questions/15734703/use-cx-freeze-to-create-an-msi-that-adds-a-shortcut-to-the-desktop)
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa371847(v=vs.85).aspx
+    shortcut_table = [
+        ("DesktopShortcut",        # Shortcut
+         "DesktopFolder",          # Directory_
+         "RAFT",                   # Name
+         "TARGETDIR",              # Component_
+         "[TARGETDIR]"+targetName, # Target
+         None,                     # Arguments
+         None,                     # Description
+         None,                     # Hotkey
+         'RAFT.exe',               # Icon_
+         0,                     # IconIndex
+         None,                     # ShowCmd
+         'TARGETDIR'               # WkDir
+         )
+        ]
+
+    # Now create the table dictionary
+    msi_data = {"Shortcut": shortcut_table}
+
+    # Change some default MSI options and specify the use of the above defined tables
+    bdist_msi_options = {'data': msi_data}
+
+elif 'darwin' == sys.platform:
+
+    # exclude dylib files from Qt
+    # for example, libQsci.dylib
+    # the compiled files are renamed during the build process
+    # this leaves the original library name intact and cx_Freeze cannot detect this
+    # so to get this to build cleanly, need to exclude libQsci.dylib file
+    bin_excludes.append('libQsci.dylib')
+    for f in '''QtCore
+QtDeclarative
+QtDesigner
+QtGui
+QtHelp
+QtMultimedia
+QtNetwork
+QtOpenGL
+QtScript
+QtScriptTools
+QtSql
+QtSvg
+QtTest
+QtWebKit
+QtXml
+QtXmlPatterns'''.splitlines():
+        f = f.strip()
+        bin_excludes.append('lib%s.dylib' % (f))
+
+    targetName = 'RAFT'
+else: # must be linux or other platform
+    targetName = 'raft.py'
+
+exe = Executable(
+    script = 'raft.py',
+    base = base,
+    targetName = targetName,
+    icon = raft_icon_target,
+    )
+
+setup(
+    name = 'RAFT',
+    version = version, # TODO: determine method to expose version between setup and raft proper
+    description = 'RAFT - Response Analysis and Further Testing',
+    options = {
+        'build_exe': {
+            'includes' : includes,  
+            'include_files' : include_files, 
+            'zip_includes' : zip_includes, 
+            'include_msvcr' : include_msvcr,
+            'bin_excludes' : bin_excludes,
+            } ,
+        'bdist_msi': bdist_msi_options,
+        },
+    executables = [exe]
+    )

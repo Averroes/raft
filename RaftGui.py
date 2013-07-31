@@ -8,7 +8,7 @@
 #          Justin Engler
 #          Seth Law
 #
-# Copyright (c) 2011-2012, RAFT Team
+# Copyright (c) 2011-2013, RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -34,18 +34,29 @@ import re
 import pprint
 import traceback
 
+# TODO: determine cleaner method for maintaining version
+from raft import __version__
+
 #ToDo: Provide more detail in the try statements when modules are not found.
 try:
-    from PyQt4.QtCore import (Qt, SIGNAL, QObject, pyqtSignature, QSettings, QDir, QThread, QMutex, QDateTime, QString)
+    from PyQt4.QtCore import (Qt, SIGNAL, QObject, pyqtSignature, QSettings, QDir, QThread, QMutex, QDateTime)
     from PyQt4.QtGui import *
     from PyQt4.QtNetwork import *
-except:
+except Exception as error:
+    print(error)
     print("You need to have PyQT4 installed. Use your package manager to install it")
     sys.exit(1)
 
 try:
+    from PyQt4.QtCore import QString
+except ImportError:
+    # we are using Python3 so QString is not defined
+    QString = type("")
+
+try:
     from PyQt4 import Qsci
-except:
+except Exception as error:
+    print(error)
     print("You do not have QScintilla installed")
     sys.exit(1)
 
@@ -59,10 +70,9 @@ def add_thirdparty_path(basepath):
     thirdparty_libnames = ('pyamf', 'pdfminer',)
     thirdparty_search_path = os.path.join(basepath, 'thirdparty')
     for thirdparty_lib in thirdparty_libnames:
-        # TODO: append at end of search path assuming that installed version take precedence??
         dirname = os.path.join(thirdparty_search_path, thirdparty_lib)
         if dirname not in sys.path:
-            sys.path.append(dirname)
+            sys.path.insert(0, dirname)
 
 # use application executable path
 executable_path = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -76,7 +86,8 @@ add_thirdparty_path(basepath)
 
 try:
     import pyamf.sol
-except:
+except Exception as error:
+    print(error)
     print("You do not have a usable version of pyamf installed")
     sys.exit(1)
 
@@ -103,14 +114,16 @@ from tabs import RequesterTab
 from tabs import WebFuzzerTab
 from tabs import DomFuzzerTab
 from tabs import CrawlerTab
+from tabs import EncoderTab
 from tabs import ScopingTab
 from tabs import TesterTab
+from tabs import LogTab
+from tabs import QuickAnalysisTab
 
 # Import actions
 from actions import importers
 from actions import request
 from actions import interface
-from actions import encoderlib
 from actions import SettingsFiles
 
 from core.database import database
@@ -153,14 +166,13 @@ from core.workers import ImporterThread
 from core.workers import AnalyzerThread
 from core.workers import DomFuzzerThread
 from core.workers import SpiderThread
+from core.workers import QuickAnalysisThread
 
 MAC = True
 try:
     from PyQt4.QtGui import qt_mac_set_native_menubar
 except ImportError:
     MAC = False
-    
-__version__ = "2011.9.1-alpha"
     
 #ToDo: Create a global search through response content
 #ToDo: Auto-Highlight error conditions
@@ -176,6 +188,8 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         # hide currently unimplemented features
         self.reqTabRawRequestTab.hide()
         self.reqTabRawRequestTab.setParent(None)
+        self.wfUnusedSequenceTab.hide()
+        self.wfUnusedSequenceTab.setParent(None)
 
         # initialize framework
         self.framework = Framework(self)
@@ -224,11 +238,6 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.actionSearch.triggered.connect(self.display_search)
         self.actionBrowser.triggered.connect(self.launch_browser)
         
-        self.encodeButton.clicked.connect(self.encode_data)
-        self.encodeWrapButton.clicked.connect(self.encode_wrap)
-        self.decodeButton.clicked.connect(self.decode_data)
-        self.decodeWrapButton.clicked.connect(self.decode_wrap)
-        
         # Create the actions for the buttons
         # self.connect(self.encodeButton, SIGNAL("clicked()"), self.encode_values)
         # self.connect(self.encodeWrapButton, SIGNAL("clicked()"), self.wrap_encode)
@@ -243,9 +252,12 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.actionImport_BurpLog.triggered.connect(lambda x: self.import_burp('burp_log'))
         self.actionImport_BurpState.triggered.connect(lambda x: self.import_burp('burp_state'))
         self.actionImport_BurpXml.triggered.connect(lambda x: self.import_burp('burp_xml'))
+        self.actionImport_Burp_Vuln_XML.triggered.connect(lambda x: self.import_burp('burp_vuln_xml'))
+        self.actionImport_AppScan_XML.triggered.connect(lambda x: self.import_appscan('appscan_xml'))
         self.actionImport_WebScarab.triggered.connect(self.import_webscarab)
         self.actionImport_ParosMessages.triggered.connect(lambda x: self.import_paros('paros_message'))
         self.actionRefresh_Responses.triggered.connect(self.refresh_responses)
+        self.actionClear_Responses.triggered.connect(self.clear_responses)
         self.actionExport_Settings.triggered.connect(self.export_settings)
         self.actionImport_Settings.triggered.connect(self.import_settings)
 
@@ -284,7 +296,7 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
 
         self.Progress.show()
         # Set initial temp.raftdb file for storage of imported data.
-        self.Data = database.Db(__version__)
+        self.Data = database.Db(__version__, self.framework.report_exception)
         self.db = self.dbfilename
         self.databaseThread = DatabaseThread.DatabaseThread(self.framework, self.Data, self)
         self.connect(self, SIGNAL('connectDbFinished()'), self.connectDbFinishedHandler, Qt.QueuedConnection)
@@ -317,8 +329,11 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.webfuzzerTab = WebFuzzerTab.WebFuzzerTab(self.framework, self)
         self.domFuzzerTab = DomFuzzerTab.DomFuzzerTab(self.framework, self)
         self.crawlerTab = CrawlerTab.CrawlerTab(self.framework, self)
+        self.encoderTab = EncoderTab.EncoderTab(self.framework, self)
         self.scopingTab = ScopingTab.ScopingTab(self.framework, self)
         self.testerTab = TesterTab.TesterTab(self.framework, self)
+        self.logTab = LogTab.LogTab(self.framework, self)
+        self.quickAnalysisTab = QuickAnalysisTab.QuickAnalysisTab(self.framework, self)
 
         # sitemap
         self.siteMapRequestResponse = RequestResponseWidget(self.framework, self.sitemapTabPlaceholder, self.sitemapSearchControlPlaceholder, self)
@@ -387,6 +402,14 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         self.spiderThread.start(QThread.LowestPriority)
         self.crawlerTab.set_spider_thread(self.spiderThread)
 
+        # quick analysis thread
+        self.quickAnalysisThread = QuickAnalysisThread.QuickAnalysisThread(self.framework, self)
+        self.quickAnalysisThread.start(QThread.LowestPriority)
+        self.quickAnalysisTab.set_quick_analysis_thread(self.quickAnalysisThread)
+
+        # handlers
+        self.framework.register_browser_openers(self.open_url_in_browser, self.open_content_in_browser)
+
         self.do_db_connect()
 
     def fillResponses(self, fillAll = False):
@@ -404,7 +427,9 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
     def restore_settings(self):
         # TODO: make constants make sense
         settings = QSettings('RaftDev', 'Raft');
-        self.restoreGeometry(settings.value('RaftMain/geometry').toByteArray());
+        saved = settings.value('RaftMain/geometry')
+        if saved is not None:
+            self.restoreGeometry(saved);
 
     def closeEvent(self, event):
         settings = QSettings('RaftDev', 'Raft');
@@ -460,7 +485,6 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
             self.Progress.show()
             try:
                 # Reinitialize with the database value set from new db name
-                self.Progress.show()
                 self.framework.closeDB()
 
                 # 5 seconds to settle
@@ -477,6 +501,18 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
 
     def refresh_responses(self):
         self.fillResponses(True)
+
+    def clear_responses(self):
+        response = self.display_confirm_dialog('Clear All Responses?\n\nAll response data will be permanently removed from the project database!')
+        if response:
+            self.Progress.show()
+            try:
+                # Truncate existing response values
+                self.Data.truncate_response_data(self.cursor)
+                self.framework.closeDB()
+                self.databaseThread.connectDb(self.db, self)
+            finally:
+                self.Progress.close()
 
     def export_settings(self):
         filename = QFileDialog.getSaveFileName(None, "Export RAFT Settings", "", "RAFT Settings File (*.raftsettings)")
@@ -506,6 +542,12 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
 
     def import_burp(self, source):
         """ Import a Burp proxy log """
+        files = QFileDialog.getOpenFileNames(None, "Open file", "")
+        if files is not None:
+            self.import_proxy_files(files, source)
+
+    def import_appscan(self, source):
+        """ Import an AppScan XML file """
         files = QFileDialog.getOpenFileNames(None, "Open file", "")
         if files is not None:
             self.import_proxy_files(files, source)
@@ -575,7 +617,7 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         
             
     def analysistree_handle_expand(self, index):
-        item=self.mainAnalysisTreeWidget.itemFromIndex(index)
+        item=self.mainAnalysisTreeView.itemFromIndex(index)
         item.wasexpanded=True
         self.analysistree_load_grandchildren(item)
                 
@@ -682,42 +724,6 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         else:
             return(None)
 
-    ####
-    # Decoder tool section
-    ####
-    
-    def encode_data(self):
-        """ Encode the specified value """
-        
-        encode_value = str(self.encodeEdit.toPlainText())
-        encode_method = self.encodingMethodCombo.currentText()
-        value = encoderlib.encode_values(encode_value, encode_method)
-        self.decodeEdit.setPlainText(value)
-        
-    def encode_wrap(self):
-        """ Wrap the specified values in the encode window """
-        
-        encode_value = str(self.encodeEdit.toPlainText())
-        wrap_value = self.encodingWrapCombo.currentText()
-        value = encoderlib.wrap_encode(encode_value, wrap_value)
-        self.encodeEdit.setPlainText(value)
-        
-    def decode_data(self):
-        """ Decode the specified value from the decoder interface """
-        
-        decode_value = str(self.decodeEdit.toPlainText())
-        decode_method = self.decodeMethodCombo.currentText()
-        value = encoderlib.decode_values(decode_value, decode_method)
-        self.encodeEdit.setPlainText(value)
-        
-    def decode_wrap(self):
-        """ Wrap the specified values in the decode window """
-        
-        decode_value = str(self.decodeEdit.toPlainText())
-        wrap_value = self.decodeWrapCombo.currentText()
-        value = encoderlib.wrap_decode(decode_value, wrap_value)
-        self.decodeEdit.setPlainText(value)
-                                                             
     def zoom_in(self):
         """ Zoom in on the items in the selected tab """
         self.framework.signal_zoom_in()
@@ -783,7 +789,7 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
 
     def reattach_encoder(self, code, index):
         self.tabMainEncoder.setParent(self.mainTabWidget)
-        self.mainTabWidget.addTab(self.tabMainEncoder, 'Encoder')
+        self.mainTabWidget.insertTab(index, self.tabMainEncoder, 'Encoder')
         
     def display_config(self):
         dialog = ConfigDialog(self.framework, self)
@@ -831,6 +837,18 @@ class RaftMain(QMainWindow, RaftMain.Ui_MainWindow):
         dialog = RaftBrowserDialog(self.framework, self)
         dialog.show()
         dialog.exec_()
+
+    def open_url_in_browser(self, url):
+        options = {'url':url}
+        dialog = RaftBrowserDialog(self.framework, self, options)
+        dialog.show()
+        dialog.exec_()
+
+    def open_content_in_browser(self, url, body, mimetype = ''):
+        options = {'url':url, 'body':body, 'mimetype':mimetype}
+        dialog = RaftBrowserDialog(self.framework, self, options)
+        dialog.show()
+        dialog.exec_()
         
     def test(self):
         """ Test Function """
@@ -847,7 +865,7 @@ class RaftAboutDialog(QDialog, RaftAbout.Ui_aboutDialog):
 
 def exception_hook(exception_type, exception_value, traceback_obj):
     # TODO: improve this
-    print('Unhandled Exception!\n%s' % ('\n'.join(traceback.format_exception(exception_type, exception_value, traceback_obj))))
+    print(('Unhandled Exception!\n%s' % ('\n'.join(traceback.format_exception(exception_type, exception_value, traceback_obj)))))
 
 # TODO: App.Notify support for other errors
 
@@ -857,6 +875,11 @@ def main():
     # https://bugs.launchpad.net/ubuntu/+source/python-qt4/+bug/561303
 
     app = QApplication(sys.argv)
+    if 'win32' == sys.platform:
+        raft_icon = QIcon(":icons/RAFT.ico")
+    else:
+        raft_icon = QIcon(":images/RAFT_app_icon.png")
+    app.setWindowIcon(raft_icon)
     arguments = app.arguments()
 
     dbfilename = None
@@ -871,6 +894,7 @@ def main():
     sys.excepthook = exception_hook
 
     mainWindow = RaftMain(dbfilename)
+    mainWindow.setWindowIcon(raft_icon)
 
     # check screen layout and geometry
     screenGeometry = app.desktop().screenGeometry()

@@ -49,10 +49,10 @@ class FormFiller(QObject):
         self.make_pattern_matches()
 
     def configuration_updated(self, name, value):
-        if str(name) == 'FORMFILL.VALUES':
-            self.formFillValues.rehydrate(str(value.toString()))
-        elif str(name) == 'FORMFILL.PATTERNS':
-            self.formFillPatterns.rehydrate(str(value.toString()))
+        if name == 'FORMFILL.VALUES':
+            self.formFillValues.rehydrate(value)
+        elif name == 'FORMFILL.PATTERNS':
+            self.formFillPatterns.rehydrate(value)
             self.make_pattern_matches()
 
     def make_pattern_matches(self):

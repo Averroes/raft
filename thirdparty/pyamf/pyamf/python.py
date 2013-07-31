@@ -6,7 +6,7 @@ Python compatibility values and helpers.
 """
 
 try:
-    import __builtin__ as builtins
+    import builtins as builtins
 except ImportError:
     import builtins
 
@@ -21,17 +21,17 @@ int_types = [int]
 str_types = [str]
 
 try:
-    int_types.append(long)
+    int_types.append(int)
 except NameError:
     pass
 
 try:
-    str_types.append(unicode)
+    str_types.append(str)
 except NameError:
     pass
 
 try:
-    class_types.append(types.ClassType)
+    class_types.append(type)
 except:
     pass
 

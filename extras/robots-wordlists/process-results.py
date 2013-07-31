@@ -1,7 +1,7 @@
 #
 # Author: Gregory Fleischer (gfleischer@gmail.com)
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2013 RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -19,13 +19,15 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys, re
-
+import sys
+import re
+sys.path.append('.')
 from raftparse import raft_parse_xml
-import urllib2
-from urllib2 import urlparse
+import urllib.request, urllib.error, urllib.parse
+from urllib import parse as urlparse
 import hashlib
 import time
+import os
 
 unique_hashes = {}
 status_counts = {}
@@ -51,9 +53,10 @@ re_domain = re.compile(r'(?:^|/)(?:\w+\.)+(?:AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|
 re_strip_chars = re.compile(r'[\'\"\\()|@+]')
 re_chomp_chars = re.compile(r'[?#;&$%].*$')
 re_remove_junk = re.compile(r'/\w+,\w+/|/com\.\w+(\.\w+)*/')
-re_remove_comments = re.compile(r'#[^\n]*\n')
-re_remove_sitemap = re.compile(r'Sitemap:[^\n]+\n', re.I)
-re_reject_spammer = re.compile(r'Disallow:[^\n]*\b(?:adderall|percocet|cialis|OptionARMCalc|ChicagoExperts|ChicagoSellers|ChicagoBuyers|Win\$\d|Loan-Analysis|RealEstateTips|DreamHome)\b', re.I)
+
+re_remove_comments = re.compile(rb'#[^\n]*\n')
+re_remove_sitemap = re.compile(rb'Sitemap:[^\n]+\n', re.I)
+re_reject_spammer = re.compile(rb'Disallow:[^\n]*\b(?:adderall|percocet|cialis|OptionARMCalc|ChicagoExperts|ChicagoSellers|ChicagoBuyers|Win\$\d|Loan-Analysis|RealEstateTips|DreamHome)\b', re.I)
 
 matchers = [
 #    (re_allow, robot_mappings), 
@@ -85,7 +88,7 @@ def initialize_mapcounts(mapcount):
         mapcount[name] = {}
 
 def update_entry_count(mapcount, path):
-    if not mapcount.has_key(path):
+    if path not in mapcount:
         mapcount[path] = 1
     else:
         mapcount[path] += 1
@@ -97,7 +100,7 @@ def normalize_entry(entry):
         splitted = urlparse.urlsplit(entry)
         entry = splitted.path
 
-    entry = urllib2.unquote(entry)
+    entry = urllib.parse.unquote(entry)
     entry = re_strip_chars.sub('', entry)
     entry = re_chomp_chars.sub('', entry)
 
@@ -151,10 +154,10 @@ def add_entry(entry, mapping):
                 ext2 = field[ndx2:]
             if '*' not in field and len(field) < 20 and not filename.endswith('-') and not filename.startswith('-') and not filename.endswith('_'):
                 update_entry_count(mapping['files'], field)
-            if len(ext) > 1 and '*' not in ext:
+            if len(ext) > 1 and '*' not in ext and ext.count('.') < 3:
                 update_entry_count(mapping['extensions'], ext)
             if ext2 != ext:
-                if len(ext2) > 1 and '*' not in ext2:
+                if len(ext2) > 1 and '*' not in ext2 and ext2.count('.') < 3:
                     update_entry_count(mapping['extensions'], ext2)
         else:
             this_field = field
@@ -184,9 +187,9 @@ def process(files):
             count += tcount
             duplicates += tdup
             skipcount += tskip
-        except Exception, e:
+        except Exception as e:
             import traceback
-            sys.stdout.write('ERROR: processing %s\n%s' % (filename, traceback.format_exc(e)))
+            sys.stdout.write('ERROR: processing %s\n%s' % (filename, traceback.format_exc()))
 
 
     sys.stderr.write('\n***processed %d records in %d seconds and ignored %d duplicates and %d skips\n' % (count, int(time.time()-start_time), duplicates, skipcount))
@@ -196,39 +199,46 @@ def process_response(host, body, content_type):
     site_mapping = {}
     initialize_mapcounts(site_mapping)
 
-    charset = ''
+    charset = 'utf-8'
     if content_type and 'charset=' in content_type:
         charset = content_type[content_type.index('charset=')+8:]
-    elif ord(body[0]) > 127:
+    elif body[0] > 127:
         charset = 'UTF-8'
-    elif ord(body[0]) == 0:
+    elif body[0] == 0:
         charset = 'UTF-16'
-    if charset:
-        try:
-            body = body.decode(charset)
-            body = body.encode('ascii', 'ignore')
-        except Exception, e:
-#            sys.stderr.write('ignoring: %s' % (e))
-            pass
-    comments = ''
+
+    if 'utf-8' in charset.lower():
+        charset = 'utf-8'
+
     for line in body.splitlines():
-        line = line.replace('\xa0', ' ')
+        if b'#' in line:
+            line, junk = line.split(b'#', 1)
+        if b'?' in line:
+            line, junk = line.split(b'?', 1)
+        if not line:
+            continue
+        line = line.replace(b'\xa0', b' ')
         line = line.strip()
         if not line:
             continue
-        matched = False
-        ndx = line.find('#')
-        if 0 == ndx:
-            m = re_comment.search(line)
-            if m:
-                matched = True
-                # comments += line + '\n'
-            elif comments:
-                print(comments)
-                comments = ''
-        elif ndx > 0:
-            line = line[0:ndx].strip()
 
+        fallback = False
+        try:
+            line = line.decode(charset)
+        except UnicodeDecodeError as e:
+            fallback = True
+        except LookupError as e:
+#            sys.stderr.write(charset + '\n')
+            fallback = True
+
+        if fallback:
+            try:
+                line = line.decode('utf-8')
+                charset = 'utf-8'
+            except UnicodeDecodeError as e:
+                line = line.decode('ascii', 'ignore')
+
+        matched = False
         for matcher in matchers:
             m = matcher[0].search(line)
             if m:
@@ -262,7 +272,7 @@ def process_response(host, body, content_type):
 def merge_mappings(site_mapping):
     found_words = {}
     for name in ['all', 'files', 'directories', 'extensions']:
-        entries =  site_mapping[name].keys()
+        entries =  list(site_mapping[name].keys())
         entries.sort()
         entries.reverse()
         for entry in entries:
@@ -277,7 +287,7 @@ def merge_mappings(site_mapping):
                 if pos > -1:
                     this_entry = entry[pos+1:]
                     parent_entry = entry[0:pos+1]
-                    if len(this_entry) > 0 and this_entry != parent_entry and site_mapping['directories'].has_key(parent_entry):
+                    if len(this_entry) > 0 and this_entry != parent_entry and parent_entry in site_mapping['directories']:
                         parent_count = site_mapping['directories'][parent_entry]
 #                        print('*** [%s]: %d (%s)' % (parent_entry, parent_count, entry))
                         if  parent_count > 256: # TODO: adjust ?
@@ -299,18 +309,18 @@ def merge_mappings(site_mapping):
                             found_words[w2] = True
                         else:
                             found_words[w] = True
-                if not robot_mappings[name].has_key(entry):
+                if entry not in robot_mappings[name]:
                     robot_mappings[name][entry] = 1
                 else:
                     robot_mappings[name][entry] += 1
 
     # process words separately
-    for word in site_mapping['words'].keys():
+    for word in list(site_mapping['words'].keys()):
         found_words[word] = True
 
     name = 'words'
-    for word in found_words.keys():
-        if not robot_mappings[name].has_key(word):
+    for word in list(found_words.keys()):
+        if word not in robot_mappings[name]:
             robot_mappings[name][word] = 1
         else:
             robot_mappings[name][word] += 1
@@ -346,20 +356,20 @@ def process_file(filename):
                     skipcount += 1
                     continue
                 # normalize and calculate hashval
-                normalized = body.lower().replace(host, '')
-                normalized = re_remove_comments.sub('\n', normalized)
-#                normalized = re_remove_sitemap.sub('\n', normalized)
+                normalized = body.lower().replace(host.encode('utf-8', 'ignore'), b'')
+                normalized = re_remove_comments.sub(b'\n', normalized)
+#                normalized = re_remove_sitemap.sub(b'\n', normalized)
                 sha1 = hashlib.sha1()
                 sha1.update(normalized)
                 hashval = sha1.hexdigest()
-                if not unique_hashes.has_key(hashval):
+                if hashval not in unique_hashes:
                     unique_hashes[hashval] = True
                     process_response(host, body, content_type)
                     count += 1
                 else:
                     duplicates += 1
 
-        if not status_counts.has_key(status):
+        if status not in status_counts:
             status_counts[status] = 1
         else:
             status_counts[status] += 1
@@ -368,15 +378,15 @@ def process_file(filename):
 
 def print_mapcount(fhandle, cutoff, mapcount):
     count_mapping = {}
-    for entry in mapcount.keys():
+    for entry in list(mapcount.keys()):
         count = mapcount[entry]
         if count >= cutoff:
-            if not count_mapping.has_key(count):
+            if count not in count_mapping:
                 count_mapping[count] = [entry]
             else:
                 count_mapping[count].append(entry)
 
-    keys = count_mapping.keys()
+    keys = list(count_mapping.keys())
     keys.sort(key=int)
     keys.reverse()
     for value in keys:
@@ -403,13 +413,19 @@ files = []
 for arg in sys.argv[1:]:
     if arg.startswith('-'):
         pass
-    else:
+    elif os.path.isfile(arg):
         files.append(arg)
+    elif os.path.isdir(arg):
+        for file in os.listdir(arg):
+            if '.xml' in file:
+                files.append(os.path.join(arg, file))
+    else:
+        raise Exception('unhandled item: %s' % (arg))
 
 process(files)
 
-for status in status_counts.keys():
-    print('status %s: %d' % (status, status_counts[status]))
+for status in list(status_counts.keys()):
+    print(('status %s: %d' % (status, status_counts[status])))
 
 print_ordered('mappings', robot_mappings)
 

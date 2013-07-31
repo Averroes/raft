@@ -30,9 +30,9 @@ class ResponsesTable():
     
     [0] Id - (Integer) - Unique ID for request
     [1] Url - (Text) - URL of request
-    [2] ReqHeaders - (Text) - Request Headers
+    [2] ReqHeaders - (Blob) - Request Headers
     [3] ReqData - (Blob) - Request Data
-    [4] ResHeaders - (Text) - Response Headers
+    [4] ResHeaders - (Blob) - Response Headers
     [5] ResContent - (Blob) - Response Content
     [6] Status - (Integer) - HTTP Status code
     [7] Length - (Integer) - Content Length of response

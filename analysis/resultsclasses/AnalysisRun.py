@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 
-from AnalysisResults import AnalysisResults
+from .AnalysisResults import AnalysisResults
 from PyQt4.QtGui import *
 from PyQt4.QtCore import Qt
 

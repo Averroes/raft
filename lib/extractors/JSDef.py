@@ -28,7 +28,7 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from cStringIO import StringIO
+from io import StringIO
 import re
 
 if '__main__' == __name__:
@@ -153,7 +153,7 @@ if '__main__' == __name__:
         if re_first_char.match(token):
             name = token.upper()
             keywords[token] = index
-        elif opTypeNames.has_key(token):
+        elif token in opTypeNames:
             name = opTypeNames[token]
         else:
             name = token
@@ -193,7 +193,7 @@ if '__main__' == __name__:
         }
 
     opPrecedence = {}
-    for k in DEFINED_opPrecedence.keys():
+    for k in list(DEFINED_opPrecedence.keys()):
         opPrecedence[k] = DEFINED_opPrecedence[k]
 
     DEFINED_opArity = {
@@ -218,16 +218,16 @@ if '__main__' == __name__:
         }
 
     opArity = {}
-    for k in DEFINED_opArity.keys():
+    for k in list(DEFINED_opArity.keys()):
         opArity[k] = DEFINED_opArity[k]
 
-    print(consts_io.getvalue())
-    print('TOKENS = %s\n' % repr(tokens))
-    print('OP_TYPE_NAMES = %s\n' % (repr(opTypeNames)))
-    print('OP_REGEX = %s\n' % (repr(opTypeNames_regex)))
-    print('KEYWORDS = %s\n' % repr(keywords))
-    print('ASSIGN_OPS = %s\n' % repr(assignOps))
-    print('GLOBAL = %s\n' % repr(defined_globals))
-    print('OP_PRECEDENCE = %s\n' % repr(opPrecedence))
-    print('OP_ARITY = %s\n' % repr(opArity))
+    print((consts_io.getvalue()))
+    print(('TOKENS = %s\n' % repr(tokens)))
+    print(('OP_TYPE_NAMES = %s\n' % (repr(opTypeNames))))
+    print(('OP_REGEX = %s\n' % (repr(opTypeNames_regex))))
+    print(('KEYWORDS = %s\n' % repr(keywords)))
+    print(('ASSIGN_OPS = %s\n' % repr(assignOps)))
+    print(('GLOBAL = %s\n' % repr(defined_globals)))
+    print(('OP_PRECEDENCE = %s\n' % repr(opPrecedence)))
+    print(('OP_ARITY = %s\n' % repr(opArity)))
 

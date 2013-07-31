@@ -84,7 +84,7 @@ class VulnerabilitiesTab(QObject):
                 str(self.mainWindow.comboBoxVulnerbalitySeverity.currentText()),
                 str(self.mainWindow.editVulnerabilityUrl.text()),
                 str(self.mainWindow.cbVulnerabilityFalsePositive.isChecked()),
-                str(self.mainWindow.editVulnerabilityRemediation.toPlainText()),
+                self.mainWindow.editVulnerabilityRemediation.toPlainText().encode('utf-8', 'ignore'),
                 self.currentId
                 ]
             self.Data.update_vulnerability(self.cursor, insertlist)
@@ -101,7 +101,7 @@ class VulnerabilitiesTab(QObject):
                 str(self.mainWindow.comboBoxVulnerbalitySeverity.currentText()),
                 str(self.mainWindow.editVulnerabilityUrl.text()),
                 str(self.mainWindow.cbVulnerabilityFalsePositive.isChecked()),
-                str(self.mainWindow.editVulnerabilityRemediation.toPlainText()),
+                self.mainWindow.editVulnerabilityRemediation.toPlainText().encode('utf-8', 'ignore')
                 ]
             self.currentId = self.Data.insert_new_vulnerability(self.cursor, insertlist)
 

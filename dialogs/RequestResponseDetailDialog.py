@@ -44,3 +44,9 @@ class RequestResponseDetailDialog(QDialog, RequestResponseDetailDialog.Ui_Reques
         self.requestResponseWidget = RequestResponseWidget(self.framework, self.tabWidget, None, self)
         self.requestResponseWidget.fill(responseId)
 
+        if parent:
+            frameGeometry = parent.frameGeometry()
+            self.setMaximumWidth(frameGeometry.width() - 40)
+            self.setMaximumHeight(frameGeometry.height() - 20)
+            self.detailWidget.setMaximumWidth(frameGeometry.width() - 40)
+            self.detailWidget.setMaximumHeight(frameGeometry.height() - 20)

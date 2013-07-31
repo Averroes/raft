@@ -25,6 +25,7 @@ from PyQt4.QtCore import Qt, QObject, SIGNAL, QThread, QTimer, QMutex
 from PyQt4.QtGui import QTreeWidgetItem
 
 from core.database.constants import ResponsesTable
+from actions import interface
 
 class SearchThread(QThread):
     def __init__(self, framework, treeViewModel):
@@ -95,32 +96,40 @@ class SearchThread(QThread):
         caseSensitive = options['CaseSensitive']
         invertSearch = options['InvertSearch']
 
-        re_search = None
+        re_search, re_search_bytes = None, None
         if options['Wildcard']:
             wildcardSearch = re.escape(text).replace('\*','.*').replace('\?','.?')
+            wildcardSearch_bytes = re.escape(text.encode('utf-8')).replace(b'\*',b'.*').replace(b'\?',b'.?')
             if caseSensitive:
                 re_search = re.compile(wildcardSearch)
+                re_search_bytes = re.compile(wildcardSearch_bytes)
             else:
                 re_search = re.compile(wildcardSearch, re.I)
+                re_search_bytes = re.compile(wildcardSearch_bytes, re.I)
         elif options['RegularExpression']:
             if caseSensitive:
                 re_search = re.compile(text)
+                re_search_bytes = re.compile(text.encode('utf-8'))
             else:
                 re_search = re.compile(text, re.I)
+                re_search_bytes = re.compile(text.encode('utf-8'), re.I)
 
         if re_search:
-            self.strategy = lambda v: re_search.search(v)
+            self.str_strategy = lambda v: re_search.search(v)
+            self.bytes_strategy = lambda v: re_search_bytes.search(v)
         else:
             if caseSensitive:
-                self.strategy = lambda v: -1 != v.find(text)
+                self.str_strategy = lambda v: -1 != v.find(text)
+                self.bytes_strategy = lambda v: -1 != v.find(text.encode('utf-8'))
             else:
                 ltext = text.lower()
-                self.strategy = lambda v: -1 != v.lower().find(ltext)
+                self.str_strategy = lambda v: -1 != v.lower().find(ltext)
+                self.bytes_strategy = lambda v: -1 != v.lower().find(ltext.encode('utf-8'))
 
         for row in self.Data.execute_search(self.cursor, self.reqbody or self.resbody):
             if self.canceled:
                 break
-            responseItems = [str(v) for v in [m or '' for m in list(row)]]
+            responseItems = interface.data_row_to_response_items(row)
             if self.isMatch(responseItems):
                 if not invertSearch:
                     self.fill(responseItems)
@@ -132,22 +141,22 @@ class SearchThread(QThread):
     def isMatch(self, responseItems):
         # TODO: work on lines
         if self.reqheaders:
-            if self.strategy(responseItems[ResponsesTable.REQ_HEADERS]):
+            if self.bytes_strategy(responseItems[ResponsesTable.REQ_HEADERS]):
                 return True
         if self.reqbody:
-            if self.strategy(responseItems[ResponsesTable.REQ_DATA]):
+            if self.bytes_strategy(responseItems[ResponsesTable.REQ_DATA]):
                 return True
         if self.resheaders:
-            if self.strategy(responseItems[ResponsesTable.RES_HEADERS]):
+            if self.bytes_strategy(responseItems[ResponsesTable.RES_HEADERS]):
                 return True
         if self.resbody:
-            if self.strategy(responseItems[ResponsesTable.RES_DATA]):
+            if self.bytes_strategy(responseItems[ResponsesTable.RES_DATA]):
                 return True
         if self.requrl:
-            if self.strategy(responseItems[ResponsesTable.URL]):
+            if self.str_strategy(responseItems[ResponsesTable.URL]):
                 return True
         if self.notes:
-            if self.strategy(responseItems[ResponsesTable.NOTES]):
+            if self.str_strategy(responseItems[ResponsesTable.NOTES]):
                 return True
 
     def fill(self, responseItems):

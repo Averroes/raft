@@ -27,6 +27,7 @@ class Payloads(object):
     def __init__(self, framework):
         self.framework = framework
         self.payloads_dir = os.path.join(self.framework.get_data_dir(), 'payloads')
+        self.functions_dir = os.path.join(self.framework.get_data_dir(), 'functions')
     
     def list_files(self):
         
@@ -40,11 +41,43 @@ class Payloads(object):
         vals = list()
         
         for item in f.readlines():
-            if item.startswith("# "):
+            if item.startswith(b"# "):
                 pass
             else:
-                vals.append(item.rstrip())
+                vals.append(item.rstrip().decode())
                 
         f.close()
         
         return vals
+    
+    def list_function_files(self):
+        
+        function_listing = os.listdir(self.functions_dir)
+        
+        return function_listing
+    
+    def read_function(self, function_file):
+        
+        f = open(os.path.join(self.functions_dir, function_file), "rb")
+        vals = list()
+        
+        for item in f.readlines():
+            vals.append(item)
+            
+        f.close()
+        
+        return vals
+    
+    def save_function(self, function_file, content):
+
+        f = open(os.path.join(self.functions_dir, function_file), "wb")
+        
+        f.write(content.encode("utf8"))
+        f.close()
+        
+        
+    
+        
+    
+    
+    

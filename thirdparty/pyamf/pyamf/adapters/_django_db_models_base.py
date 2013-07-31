@@ -26,7 +26,7 @@ class DjangoReferenceCollection(dict):
     """
 
     def _getClass(self, klass):
-        if klass not in self.keys():
+        if klass not in list(self.keys()):
             self[klass] = {}
 
         return self[klass]
@@ -86,13 +86,13 @@ class DjangoClassAlias(pyamf.ClassAlias):
 
         parent_fields = []
 
-        for field in self.meta.parents.values():
+        for field in list(self.meta.parents.values()):
             parent_fields.append(field.attname)
             del self.relations[field.name]
 
         self.exclude_attrs.update(parent_fields)
 
-        props = self.fields.keys()
+        props = list(self.fields.keys())
 
         self.encodable_properties.update(props)
         self.decodable_properties.update(props)
@@ -153,19 +153,19 @@ class DjangoClassAlias(pyamf.ClassAlias):
         if not attrs:
             attrs = {}
 
-        for name, prop in self.fields.iteritems():
-            if name not in attrs.keys():
+        for name, prop in self.fields.items():
+            if name not in list(attrs.keys()):
                 continue
 
             attrs[name] = self._encodeValue(prop, getattr(obj, name))
 
-        keys = attrs.keys()
+        keys = list(attrs.keys())
 
         for key in keys:
             if key.startswith('_'):
                 del attrs[key]
 
-        for name, relation in self.relations.iteritems():
+        for name, relation in self.relations.items():
             if '_%s_cache' % name in obj.__dict__:
                 attrs[name] = getattr(obj, name)
 
@@ -211,7 +211,7 @@ class DjangoClassAlias(pyamf.ClassAlias):
                     pass
 
         if not getattr(obj, pk_attr):
-            for name, relation in self.relations.iteritems():
+            for name, relation in self.relations.items():
                 if isinstance(relation, related.ManyToManyField):
                     try:
                         if len(attrs[name]) == 0:

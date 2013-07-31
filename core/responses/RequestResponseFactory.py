@@ -26,10 +26,10 @@ from PyQt4.QtCore import QObject, QMutex
 
 from core.database.constants import ResponsesTable
 from core.responses.RequestResponse import RequestResponse
-from utility import ContentHelper
+from actions import interface
 
 import re
-from urllib2 import urlparse
+from urllib import parse as urlparse
 import cgi
 
 class RequestResponseFactory(QObject):
@@ -63,70 +63,45 @@ class RequestResponseFactory(QObject):
             self.cursor = None
 
     def fill(self, Id):
-        rr = RequestResponse()
-        if not Id:
-            return rr
-        
-        rr.responseId = Id
-
         self.qlock.lock()
         try:
             row = self.Data.read_responses_by_id(self.cursor, Id)
             if not row:
-                return False
-            responseItems = [m or '' for m in list(row)]
-            rr.Id = Id
-            rr.responseUrl = str(responseItems[ResponsesTable.URL])
-            rr.requestHeaders = str(responseItems[ResponsesTable.REQ_HEADERS])
-            rr.requestBody = str(responseItems[ResponsesTable.REQ_DATA])
-            rr.responseHeaders = str(responseItems[ResponsesTable.RES_HEADERS])
-            rr.responseBody = str(responseItems[ResponsesTable.RES_DATA])
-            rr.responseContentType = str(responseItems[ResponsesTable.RES_CONTENT_TYPE])
-            rr.requestHost = str(responseItems[ResponsesTable.REQ_HOST])
-            rr.responseStatus = str(responseItems[ResponsesTable.STATUS])
-            rr.responseHash = str(responseItems[ResponsesTable.RES_DATA_HASHVAL])
-            rr.requestHash = str(responseItems[ResponsesTable.REQ_DATA_HASHVAL])
-            rr.requestTime = str(responseItems[ResponsesTable.REQTIME])
-            rr.requestDate = str(responseItems[ResponsesTable.REQDATE])
-            rr.notes = str(responseItems[ResponsesTable.NOTES])
-            rr.confirmed = str(responseItems[ResponsesTable.CONFIRMED])
-            rr.requestParams = {}
+                return None
 
-            # extract request parameters
-            # TODO: repeated parameters clobber earlier values
-            splitted = urlparse.urlsplit(rr.responseUrl)
-            if splitted.query:
-                qs_values = urlparse.parse_qs(splitted.query, True)
-                for name, value in qs_values.iteritems():
-                    rr.requestParams[name] = value
-            postDataResults = self.postDataExtractor.process_request(rr.requestHeaders, rr.requestBody)
-            if postDataResults:
-                # TODO: support non-name/value pair types
-                for name, value in postDataResults.name_values_dictionary.iteritems():
-                    rr.requestParams[name] = value
-
-            if not rr.responseContentType:
-                # TODO: fix this to use better algorithm
-                rr.responseContentType = 'text/html'
-
-            rr.contentType, rr.charset = self.contentExtractor.parseContentType(rr.responseContentType)
-
-            # TODO: not really ASCII
-            rr.requestASCIIHeaders, rr.requestASCIIBody, rr.rawRequest = ContentHelper.combineRaw(rr.requestHeaders, rr.requestBody)
-            rr.responseASCIIHeaders, rr.responseASCIIBody, rr.rawResponse = ContentHelper.combineRaw(rr.responseHeaders, rr.responseBody, rr.charset)
-
-            rr.baseType = self.contentExtractor.getBaseType(rr.contentType)
-            if 'html' == rr.baseType:
-                rr.results = self.htmlExtractor.process(rr.responseBody, rr.responseUrl, rr.charset, None)
-            elif 'javascript' == rr.baseType:
-                rr.results = self.jsExtractor.process(rr.responseASCIIBody, rr.responseUrl, rr.charset, None)
-            else:
-                # TODO: implement more types
-                rr.results = None
-                pass
-
+            rr = self.fill_by_row(row)
 
         finally:
             self.qlock.unlock()
+
+        return rr
+
+    def fill_by_row(self, row):
+
+        responseItems = interface.data_row_to_response_items(row)
+
+        rr = RequestResponse(self.framework)
+        rr.Id = responseItems[ResponsesTable.ID]
+        rr.responseUrl = responseItems[ResponsesTable.URL]
+        rr.requestHeaders = responseItems[ResponsesTable.REQ_HEADERS]
+        rr.requestBody = responseItems[ResponsesTable.REQ_DATA]
+        rr.responseHeaders = responseItems[ResponsesTable.RES_HEADERS]
+        rr.responseBody = responseItems[ResponsesTable.RES_DATA]
+        rr.responseContentType = responseItems[ResponsesTable.RES_CONTENT_TYPE]
+        rr.requestHost = responseItems[ResponsesTable.REQ_HOST]
+        rr.responseStatus = responseItems[ResponsesTable.STATUS]
+        rr.responseHash = responseItems[ResponsesTable.RES_DATA_HASHVAL]
+        rr.requestHash = responseItems[ResponsesTable.REQ_DATA_HASHVAL]
+        rr.requestTime = responseItems[ResponsesTable.REQTIME]
+        rr.requestDate = responseItems[ResponsesTable.REQDATE]
+        rr.notes = responseItems[ResponsesTable.NOTES]
+        rr.confirmed = responseItems[ResponsesTable.CONFIRMED]
+
+        if not rr.responseContentType:
+            # TODO: fix this to use better algorithm
+            rr.responseContentType = 'text/html'
+
+        rr.contentType, rr.charset = self.contentExtractor.parseContentType(rr.responseContentType)
+        rr.baseType = self.contentExtractor.getBaseType(rr.contentType)
 
         return rr

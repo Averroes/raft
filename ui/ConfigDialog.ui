@@ -32,37 +32,17 @@
          <x>10</x>
          <y>10</y>
          <width>328</width>
-         <height>141</height>
+         <height>191</height>
         </rect>
        </property>
        <property name="title">
         <string>Network Communication</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="QCheckBox" name="bhNetworkBox">
-          <property name="toolTip">
-           <string>Do not make requests to site while rendering captured content</string>
-          </property>
-          <property name="text">
-           <string>Black Hole Network</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QCheckBox" name="checkBoxUseProxy">
-          <property name="text">
-           <string>Use Proxy</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>HTTP/HTTPS Proxy</string>
+        <item row="5" column="1">
+         <widget class="QLineEdit" name="confProxyPassword">
+          <property name="enabled">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -86,6 +66,13 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="checkBoxUseProxy">
+          <property name="text">
+           <string>Use Proxy</string>
+          </property>
+         </widget>
+        </item>
         <item row="3" column="1">
          <widget class="QLineEdit" name="confProxyPort">
           <property name="enabled">
@@ -96,13 +83,71 @@
           </property>
          </widget>
         </item>
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="bhNetworkBox">
+          <property name="toolTip">
+           <string>Do not make requests to site while rendering captured content</string>
+          </property>
+          <property name="text">
+           <string>Black Hole Network</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Proxy Address</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLineEdit" name="confProxyUsername">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string>Username</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLabel" name="label_12">
+          <property name="text">
+           <string>Password</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QComboBox" name="confProxyProxyType">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <item>
+           <property name="text">
+            <string>Http Proxy</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Socks5 Proxy</string>
+           </property>
+          </item>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QGroupBox" name="groupBox_2">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>160</y>
+         <y>210</y>
          <width>331</width>
          <height>251</height>
         </rect>
@@ -194,7 +239,7 @@
          <string>Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1</string>
         </property>
         <property name="cursorPosition">
-         <number>0</number>
+         <number>127</number>
         </property>
        </widget>
        <widget class="QCheckBox" name="browserCustomUserAgentCheckBox">
@@ -990,6 +1035,26 @@
                 <widget class="QComboBox" name="dbankPayloadsBox"/>
                </item>
                <item>
+                <widget class="QPushButton" name="dbankFuzzFileAddButton">
+                 <property name="toolTip">
+                  <string>Add a file with values for fuzzer</string>
+                 </property>
+                 <property name="text">
+                  <string>Add File</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="dbankFuzzFileDelButton">
+                 <property name="toolTip">
+                  <string>Delete the selected file</string>
+                 </property>
+                 <property name="text">
+                  <string>Delete File</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <spacer name="verticalSpacer_2">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
@@ -1013,10 +1078,163 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_5">
+         <widget class="QWidget" name="tabDataBankGenerator">
+          <property name="toolTip">
+           <string>Payload Generator</string>
+          </property>
           <attribute name="title">
-           <string>Page</string>
+           <string>Generator</string>
           </attribute>
+          <attribute name="toolTip">
+           <string>Payload Generator</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QGroupBox" name="groupBox_3">
+             <property name="title">
+              <string>Generate Custom Range</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_7">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_2">
+                <item>
+                 <widget class="QLabel" name="label_13">
+                  <property name="text">
+                   <string>Payload Name: </string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="dbankGenPayloadName">
+                  <property name="toolTip">
+                   <string>Name the payload. It will show up in the payloads list</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="QLabel" name="label_14">
+                  <property name="text">
+                   <string>Range Start: </string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="dbankGenStart">
+                  <property name="toolTip">
+                   <string>Start of range to generate</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_15">
+                  <property name="text">
+                   <string>Stop: </string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="dbankGenStop">
+                  <property name="toolTip">
+                   <string>End of range to generate</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_16">
+                  <property name="text">
+                   <string>Step: </string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="dbankGenStep">
+                  <property name="toolTip">
+                   <string>Step through range skipping by value specificed</string>
+                  </property>
+                  <property name="text">
+                   <string>1</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QLabel" name="label_17">
+                  <property name="text">
+                   <string>Prepend: </string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="dbankGenPre">
+                  <property name="toolTip">
+                   <string>Prepend static values to range</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_18">
+                  <property name="text">
+                   <string>Postpend: </string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="dbankGenPost">
+                  <property name="toolTip">
+                   <string>Postpend static values to range</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="dbankGenButton">
+               <property name="text">
+                <string>Generate</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </widget>
         </widget>
        </item>

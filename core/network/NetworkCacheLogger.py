@@ -30,44 +30,44 @@ class NetworkCacheLogger(QtNetwork.QAbstractNetworkCache):
         self.nc = cache
 
     def __attr__(self, name):
-        print('NetworkCache: [%s]' % (name))
+        print(('NetworkCache: [%s]' % (name)))
         return getattr(self.nc, msg)
 
     def insert(self, device):
         msg = 'NetworkCache: [%s](%s)' % ('insert', device)
         r = self.nc.insert(device)
-        print('%s -> %s' % (msg, r))
+        print(('%s -> %s' % (msg, r)))
         return r
 
     def metaData(self, url):
         msg = 'NetworkCache: [%s](%s)' % ('metaData', url)
         r = self.nc.metaData(url)
-        print('%s -> %s, isValid=%s' % (msg, r, r.isValid()))
-        print('\n'.join(['%s: %s' % (n, v) for n,v in r.rawHeaders()]))
+        print(('%s -> %s, isValid=%s' % (msg, r, r.isValid())))
+        print((b'\n'.join([n + b': ' + v for n,v in r.rawHeaders()])))
         return r
 
     def data(self, url):
         msg = 'NetworkCache: [%s](%s)' % ('data', url)
         r = self.nc.data(url)
         if r:
-            print('%s -> %s, isOpen=%s' % (msg, r, r.isOpen()))
+            print(('%s -> %s, isOpen=%s' % (msg, r, r.isOpen())))
         return r
 
     def prepare(self, metaData):
         msg = 'NetworkCache: [%s](%s)' % ('prepare', metaData)
         r = self.nc.prepare(metaData)
-        print('%s -> %s' % (msg, r))
+        print(('%s -> %s' % (msg, r)))
 #        print('\n'.join(['%s: %s' % (n, v) for n,v in metaData.rawHeaders()]))
         return r
 
     def remove(self, url):
         msg = 'NetworkCache: [%s](%s)' % ('remove', url)
         r = self.nc.remove(url)
-        print('%s -> %s' % (msg, r))
+        print(('%s -> %s' % (msg, r)))
         return r
 
     def updateMetaData(self, metaData):
         msg = 'NetworkCache: [%s](%s)' % ('updateMetaData', metaData)
         r = self.nc.updateMetaData(metaData)
-        print('%s -> %s' % (msg, r))
-        print('\n'.join(['%s: %s' % (n, v) for n,v in metaData.rawHeaders()]))
+        print(('%s -> %s' % (msg, r)))
+        print((b'\n'.join([n + b': ' + v for n,v in metaData.rawHeaders()])))

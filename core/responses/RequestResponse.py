@@ -22,29 +22,146 @@
 # You should have received a copy of the GNU General Public License
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
+from utility import ContentHelper
+from urllib import parse as urlparse
 
 class RequestResponse(object):
-    def __init__(self):
+    def __init__(self, framework):
+        self._framework = framework
+        self._results = None
+        self._requestParams = None
+        self._combinedRequest = False
+        self._combinedResponse = False
+        self._requestUTF8Headers = None
+        self._requestUTF8Body = None
+        self._rawRequest = None
+        self._responseUTF8Headers = None
+        self._responseUTF8Body = None
+        self._rawResponse = None
+
+        ######
         self.Id = ''
-        self.requestHeaders = ''
-        self.requestBody = ''
+        self.responseUrl = ''
+        self.requestHeaders = b''
+        self.requestBody = b''
         self.requestHost = ''
         self.requestHash = ''
         self.requestDate = ''
         self.requestTime = ''
-        self.rawRequest = ''
-        self.responseHeaders = ''
-        self.responseBody=''
+        self.responseHeaders = b''
+        self.responseBody = b''
         self.responseStatus = ''
         self.responseHash = ''
         self.responseContentType = ''
-        self.rawResponse = ''
         self.notes = ''
         self.confirmed = ''
 
         self.contentType = ''
+        self.charset = ''
         self.baseType = ''
+        ######
 
-        self.results = None
+    @property
+    def results(self):
+        """ Get the extracted data results"""
+        if self._results is not None:
+            return self._results
+
+        if 'html' == self.baseType:
+            self._results = self._framework.getContentExtractor().getExtractor('html').process(self.responseBody, self.responseUrl, self.charset, None)
+        elif 'javascript' == self.baseType:
+            self._results = self._framework.getContentExtractor().getExtractor('javascript').process(self.responseUTF8Body, self.responseUrl, self.charset, None)
+        else:
+            # TODO: implement more types
+            self._results = None
+            pass
+
+        if self._results is not None:
+            # include any Location or Content-Location responses in links
+            for line in self.responseHeaders.splitlines():
+                if b':' in line:
+                    name, value = [m.strip() for m in line.split(b':', 1)]
+                    if name.lower() in (b'location', b'content-location'):
+                        link = value.decode('utf-8', 'ignore')
+                        url = urlparse.urljoin(self.responseUrl, link)
+                        if url not in self._results.links:
+                            self._results.links.append(url)
+
+        return self._results
+
+    @property
+    def requestParams(self):
+        """ Get a Dictionary containing all request parameters """
+        if self._requestParams is not None:
+            return self._requestParams
+
+        self._requestParams = {}
+        # extract request parameters
+        # TODO: repeated parameters clobber earlier values
+        # TODO: this should be processed when needed, not everytime
+        splitted = urlparse.urlsplit(self.responseUrl)
+        if splitted.query:
+            qs_values = urlparse.parse_qs(splitted.query, True, errors='ignore')
+            for name, value in qs_values.items():
+                self._requestParams[name] = value
+        postDataResults = self._framework.getContentExtractor().getExtractor('post-data').process_request(self.requestHeaders, self.requestBody)
+        if postDataResults:
+            # TODO: support non-name/value pair types
+            for name, value in postDataResults.name_values_dictionary.items():
+                # XXX: bytes
+                self._requestParams[name] = value
+
+        return self._requestParams
+
         
+    @property
+    def requestUTF8Headers(self):
+        """ Get the request headers as a UTF-8 string """
+        if not self._combinedRequest:
+            self._doCombineRequest()
+        return self._requestUTF8Headers
+
+    @property
+    def requestUTF8Body(self):
+        """ Get the request body as a UTF-8 string """
+        if not self._combinedRequest:
+            self._doCombineRequest()
+        return self._requestUTF8Body
+
+    @property
+    def rawRequest(self):
+        """ Get a representation of the raw request """
+        if not self._combinedRequest:
+            self._doCombineRequest()
+        return self._rawRequest
+
+    @property
+    def responseUTF8Headers(self):
+        """ Get the response headers as a UTF-8 string """
+        if not self._combinedResponse:
+            self._doCombineResponse()
+        return self._responseUTF8Headers
+
+    @property
+    def responseUTF8Body(self):
+        """ Get the response body as a UTF-8 string """
+        if not self._combinedResponse:
+            self._doCombineResponse()
+        return self._responseUTF8Body
+
+    @property
+    def rawResponse(self):
+        """ Get a representation of the raw response """
+        if not self._combinedResponse:
+            self._doCombineResponse()
+        return self._rawResponse
+
+
+    def _doCombineRequest(self):
+        self._requestUTF8Headers, self._requestUTF8Body, self._rawRequest = ContentHelper.combineRaw(self.requestHeaders, self.requestBody)
+        self._combinedRequest = True
+
+    def _doCombineResponse(self):
+        self._responseUTF8Headers, self._responseUTF8Body, self._rawResponse = ContentHelper.combineRaw(self.responseHeaders, self.responseBody, self.charset)
+        self._combinedResponse = True
 

@@ -64,7 +64,7 @@ class ImporterThread(QThread):
                     try: 
                         self.framework.debug_log('attempting import of %s' % (str(proxy_file)))
                         self.importers.process_import(str(proxy_file), self.framework, self.source)
-                    except Exception, ex:
+                    except Exception as ex:
                         self.framework.report_exception(ex)
             finally:
                 self.qlock.unlock()

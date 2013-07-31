@@ -55,7 +55,7 @@ class MergeTopSites:
     def process(self):
         t0 = time.time()
         self.process_files([(self.alexa_file, self.re_alexa_skip, ','), (self.quantcast_file, None, '\t')])
-        print('processed [%d] records and output [%d] records in %d seconds' % (self.tcount, self.ocount, int(time.time()-t0)))
+        print(('processed [%d] records and output [%d] records in %d seconds' % (self.tcount, self.ocount, int(time.time()-t0))))
         
     def process_files(self, entries):
 

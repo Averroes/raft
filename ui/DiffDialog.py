@@ -72,4 +72,4 @@ class Ui_DiffDialog(object):
         self.closeButton.setText(QtGui.QApplication.translate("DiffDialog", "Close", None, QtGui.QApplication.UnicodeUTF8))
 
 from PyQt4 import QtWebKit
-import resources_rc
+from . import resources_rc

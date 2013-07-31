@@ -120,7 +120,7 @@ class DiffDialog(QDialog, DiffDialog.Ui_DiffDialog):
                     self.diffView.setHtml(diffHtml)
                 else:
                     self.diffView.setHtml('')
-            except Exception, e:
+            except Exception as e:
                 self.display_message('Failed when comparing:\n%s' % (e))
                 self.diffView.setHtml('')
             finally:

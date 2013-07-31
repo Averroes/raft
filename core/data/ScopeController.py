@@ -22,7 +22,7 @@
 from PyQt4.QtCore import Qt, QObject, SIGNAL, QUrl
 import json
 import re
-from urllib2 import urlparse
+from urllib import parse as urlparse
 
 class ScopeController(QObject):
     def __init__(self, framework, parent = None):
@@ -46,8 +46,8 @@ class ScopeController(QObject):
         pass
 
     def configuration_updated(self, name, value):
-        if str(name) == 'SCOPING':
-            self.fill_scoping_configuration(str(value.toString()))
+        if name == 'SCOPING':
+            self.fill_scoping_configuration(value)
 
     def fill_scoping_configuration(self, configuration):
         if configuration:
@@ -89,6 +89,10 @@ class ScopeController(QObject):
         return inscope
 
     def apply_scoping_rules(self, url, referer):
+        if isinstance(url, bytes):
+            url = str(url, 'utf-8', 'ignore')
+        if isinstance(referer, bytes):
+            referer = str(referer, 'utf-8', 'ignore')
         splitted = urlparse.urlsplit(url)
         matched_exclusion = False
         matched_inclusion = False
@@ -145,7 +149,7 @@ class ScopeController(QObject):
             return False
         else:
             if referer:
-                splitted2 = urlparse.urlsplit(str(referer))
+                splitted2 = urlparse.urlsplit(referer)
                 if splitted2.hostname != splitted.hostname:
                     return False
             return True

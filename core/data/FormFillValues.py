@@ -55,7 +55,7 @@ class FormFillValues():
             return
         try:
             obj = json.loads(blob)
-            for name, value in obj.iteritems():
+            for name, value in obj.items():
                 if not name:
                     pass
                 elif 'FirstName' == name:

@@ -18,8 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 
-from ResultSet import ResultSet
-from SingleResult import SingleResult
+from .ResultSet import ResultSet
+from .SingleResult import SingleResult
 from PyQt4.QtGui import *
 from PyQt4.QtCore import Qt
 
@@ -84,13 +84,13 @@ class AnalysisResults(object):
         
         if len(self.overall) > 0:
             finaloutput+='<h2>Overall Results</h2>'
-            for k in self.overall.keys():
+            for k in list(self.overall.keys()):
                 finaloutput+=self.overall[k].toHTML()
                 
                
         if len(self.pages)>0:
             finaloutput+='<h2>Results for each page analyzed</h2>'
-            for k in self.pages.keys():
+            for k in list(self.pages.keys()):
                 finaloutput+=self.pages[k].toHTML()
         return finaloutput
         

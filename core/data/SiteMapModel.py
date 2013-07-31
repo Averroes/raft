@@ -136,14 +136,14 @@ class SiteMapModel(QAbstractItemModel):
 
     def headerData(self, section, orientation, role):
         if 0 == section and orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return QVariant('Name')
-        return QVariant()
+            return 'Name' # QVariant('Name')
+        return None # QVariant()
         
     def data(self, index, role):
         if not index.isValid():
-            return QVariant()
+            return None # QVariant()
         node = index.internalPointer()
         if role == Qt.DisplayRole:
-            return QVariant(node.text)
-        return QVariant()
+            return node.text # QVariant(node.text)
+        return None # QVariant()
 

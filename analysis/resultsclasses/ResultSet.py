@@ -20,7 +20,7 @@
 
 import ast
 
-from SingleResult import SingleResult
+from .SingleResult import SingleResult
 from PyQt4.QtGui import *
 from PyQt4.QtCore import Qt
 
@@ -47,7 +47,7 @@ class ResultSet(object):
         statsoutput=''
         resultsoutput=''
         
-        for key,value in self.stats.items():
+        for key,value in list(self.stats.items()):
             statsoutput+="<em>%s</em>: %s"%(key,value)
         
         resultcounter=1

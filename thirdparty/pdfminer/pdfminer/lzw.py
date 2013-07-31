@@ -1,9 +1,9 @@
 #!/usr/bin/env python2
 import sys
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 
 ##  LZWDecoder
@@ -48,7 +48,7 @@ class LZWDecoder(object):
     def feed(self, code):
         x = ''
         if code == 256:
-            self.table = [ chr(c) for c in xrange(256) ] # 0-255
+            self.table = [ chr(c) for c in range(256) ] # 0-255
             self.table.append(None) # 256
             self.table.append(None) # 257
             self.prevbuf = ''
@@ -83,8 +83,8 @@ class LZWDecoder(object):
             x = self.feed(code)
             yield x
             if self.debug:
-                print >>sys.stderr, ('nbits=%d, code=%d, output=%r, table=%r' %
-                                     (self.nbits, code, x, self.table[258:]))
+                print(('nbits=%d, code=%d, output=%r, table=%r' %
+                                     (self.nbits, code, x, self.table[258:])), file=sys.stderr)
         return
 
 # lzwdecode

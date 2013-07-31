@@ -21,12 +21,12 @@
 #
 
 import time
-from urllib2 import urlparse
+from urllib import parse as urlparse
 
 from PyQt4.QtCore import Qt, SIGNAL, QObject, QModelIndex
 from PyQt4.QtGui import *
 
-from cStringIO import StringIO
+from io import StringIO
 
 from actions import interface
 from core.database.constants import ResponsesTable
@@ -34,6 +34,7 @@ from core.database.constants import ResponsesTable
 from lib.parsers.raftparse import ParseAdapter
 from core.data.RaftDbCapture import RaftDbCapture
 import bz2
+import lzma
 
 class ResponsesContextMenuWidget(QObject):
     def __init__(self, framework, dataModel, treeView, parent = None):
@@ -54,6 +55,10 @@ class ResponsesContextMenuWidget(QObject):
         self.treeView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.connect(self.treeView, SIGNAL("customContextMenuRequested(const QPoint&)"), self.responses_data_context_menu)
         self.menu = QMenu(self.treeView)
+
+        self.sendToBrowserAction = action = QAction("Open URL in Browser", self)
+        action.triggered.connect(self.open_response_url_in_browser)
+        self.menu.addAction(action)
 
         self.sendToRequesterAction = action = QAction("Send to Requester", self)
         action.triggered.connect(self.send_response_data_to_requester)
@@ -173,14 +178,17 @@ class ResponsesContextMenuWidget(QObject):
     def export_to_raft_capture(self):
         # TODO: consider implementing a tasklet if this is the entire DB being exported
         filename = 'RaftExport-%s' % int(time.time())
-        file = QFileDialog.getSaveFileName(None, "Save to file", filename, "XML File (*.xml);;BZ2 XML File (*.xml.bz2)")
+        file = QFileDialog.getSaveFileName(None, "Save to file", filename, "XML File (*.xml);;XZ XML File (*.xml.xz)")
         if file:
             adapter = ParseAdapter()
             # TODO: refactor
             filename = str(file)
-            if filename.endswith('.xml.bz2'):
-                filename = filename.replace('.xml.bz2.xml.bz2', '.xml.bz2')
-                fh = bz2.BZ2File(filename, 'w')
+            while '.xml.xml' in filename:
+                filename = filename.replace('.xml.xml', '.xml')
+            if filename.endswith('.xml.xz'):
+                while '.xml.xz.xml.xz' in filename:
+                    filename = filename.replace('.xml.xz.xml.xz', '.xml.xz')
+                fh = lzma.LZMAFile(filename, 'w')
             elif filename.endswith('.xml'):
                 filename = filename.replace('.xml.xml', '.xml')
                 fh = open(filename, 'wb')
@@ -189,13 +197,14 @@ class ResponsesContextMenuWidget(QObject):
             Data = self.framework.getDB()
             cursor = Data.allocate_thread_cursor()
             try:
-                fh.write('<raft version="1.0">\n')
+                fh.write(b'<raft version="1.0">\n')
                 for index in self.treeViewSelectionModel.selectedRows():
                     Id = interface.index_to_id(self.dataModel, index)
                     if Id:
-                        capture = RaftDbCapture(self.framework, Data, cursor, Id)
-                        fh.write(adapter.format_as_xml(capture))
-                fh.write('</raft>')
+                        capture = RaftDbCapture()
+                        capture.populate_by_id(self.framework, Data, cursor, Id)
+                        fh.write(adapter.format_as_xml(capture).encode('utf-8'))
+                fh.write(b'</raft>')
                 fh.close()
             finally:
                 cursor.close()
@@ -223,15 +232,30 @@ class ResponsesContextMenuWidget(QObject):
                 finally:
                     fh.close()
 
+    def open_response_url_in_browser(self):
+        url_list = []
+        for index in self.treeViewSelectionModel.selectedRows():
+            url = interface.index_to_url(self.dataModel, index)
+            if url and url not in url_list:
+                url_list.append(url)
+
+        if 1 == len(url_list):
+            self.framework.open_url_in_browser(url_list[0])
+        else:
+            # TODO: support this via multiple tables
+            pass
+
     def send_response_data_to_requester(self):
         id_list = []
         for index in self.treeViewSelectionModel.selectedRows():
             Id = interface.index_to_id(self.dataModel, index)
             if Id:
-                id_list.append(Id)
+                id_list.append(int(Id))
 
         if 1 == len(id_list):
             self.framework.send_response_id_to_requester(id_list[0])
+        else:
+            self.framework.send_responses_to_bulk_requester(id_list)
 
     def responses_data_context_menu(self, point):
         """ Display the context menu for the TreeView """
@@ -317,10 +341,10 @@ class ResponsesContextMenuWidget(QObject):
         index = self.treeView.currentIndex()
         index = self.dataModel.index(index.row(), column)
         if index.isValid():
-            value = str(self.dataModel.data(index).toString())
+            value = self.dataModel.data(index)
             for i in range(0, self.dataModel.rowCount()):
                 itemIndex = self.dataModel.index(i, column)
-                data = str(self.dataModel.data(itemIndex).toString())
+                data = self.dataModel.data(itemIndex)
                 if data == value:
                     self.treeView.setRowHidden(i, QModelIndex(), True)
 
@@ -334,10 +358,10 @@ class ResponsesContextMenuWidget(QObject):
         index = self.treeView.currentIndex()
         index = self.dataModel.index(index.row(), column)
         if index.isValid():
-            value = str(self.dataModel.data(index).toString())
+            value = self.dataModel.data(index)
             for i in range(0, self.dataModel.rowCount()):
                 itemIndex = self.dataModel.index(i, column)
-                data = str(self.dataModel.data(itemIndex).toString())
+                data = self.dataModel.data(itemIndex)
                 if data != value:
                     self.treeView.setRowHidden(i, QModelIndex(), True)
 
@@ -346,7 +370,7 @@ class ResponsesContextMenuWidget(QObject):
         urlColumn = self.dataModel.translate_offset(ResponsesTable.URL)
         for i in range(0, self.dataModel.rowCount()):
             itemIndex = self.dataModel.index(i, urlColumn)
-            url = str(self.dataModel.data(itemIndex).toString())
+            url = self.dataModel.data(itemIndex)
             if scopeController.isUrlInScope(url, url):
                 self.treeView.setRowHidden(i, QModelIndex(), False)
             else:

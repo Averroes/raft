@@ -83,16 +83,16 @@ class AbstractMessage(object):
     REQUEST_TIMEOUT_HEADER = "DSRequestTimeout"
 
     SMALL_ATTRIBUTE_FLAGS = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40]
-    SMALL_ATTRIBUTES = dict(zip(
+    SMALL_ATTRIBUTES = dict(list(zip(
         SMALL_ATTRIBUTE_FLAGS,
         __amf__.static
-    ))
+    )))
 
     SMALL_UUID_FLAGS = [0x01, 0x02]
-    SMALL_UUIDS = dict(zip(
+    SMALL_UUIDS = dict(list(zip(
         SMALL_UUID_FLAGS,
         ['clientId', 'messageId']
-    ))
+    )))
 
     def __new__(cls, *args, **kwargs):
         obj = object.__new__(cls)

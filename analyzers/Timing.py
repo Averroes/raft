@@ -29,7 +29,7 @@ from analysis.AbstractAnalyzer import AbstractAnalyzer
 class Timing(AbstractAnalyzer):
     
     #Class variables shared across all instances
-    ResponseDateRegex = re.compile("Date:\ (.*)")
+    ResponseDateRegex = re.compile(b"Date:\ (.*)")
     #ReqDateRegex matching format: Mon Jul  4 23:55:11 2011 GMT
     ReqDateRegex = re.compile("\w{3}\s\w{3}\s+\d+\s\d\d:\d\d:\d\d\s\d{4}\s\w{3}")
     URLRegex = re.compile("\/\/(.*?)(\/.*)$")
@@ -63,17 +63,18 @@ class Timing(AbstractAnalyzer):
                 else:
                    requestdate = time.strptime(reqdate, '%a %b %d %H:%M:%S %Y')
             except ValueError:
-                print "ERROR REQDATE: %s" % reqdate
+                print("ERROR REQDATE: %s" % reqdate)
                 # TODO: fix this
                 return
             responsedate = None
             m = Timing.ResponseDateRegex.search(responseheaders)
             if (m != None):
-                resdate = m.group(1).rstrip()
+                restemp = m.group(1).rstrip()
+                resdate = restemp.decode('utf-8')
                 try:
                     responsedate = time.strptime(resdate, '%a, %d %b %Y %H:%M:%S %Z')
                 except ValueError:
-                    print "ERROR RESPONSEDATE: %s" % responsedate
+                    print("ERROR RESPONSEDATE: %s" % responsedate)
         
             if (responsedate != None):
                 elapsedtime = abs(time.mktime(responsedate) - time.mktime(requestdate))
@@ -124,7 +125,7 @@ class Timing(AbstractAnalyzer):
     def postanalysis(self,results):
         header = "<table border='1'><tr><td align='center' width=200><b>HOST</b></td><td align='center' width=100><b>REQUESTS</b></td><td align='center' width=100><b>MIN</b></td><td align='center' width=100><b>MAX</b></td><td align='center' width=100><b>AVE</b></td></tr>"
         tail = "</table>"
-        for h in self.hosts.iterkeys():
+        for h in self.hosts.keys():
             host = self.hosts[h]
             output = "<tr><td align='left'>%s</td><td align='right'>%d</td><td align='right'>%d</td><td align='right'>%d</td><td align='right'>%5d</td></tr>" % (h,host['count'],host['min'], host['max'], host['total']/host['count'])
             # def addOverallResult(self, type, desc, data, span=None, severity=None, certainty=None, context=None):

@@ -3,6 +3,7 @@
 #
 # Authors: 
 #          Gregory Fleischer (gfleischer@gmail.com)
+#          Nathan Hamiel
 #
 # Copyright (c) 2011 RAFT Team
 #
@@ -27,7 +28,14 @@ from PyQt4.QtGui import *
 
 from ui import ConfigDialog
 from tabs import DataBankTab
+from dialogs import ConfirmDialog
+from dialogs.SimpleDialog import SimpleDialog
+from dialogs.ProgressDialog import ProgressDialog
 
+from core.fuzzer import Payloads
+
+import os
+import shutil
 import json
 
 class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
@@ -38,6 +46,8 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.setupUi(self)
 
         self.framework = framework
+        self.payloads_dir = os.path.join(self.framework.get_data_dir(), 'payloads')
+        self.Progress = ProgressDialog()
 
         self.buttonBox.clicked.connect(self.handle_buttonBox_clicked)
 
@@ -47,6 +57,11 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.framework.subscribe_raft_config_populated(self.configuration_populated)
 
         self.dataBankTab = DataBankTab.DataBankTab(self.framework, self)
+        
+        self.dbankFuzzFileAddButton.clicked.connect(self.add_fuzz_file)
+        self.dbankFuzzFileDelButton.clicked.connect(self.del_fuzz_file)
+        
+        self.dbankGenButton.clicked.connect(self.generate_payload)
 
     def configuration_populated(self):
         self.fill_values()
@@ -54,8 +69,14 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
     def fill_values(self):
         self.bhNetworkBox.setChecked(self.framework.get_raft_config_value('black_hole_network', bool))
         self.checkBoxUseProxy.setChecked(self.framework.get_raft_config_value('use_proxy', bool))
-        self.confProxyEdit.setText(self.framework.get_raft_config_value('proxy_host'))
-        self.confProxyPort.setText(self.framework.get_raft_config_value('proxy_port'))
+        self.confProxyEdit.setText(self.framework.get_raft_config_value('proxy_host', default_value = 'localhost'))
+        self.confProxyPort.setText(self.framework.get_raft_config_value('proxy_port', default_value = '8080'))
+        self.confProxyUsername.setText(self.framework.get_raft_config_value('proxy_username'))
+        self.confProxyPassword.setText(self.framework.get_raft_config_value('proxy_password'))
+        if 'socks5' == self.framework.get_raft_config_value('proxy_type'):
+            self.confProxyProxyType.setCurrentIndex(1)
+        else:
+            self.confProxyProxyType.setCurrentIndex(0)
         self.set_enable_proxy_edits()
         self.fill_browser_edits()
         self.fill_crawler_edits()
@@ -69,8 +90,14 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
     def do_save_config(self):
         self.framework.set_raft_config_value('black_hole_network', bool(self.bhNetworkBox.isChecked()))
         if self.checkBoxUseProxy.isChecked():
-            self.framework.set_raft_config_value('proxy_host', str(self.confProxyEdit.text()))
-            self.framework.set_raft_config_value('proxy_port', int(self.confProxyPort.text()))
+            self.framework.set_raft_config_value('proxy_host', self.confProxyEdit.text())
+            self.framework.set_raft_config_value('proxy_port', int(self.confProxyPort.text() or '8080'))
+            self.framework.set_raft_config_value('proxy_username', self.confProxyUsername.text())
+            self.framework.set_raft_config_value('proxy_password', self.confProxyPassword.text())
+            if 'http' in self.confProxyProxyType.currentText().lower():
+                self.framework.set_raft_config_value('proxy_type', 'http')
+            else:
+                self.framework.set_raft_config_value('proxy_type', 'socks5')
             self.framework.set_raft_config_value('use_proxy', True)
         else:
             self.framework.set_raft_config_value('use_proxy', False)
@@ -85,9 +112,15 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         if self.checkBoxUseProxy.isChecked():
             self.confProxyEdit.setEnabled(True)            
             self.confProxyPort.setEnabled(True)
+            self.confProxyUsername.setEnabled(True)            
+            self.confProxyPassword.setEnabled(True)
+            self.confProxyProxyType.setEnabled(True)
         else:
             self.confProxyEdit.setEnabled(False)            
             self.confProxyPort.setEnabled(False)
+            self.confProxyUsername.setEnabled(False)            
+            self.confProxyPassword.setEnabled(False)
+            self.confProxyProxyType.setEnabled(False)
 
     def fill_crawler_edits(self):
         self.fill_spider_edits()
@@ -96,7 +129,7 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.save_spider_config()
 
     def value_or_default(self, obj, name, default_value):
-        if obj.has_key(name):
+        if name in obj:
             return obj[name]
         else:
             return default_value
@@ -120,14 +153,14 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.spiderIterateUserAgentsCheckBox.setChecked(bool(self.value_or_default(obj, 'iterate_user_agents', True)))
         self.spiderRetrieveMediaFilesCheckBox.setChecked(bool(self.value_or_default(obj, 'retrieve_media_files', True)))
         self.spiderExcludeDangerouPathCheckBox.setChecked(bool(self.value_or_default(obj, 'exclude_dangerous_paths', False)))
-        self.spiderDangerousPathEdit.setText(str(self.value_or_default(obj, 'dangerous_path', 'delete|remove|destroy')))
+        self.spiderDangerousPathEdit.setText(self.value_or_default(obj, 'dangerous_path', 'delete|remove|destroy'))
         self.spiderMaxLinksEdit.setText(str(self.value_or_default(obj, 'max_links', 8192)))
         self.spiderMaxLinkDepthEdit.setText(str(self.value_or_default(obj, 'max_link_depth', 5)))
         self.spiderMaxChildrenEdit.setText(str(self.value_or_default(obj, 'max_children', 256)))
         self.spiderMaxUniqueParametersEdit.setText(str(self.value_or_default(obj, 'max_unique_parameters', 16)))
         self.spiderRedundantContentLimit.setText(str(self.value_or_default(obj, 'redundant_content_limit', 128)))
         self.spiderRedundantStructureLimit.setText(str(self.value_or_default(obj, 'redundant_structure_limit', 256)))
-        self.spiderMediaExtensionsEdit.setText(str(self.value_or_default(obj, 'media_extensions', 'wmv,mp3,mp4,mpa,gif,jpg,jpeg,png')))
+        self.spiderMediaExtensionsEdit.setText(self.value_or_default(obj, 'media_extensions', 'wmv,mp3,mp4,mpa,gif,jpg,jpeg,png'))
 
     def save_spider_config(self):
         obj = {}
@@ -138,14 +171,14 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         obj['iterate_user_agents'] = self.spiderIterateUserAgentsCheckBox.isChecked()
         obj['retrieve_media_files'] = self.spiderRetrieveMediaFilesCheckBox.isChecked()
         obj['exclude_dangerous_paths'] = self.spiderExcludeDangerouPathCheckBox.isChecked()
-        obj['dangerous_path'] = str(self.spiderDangerousPathEdit.text().toUtf8())
-        obj['max_links'] = int(self.spiderMaxLinksEdit.text().toUtf8())
-        obj['max_link_depth'] = int(self.spiderMaxLinkDepthEdit.text().toUtf8())
-        obj['max_children'] = int(self.spiderMaxChildrenEdit.text().toUtf8())
-        obj['max_unique_parameters'] = int(self.spiderMaxUniqueParametersEdit.text().toUtf8())
-        obj['redundant_content_limit'] = int(self.spiderRedundantContentLimit.text().toUtf8())
-        obj['redundant_structure_limit'] = int(self.spiderRedundantStructureLimit.text().toUtf8())
-        obj['media_extensions'] = str(self.spiderMediaExtensionsEdit.text().toUtf8())
+        obj['dangerous_path'] = self.spiderDangerousPathEdit.text()
+        obj['max_links'] = int(self.spiderMaxLinksEdit.text())
+        obj['max_link_depth'] = int(self.spiderMaxLinkDepthEdit.text())
+        obj['max_children'] = int(self.spiderMaxChildrenEdit.text())
+        obj['max_unique_parameters'] = int(self.spiderMaxUniqueParametersEdit.text())
+        obj['redundant_content_limit'] = int(self.spiderRedundantContentLimit.text())
+        obj['redundant_structure_limit'] = int(self.spiderRedundantStructureLimit.text())
+        obj['media_extensions'] = self.spiderMediaExtensionsEdit.text()
         configuration = json.dumps(obj)
         self.framework.set_raft_config_value('SPIDER', configuration)
 
@@ -156,7 +189,7 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.browserEnableJavaCheckBox.setChecked(self.framework.get_raft_config_value('browser_java_enabled', bool, True))
         self.browserAutoLoadImagesCheckBox.setChecked(self.framework.get_raft_config_value('browser_auto_load_images', bool, True))
         self.browserCustomUserAgentCheckBox.setChecked(self.framework.get_raft_config_value('browser_custom_user_agent', bool, False))
-        self.browserUserAgentEdit.setText(str(self.framework.get_raft_config_value('browser_user_agent_value', str, self.framework.useragent())))
+        self.browserUserAgentEdit.setText(self.framework.get_raft_config_value('browser_user_agent_value', str, self.framework.useragent()))
     
     def save_browser_config(self):
         self.framework.set_raft_config_value('browser_javascript_enabled', self.browserEnableJavaScriptCheckBox.isChecked())
@@ -165,4 +198,106 @@ class ConfigDialog(QDialog, ConfigDialog.Ui_configDialog):
         self.framework.set_raft_config_value('browser_java_enabled', self.browserEnableJavaCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_auto_load_images', self.browserAutoLoadImagesCheckBox.isChecked())
         self.framework.set_raft_config_value('browser_custom_user_agent', self.browserCustomUserAgentCheckBox.isChecked())
-        self.framework.set_raft_config_value('browser_user_agent_value', self.browserUserAgentEdit.text().toUtf8())
+        self.framework.set_raft_config_value('browser_user_agent_value', self.browserUserAgentEdit.text())
+        
+    def add_fuzz_file(self):
+        
+        file = QFileDialog.getOpenFileName(None, "Open file", "")
+        shutil.copy(file, self.payloads_dir)
+        
+        # Refresh the payload list in the interface.
+        # pl = Payloads.Payloads()
+        self.dataBankTab.fill_payload_combo_box()
+        
+    def del_fuzz_file(self):
+        
+        # Gets the current name of the file selected in the combobox
+        filename = self.dataBankTab.mainWindow.dbankPayloadsBox.currentText()
+        path = self.payloads_dir
+        
+        message = "Are you sure you want to delete: {0}".format(filename)
+        
+        response = ConfirmDialog.display_confirm_dialog(self, message)
+        
+        if response == True:
+            os.remove(path + "/" + filename)
+            
+            self.dataBankTab.fill_payload_combo_box()
+                    
+            # Clear the items from the textedit
+            self.dataBankTab.mainWindow.dbankFuzzValuesEdit.clear()
+            
+    def write_payload(self, fullpath, start, stop):
+        
+        step = self.dataBankTab.mainWindow.dbankGenStep.text()
+        prepend = self.dataBankTab.mainWindow.dbankGenPre.text()
+        postpend = self.dataBankTab.mainWindow.dbankGenPost.text()
+        
+        
+        try:
+            f = open(fullpath, "w")
+            self.Progress = ProgressDialog()
+            for item in range(int(start), int(stop), int(step)):
+                f.write(prepend + str(item) + postpend +"\n")   
+        
+            self.dataBankTab.fill_payload_combo_box()
+            
+            # Display a message since small payload generation will not show the progress dialog.
+            message = "Payload Generated"
+            dialog = SimpleDialog(message)
+            dialog.exec_()
+            
+        except Exception as e:
+            message = "An error occured:\n%s" % (e)
+            dialog = SimpleDialog(message)
+            dialog.exec_()
+            
+            # Remove the file created on error so a blank payload is not listed in the payload list
+            os.remove(fullpath)
+        
+        finally:
+            self.Progress.close()
+            
+            
+            
+    def generate_payload(self):
+        """ Generate a payload file and place it in the payloads directory. Payloads will be one item per line. """
+        
+        filename = self.dataBankTab.mainWindow.dbankGenPayloadName.text()
+        start = self.dataBankTab.mainWindow.dbankGenStart.text()
+        stop = self.dataBankTab.mainWindow.dbankGenStop.text()
+        step = self.dataBankTab.mainWindow.dbankGenStep.text()
+        prepend = self.dataBankTab.mainWindow.dbankGenPre.text()
+        postpend = self.dataBankTab.mainWindow.dbankGenPost.text()
+        
+        if filename == "":
+            message = "You didn't specify a filename"
+            dialog = SimpleDialog(message)
+            dialog.exec_()
+            return()
+        if start == "":
+            message = "You didn't specify a start of the range"
+            dialog = SimpleDialog(message)
+            dialog.exec_()
+            return()
+        if stop == "":
+            message = "You didn't specify a end of the range"
+            dialog = SimpleDialog(message)
+            dialog.exec_()
+            return()
+        
+        fullpath = self.payloads_dir + "/" + filename
+        
+        if os.path.exists(fullpath):
+            message = "File already exists. Would you like to overwrite?"
+            response = ConfirmDialog.display_confirm_dialog(self, message)
+            if response == False:
+                return()
+            
+        self.write_payload(fullpath, start, stop)
+            
+            
+        
+    
+    
+    

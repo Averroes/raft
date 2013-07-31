@@ -23,7 +23,7 @@
 
 from PyQt4.QtCore import QObject, SIGNAL
 
-from SequenceBuilderWebPage import SequenceBuilderWebPage
+from .SequenceBuilderWebPage import SequenceBuilderWebPage
 
 class SequenceBuilderPageFactory(QObject):
     def __init__(self, framework, context, parent = None):

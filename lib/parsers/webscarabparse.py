@@ -20,7 +20,7 @@
 #
 # Classes to support parsing WebScarab converstation log files
 import re, time, os
-from urllib2 import urlparse
+from urllib import parse as urlparse
 import logging
 
 class webscarab_parse_conversation():
@@ -38,9 +38,9 @@ class webscarab_parse_conversation():
             self.wsdir = os.path.dirname(wsfile)
         self.convdir = os.path.join(self.wsdir, 'conversations')
 
-        self.re_conversation = re.compile(r'^###\s+Conversation\s+:\s+(\d+)\s*$')
-        self.re_data = re.compile(r'^(COMMENTS|WHEN|METHOD|COOKIE|STATUS|URL|ORIGIN):\s+(.*)$')
-        self.re_content_type = re.compile(r'^Content-Type:\s*([-_+0-9a-z.]+/[-_+0-9a-z.]+(?:\s*;\s*\S+=\S+)*)\s*$', re.I)
+        self.re_conversation = re.compile(br'^###\s+Conversation\s+:\s+(\d+)\s*$')
+        self.re_data = re.compile(br'^(COMMENTS|WHEN|METHOD|COOKIE|STATUS|URL|ORIGIN|SET-COOKIE|SCRIPTS):\s+(.*)$')
+        self.re_content_type = re.compile(br'^Content-Type:\s*([-_+0-9a-z.]+/[-_+0-9a-z.]+(?:\s*;\s*\S+=\S+)*)\s*$', re.I)
 
         self.logger = logging.getLogger(__name__)
         self.logger.info('Processing WebScarab conversation log file: %s' % (wsfile))
@@ -64,13 +64,13 @@ class webscarab_parse_conversation():
         headers = ''
         body = ''
         data = rfile.read()
-        n = data.find('\r\n\r\n')
+        n = data.find(b'\r\n\r\n')
         if -1 != n:
             # found headers
             headers = data[0:n+4]
             body = data[n+4:]
         else:
-            n = data.find('\n\n')
+            n = data.find(b'\n\n')
             if -1 != n:
                 # found headers
                 headers = data[0:n+2]
@@ -101,16 +101,16 @@ class webscarab_parse_conversation():
         host = parsed.hostname
 
         # TODO: maybe change this to use hostname and port?
-        if 'http' == scheme:
-            netloc = netloc.replace(':80','')
-        elif 'https' == scheme:
-            netloc = netloc.replace(':443','')
+        if b'http' == scheme:
+            netloc = netloc.replace(b':80',b'')
+        elif b'https' == scheme:
+            netloc = netloc.replace(b':443',b'')
         
-        url = scheme + '://' + netloc + parsed.path
+        url = scheme + b'://' + netloc + parsed.path
         if parsed.query:
-            url += '?' + parsed.query
+            url += b'?' + parsed.query
         if parsed.fragment:
-            url += '#' + parsed.fragment
+            url += b'#' + parsed.fragment
 
         return (url, host)
 
@@ -119,9 +119,9 @@ class webscarab_parse_conversation():
             m = self.re_content_type.search(header)
             if m:
                 return m.group(1)
-        return ''
+        return b''
 
-    def next(self):
+    def __next__(self):
         while True:
             line = self.__read_line().rstrip()
             if self.state in (self.S_INITIAL, self.S_END_CONVERSATION):
@@ -129,50 +129,51 @@ class webscarab_parse_conversation():
                 if m:
                     conversation = m.group(1)
                     self.state = self.S_BEGIN_CONVERSATION
-                    method = ''
+                    method = b''
                     status = 0
-                    url = ''
-                    origin = ''
-                    host = ''
-                    hostip = ''
-                    datetime = ''
-                    content_type = ''
+                    url = b''
+                    origin = b''
+                    host = b''
+                    hostip = b''
+                    datetime = b''
+                    content_type = b''
                     request, response = None, None
                 else:
-                    self.logger.debug('Leading garbage: %s' % (line))
+                    self.logger.debug('Leading garbage: %s' % (repr(line.decode('ascii','ignore'))))
             elif self.S_BEGIN_CONVERSATION == self.state:
                 if 0 == len(line):
                     self.state = self.S_END_CONVERSATION
                     # return request/response
                     if request and response:
                         content_type = self.__determine_content_type(response[0])
-                        return (origin, host, hostip, url, status, datetime, request, response, method, content_type, {})
+                        return (origin.decode('utf-8','ignore'), host.decode('utf-8','ignore'), hostip.decode('utf-8','ignore'), url.decode('utf-8','ignore'), status, datetime.decode('utf-8','ignore'), request, response, method.decode('utf-8','ignore'), content_type.decode('utf-8','ignore'), {})
                     conversation = None
                 else:
                     m = self.re_data.search(line)
                     if m:
                         name = m.group(1)
                         value = m.group(2)
-                        if name in ('COMMENTS', 'COOKIE'):
+                        if name in (b'COMMENTS', b'COOKIE',b'SET-COOKIE',b'SCRIPTS'):
+                            # TODO: implement
                             pass
-                        elif 'WHEN' == name:
-                            datetime = time.asctime(time.localtime(int(value)/1000.0))
-                        elif 'METHOD' == name:
+                        elif b'WHEN' == name:
+                            datetime = bytes(time.asctime(time.localtime(int(value.decode('ascii','ignore'))/1000.0)),'ascii')
+                        elif b'METHOD' == name:
                             method = value
-                        elif 'STATUS' == name:
-                            status = int(value[0:value.index(' ')])
-                            response = self.__read_response(conversation)
-                        elif 'URL' == name:
+                        elif b'STATUS' == name:
+                            status = int(value[0:value.index(b' ')].decode('ascii','ignore'))
+                            response = self.__read_response(conversation.decode())
+                        elif b'URL' == name:
                             url, host = self.__normalize_url(value)
-                            request = self.__read_request(conversation)
-                        elif 'ORIGIN' == name:
+                            request = self.__read_request(conversation.decode())
+                        elif b'ORIGIN' == name:
                             origin = value
                         else:
-                            self.logger.debug('Unhandled data: [%s]=[%s]' % (name, value))
+                            self.logger.debug('Unhandled data: [%s]=[%s]' % (repr(name.decode('ascii','ignore')), repr(value.decode('ascii','ignore'))))
                     else:
-                        self.logger.debug('Garbage: %s' % (line))
+                        self.logger.debug('Garbage: %s' % (repr(line.decode('ascii','ignore'))))
             else:
-                raise(Exception('unhandled state: %s' % (self.state)))
+                raise Exception
 
 if '__main__' == __name__:
     # test code
@@ -194,8 +195,9 @@ if '__main__' == __name__:
     if 'log' == mode:
         count = 0
         for result in webscarab_parse_conversation(wsfile):
+            print(result)
             count += 1
-        print('processed %d records' % (count))
+        print(('processed %d records' % (count)))
     else:
-        raise(Exception('unsupported mode: %s' % (mode)))
+        raise Exception
 

@@ -22,7 +22,7 @@
 from PyQt4.QtCore import (Qt, QObject, SIGNAL, QUrl, QByteArray, QIODevice, QMetaType)
 from PyQt4.QtNetwork import *
 
-from cStringIO import StringIO
+from io import StringIO, BytesIO
 
 from core.database.constants import ResponsesTable
 
@@ -39,13 +39,13 @@ class NetworkResponse(QObject):
         
     def reply_finished(self):
         response_id = 0
-        status = ''
-        body, headers = ('', '')
+        status = None
+        body, headers = (b'', b'')
 
         fetched = False
         var = self.reply.attribute(QNetworkRequest.User)
-        if var.isValid() and var.type() == QMetaType.Int:
-            response_id = int(var.toInt()[0])
+        if var is not None:
+            response_id = var
             if 0 != response_id:
                 Data = self.framework.getDB()
                 cursor = Data.allocate_thread_cursor()
@@ -54,37 +54,43 @@ class NetworkResponse(QObject):
                     response_item = [m or '' for m in row]
                     status = str(response_item[ResponsesTable.STATUS])
                     content_type = str(response_item[ResponsesTable.RES_CONTENT_TYPE])
-                    headers = str(response_item[ResponsesTable.RES_HEADERS])
-                    body = str(response_item[ResponsesTable.RES_DATA])
+                    headers = bytes(response_item[ResponsesTable.RES_HEADERS])
+                    body = bytes(response_item[ResponsesTable.RES_DATA])
                     fetched = True
                 cursor.close()
                 Data.release_thread_cursor(cursor)
                 Data, cursor = None, None
-        if not status:
-            status = str(self.reply.attribute(QNetworkRequest.HttpStatusCodeAttribute).toString())
+        if status is None:
+            status = self.reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
         if status:
             try:
                 status = int(status)
-            except ValueError, e:
-                print(e)
+            except ValueError as e:
+                self.framework.debug_log('invalid status code value', e)
                 # TODO: should log bogus code value
                 pass
         if not fetched:
-            headers_io = StringIO()
-            message = str(self.reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute).toString())
-            content_type = str(self.reply.header(QNetworkRequest.ContentTypeHeader))
-            headers_io.write('HTTP/1.1 %s %s\r\n' % (status, message)) # TODO: is server HTTP version exposed?
+            # TODO: refactor this header response construction
+            headers_io = BytesIO()
+            message = self.reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+            content_type = self.reply.header(QNetworkRequest.ContentTypeHeader)
+            headers_io.write(b'HTTP/1.1 ')  # TODO: is server HTTP version exposed?
+            headers_io.write(str(status).encode('ascii'))
+            headers_io.write(b' ')
+            headers_io.write(message.encode('utf-8'))
+            headers_io.write(b'\r\n')
             for bname in self.reply.rawHeaderList():
                 bvalue = self.reply.rawHeader(bname)
-                name = str(bname)
-                value = str(bvalue)
-                headers_io.write('%s: %s\r\n' % (name, value))
-            headers_io.write('\r\n')
+                headers_io.write(bname)
+                headers_io.write(b': ')
+                headers_io.write(bvalue)
+                headers_io.write(b'\r\n')
+            headers_io.write(b'\r\n')
             headers = headers_io.getvalue()
 
-            bytes = self.reply.readAll()
-            if bytes:
-                body = str(bytes)
+            data_bytes = self.reply.readAll()
+            if data_bytes:
+                body = data_bytes
 
         self.response_id = response_id
         self.status = status
@@ -95,7 +101,7 @@ class NetworkResponse(QObject):
 
     def reply_error(self, error):
         # TODO: log
-        print('ignoring', error)
+        print(('ignoring', error))
         pass
 
     def reply_ssl_errors(self, ssl_errors):

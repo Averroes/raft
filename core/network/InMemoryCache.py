@@ -41,7 +41,7 @@ class InMemoryCache(QtNetwork.QAbstractNetworkCache):
         return self.size
 
     def clear(self):
-        for k in self.cache.keys():
+        for k in list(self.cache.keys()):
             metaData, buf, mtime = self.cache.pop(k)
             if buf:
                 self.size -= buf.length()
@@ -50,7 +50,7 @@ class InMemoryCache(QtNetwork.QAbstractNetworkCache):
 
     def data(self, url):
         k = url.toEncoded()
-        if self.cache.has_key(k):
+        if k in self.cache:
             buf = self.cache[k][1]
             device = QBuffer(buf)
             device.open(QIODevice.ReadOnly|QIODevice.Unbuffered)
@@ -59,7 +59,7 @@ class InMemoryCache(QtNetwork.QAbstractNetworkCache):
 
     def insert(self, device):
         # TODO: implement max size of cache using LRU approach
-        for k in self.outstanding.keys():
+        for k in list(self.outstanding.keys()):
             if self.outstanding[k] == device:
                 self.size += device.size()
                 self.cache[k][1] = device.data()
@@ -70,7 +70,7 @@ class InMemoryCache(QtNetwork.QAbstractNetworkCache):
 
     def metaData(self, url):
         k = url.toEncoded()
-        if self.cache.has_key(k):
+        if k in self.cache:
             metaData, buf, mtime = self.cache[k]
             if buf:
                 return metaData
@@ -88,10 +88,10 @@ class InMemoryCache(QtNetwork.QAbstractNetworkCache):
 
     def remove(self, url):
         k = url.toEncoded()
-        if self.outstanding.has_key(k):
+        if k in self.outstanding:
             device = self.outstanding.pop(k)
             device = None
-        if self.cache.has_key(k):
+        if k in self.cache:
             metaData, buf, mtime = self.cache.pop(k)
             if buf:
                 self.size -= buf.length()
@@ -102,5 +102,5 @@ class InMemoryCache(QtNetwork.QAbstractNetworkCache):
 
     def updateMetaData(self, metaData):
         url = metaData.url().toEncoded()
-        if self.cache.has_key(url):
+        if url in self.cache:
             self.cache[url][0] = metaData

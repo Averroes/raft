@@ -44,37 +44,37 @@ use_proxies_default = False
 
 #: The undefined type is represented by the undefined type marker. No further
 #: information is encoded for this value.
-TYPE_UNDEFINED = '\x00'
+TYPE_UNDEFINED = b'\x00'
 #: The null type is represented by the null type marker. No further
 #: information is encoded for this value.
-TYPE_NULL = '\x01'
+TYPE_NULL = b'\x01'
 #: The false type is represented by the false type marker and is used to
 #: encode a Boolean value of C{false}. No further information is encoded for
 #: this value.
-TYPE_BOOL_FALSE = '\x02'
+TYPE_BOOL_FALSE = b'\x02'
 #: The true type is represented by the true type marker and is used to encode
 #: a Boolean value of C{true}. No further information is encoded for this
 #: value.
-TYPE_BOOL_TRUE = '\x03'
+TYPE_BOOL_TRUE = b'\x03'
 #: In AMF 3 integers are serialized using a variable length signed 29-bit
 #: integer.
 #: @see: U{Parsing Integers on OSFlash (external)
 #: <http://osflash.org/documentation/amf3/parsing_integers>}
-TYPE_INTEGER = '\x04'
+TYPE_INTEGER = b'\x04'
 #: This type is used to encode an ActionScript Number or an ActionScript
 #: C{int} of value greater than or equal to 2^28 or an ActionScript uint of
 #: value greater than or equal to 2^29. The encoded value is is always an 8
 #: byte IEEE-754 double precision floating point value in network byte order
 #: (sign bit in low memory). The AMF 3 number type is encoded in the same
 #: manner as the AMF 0 L{Number<pyamf.amf0.TYPE_NUMBER>} type.
-TYPE_NUMBER = '\x05'
+TYPE_NUMBER = b'\x05'
 #: ActionScript String values are represented using a single string type in
 #: AMF 3 - the concept of string and long string types from AMF 0 is not used.
 #: Strings can be sent as a reference to a previously occurring String by
 #: using an index to the implicit string reference table. Strings are encoding
 #: using UTF-8 - however the header may either describe a string literal or a
 #: string reference.
-TYPE_STRING = '\x06'
+TYPE_STRING = b'\x06'
 #: ActionScript 3.0 introduced a new XML type however the legacy C{XMLDocument}
 #: type from ActionScript 1.0 and 2.0.is retained in the language as
 #: C{flash.xml.XMLDocument}. Similar to AMF 0, the structure of an
@@ -85,29 +85,36 @@ TYPE_STRING = '\x06'
 #: table.
 #: @see: U{OSFlash documentation (external)
 #: <http://osflash.org/documentation/amf3#x07_-_xml_legacy_flash.xml.xmldocument_class>}
-TYPE_XML = '\x07'
+TYPE_XML = b'\x07'
 #: In AMF 3 an ActionScript Date is serialized simply as the number of
 #: milliseconds elapsed since the epoch of midnight, 1st Jan 1970 in the
 #: UTC time zone. Local time zone information is not sent.
-TYPE_DATE = '\x08'
+TYPE_DATE = b'\x08'
 #: ActionScript Arrays are described based on the nature of their indices,
 #: i.e. their type and how they are positioned in the Array.
-TYPE_ARRAY = '\x09'
+TYPE_ARRAY = b'\x09'
 #: A single AMF 3 type handles ActionScript Objects and custom user classes.
-TYPE_OBJECT = '\x0A'
+TYPE_OBJECT = b'\x0A'
 #: ActionScript 3.0 introduces a new top-level XML class that supports
 #: U{E4X<http://en.wikipedia.org/wiki/E4X>} syntax.
 #: For serialization purposes the XML type needs to be flattened into a
 #: string representation. As with other strings in AMF, the content is
 #: encoded using UTF-8.
-TYPE_XMLSTRING = '\x0B'
+TYPE_XMLSTRING = b'\x0B'
 #: ActionScript 3.0 introduces the L{ByteArray} type to hold an Array
 #: of bytes. AMF 3 serializes this type using a variable length encoding
 #: 29-bit integer for the byte-length prefix followed by the raw bytes
 #: of the L{ByteArray}.
 #: @see: U{Parsing ByteArrays on OSFlash (external)
 #: <http://osflash.org/documentation/amf3/parsing_byte_arrays>}
-TYPE_BYTEARRAY = '\x0C'
+TYPE_BYTEARRAY = b'\x0C'
+# Vector types
+TYPE_VECTOR_INT = b'\x0D'
+TYPE_VECTOR_UINT = b'\x0E'
+TYPE_VECTOR_NUMBER = b'\x0F'
+TYPE_VECTOR_OBJECT = b'\x10'
+# Dictionary type
+TYPE_DICTIONARY = b'\x11'
 
 #: Reference bit.
 REFERENCE_BIT = 0x01
@@ -246,7 +253,7 @@ class DataOutput(object):
         @see: U{Supported character sets on Livedocs (external)
             <http://livedocs.adobe.com/flex/201/langref/charset-codes.html>}
         """
-        if type(value) is unicode:
+        if type(value) is str:
             value = value.encode(charset)
 
         self.stream.write(value)
@@ -300,10 +307,10 @@ class DataOutput(object):
         """
         buf = util.BufferedByteStream()
         buf.write_utf8_string(value)
-        bytes = buf.getvalue()
+        sbytes = buf.getvalue()
 
-        self.stream.write_ushort(len(bytes))
-        self.stream.write(bytes)
+        self.stream.write_ushort(len(sbytes))
+        self.stream.write(sbytes)
 
     def writeUTFBytes(self, value):
         """
@@ -315,10 +322,10 @@ class DataOutput(object):
         """
         val = None
 
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             val = value
         else:
-            val = unicode(value, 'utf8')
+            val = str(value, 'utf-8')
 
         self.stream.write_utf8_string(val)
 
@@ -353,9 +360,9 @@ class DataInput(object):
         """
         byte = self.stream.read(1)
 
-        if byte == '\x00':
+        if byte == b'\x00':
             return False
-        elif byte == '\x01':
+        elif byte == b'\x01':
             return True
         else:
             raise ValueError("Error reading boolean")
@@ -412,9 +419,9 @@ class DataInput(object):
         @return: UTF-8 encoded string.
         """
         #FIXME nick: how to work out the code point byte size (on the fly)?
-        bytes = self.stream.read(length)
+        sbytes = self.stream.read(length)
 
-        return unicode(bytes, charset)
+        return str(sbytes, charset)
 
     def readObject(self):
         """
@@ -541,7 +548,7 @@ class ByteArray(util.BufferedByteStream, DataInput, DataOutput):
 
         buf = zlib.compress(buf)
         #FIXME nick: hacked
-        return buf[0] + '\xda' + buf[2:]
+        return buf[0] + b'\xda' + buf[2:]
 
     def compress(self):
         """
@@ -650,7 +657,7 @@ class Context(codec.Context):
 
         @raise TypeError: The parameter C{s} is not of C{basestring} type.
         """
-        if not isinstance(s, basestring):
+        if not isinstance(s, bytes):
             raise TypeError
 
         if len(s) == 0:
@@ -780,6 +787,16 @@ class Decoder(codec.Decoder):
             return self.readXMLString
         elif data == TYPE_BYTEARRAY:
             return self.readByteArray
+        elif data == TYPE_VECTOR_INT:
+            return self.readVectorInt
+        elif data == TYPE_VECTOR_UINT:
+            return self.readVectorUInt
+        elif data == TYPE_VECTOR_NUMBER:
+            return self.readVectorNumber
+        elif data == TYPE_VECTOR_OBJECT:
+            return self.readVectorObject
+        elif data == TYPE_DICTIONARY:
+            return self.readDictionary
 
     def readProxy(self, obj):
         """
@@ -848,18 +865,21 @@ class Decoder(codec.Decoder):
         """
         Reads and returns a utf-8 encoded byte array.
         """
-        length, is_reference = self._readLength()
+        # XXX: all logic seems to assume utf-8 strings, not bytes
+        return self.readString()
 
-        if is_reference:
-            return self.context.getString(length)
+#         length, is_reference = self._readLength()
 
-        if length == 0:
-            return ''
+#         if is_reference:
+#             return self.context.getString(length)
 
-        result = self.stream.read(length)
-        self.context.addString(result)
+#         if length == 0:
+#             return b''
 
-        return result
+#         result = self.stream.read(length)
+#         self.context.addString(result)
+
+#         return result
 
     def readString(self):
         """
@@ -869,7 +889,6 @@ class Decoder(codec.Decoder):
 
         if is_reference:
             result = self.context.getString(length)
-
             return self.context.getStringForBytes(result)
 
         if length == 0:
@@ -923,7 +942,7 @@ class Decoder(codec.Decoder):
             result = []
             self.context.addObject(result)
 
-            for i in xrange(size):
+            for i in range(size):
                 result.append(self.readElement())
 
             return result
@@ -935,10 +954,88 @@ class Decoder(codec.Decoder):
             result[key] = self.readElement()
             key = self.readBytes()
 
-        for i in xrange(size):
+        for i in range(size):
             el = self.readElement()
             result[i] = el
 
+        return result
+
+    def readVectorInt(self):
+        size = self.readInteger(False)
+        if size & REFERENCE_BIT == 0:
+            return self.context.getObject(size >> 1)
+        size >>= 1
+        fixed_vector = self.stream.read_uchar()
+        result = []
+        for i in range(size):
+            result.append(self.stream.read_long())
+        self.context.addObject(result)
+        return result
+
+    def readVectorUInt(self):
+        length, is_reference = self._readLength()
+        if is_reference:
+            result = self.context.getObject(length)
+            return result
+        fixed_vector = self.stream.read_uchar()
+        result = []
+        for i in range(length):
+            result.append(self.stream.read_ulong())
+        self.context.addObject(result)
+        return result
+
+    def readVectorNumber(self):
+        length, is_reference = self._readLength()
+        if is_reference:
+            result = self.context.getObject(length)
+            return result
+        fixed_vector = self.stream.read_uchar()
+        result = []
+        for i in range(length):
+            result.append(self.readNumber())
+        self.context.addObject(result)
+        return result
+
+    def readVectorObject(self):
+        length, is_reference = self._readLength()
+        if is_reference:
+            result = self.context.getObject(length)
+            return result
+
+        fixed_vector = self.stream.read_uchar()
+        object_type_name = self.readString()
+
+        result = []
+        for i in range(length):
+            t = self.stream.read(1)
+            if t == TYPE_STRING:
+                obj = self.readString()
+            elif t == TYPE_OBJECT:
+                obj = self.readObject()
+            else:
+                # TODO: ?
+                obj = ''
+            result.append(obj)
+
+        self.context.addObject(result)
+        return result
+
+    def readDictionary(self):
+        # TODO: this is untested due to lack of test cases
+        length, is_reference = self._readLength()
+        if is_reference:
+            result = self.context.getObject(length)
+            return result
+
+        weak_keys = self.stream.read_uchar()
+
+        result = {}
+        for i in range(length):
+            key = self.readElement()
+            value = self.readElement()
+            result[key] = value
+
+        self.context.addObject(result)
         return result
 
     def _getClassDefinition(self, ref):
@@ -974,7 +1071,7 @@ class Decoder(codec.Decoder):
         class_def.static_properties = []
 
         if class_def.attr_len > 0:
-            for i in xrange(class_def.attr_len):
+            for i in range(class_def.attr_len):
                 key = self.readBytes()
 
                 class_def.static_properties.append(key)
@@ -1216,7 +1313,7 @@ class Encoder(codec.Encoder):
         @type   s: C{str}
         @param  s: The string data to be encoded to the AMF3 data stream.
         """
-        if type(s) is unicode:
+        if type(s) is str:
             s = self.context.getBytesForString(s)
 
         self.serialiseBytes(s)
@@ -1293,7 +1390,7 @@ class Encoder(codec.Encoder):
         self.context.addObject(n)
 
         self._writeInteger((len(n) << 1) | REFERENCE_BIT)
-        self.stream.write('\x01')
+        self.stream.write(b'\x01')
 
         [self.writeElement(x) for x in n]
 
@@ -1328,7 +1425,7 @@ class Encoder(codec.Encoder):
         self.context.addObject(n)
 
         # The AMF3 spec demands that all str based indicies be listed first
-        keys = n.keys()
+        keys = list(n.keys())
         int_keys = []
         str_keys = []
 
@@ -1430,7 +1527,7 @@ class Encoder(codec.Encoder):
                 definition.reference << 2 | REFERENCE_BIT)
 
             if alias.anonymous:
-                self.stream.write('\x01')
+                self.stream.write(b'\x01')
             else:
                 self.serialiseString(alias.alias)
 
@@ -1460,14 +1557,14 @@ class Encoder(codec.Encoder):
 
         if definition.encoding == ObjectEncoding.DYNAMIC:
             if attrs:
-                for attr, value in attrs.iteritems():
+                for attr, value in attrs.items():
                     if type(attr) in python.int_types:
                         attr = str(attr)
 
                     self.serialiseString(attr)
                     self.writeElement(value)
 
-            self.stream.write('\x01')
+            self.stream.write(b'\x01')
 
     def writeByteArray(self, n):
         """
@@ -1535,31 +1632,31 @@ def encode_int(n):
     if n < 0:
         n += 0x20000000
 
-    bytes = ''
+    ibytes = ''
     real_value = None
 
     if n > 0x1fffff:
         real_value = n
         n >>= 1
-        bytes += chr(0x80 | ((n >> 21) & 0xff))
+        ibytes += chr(0x80 | ((n >> 21) & 0xff))
 
     if n > 0x3fff:
-        bytes += chr(0x80 | ((n >> 14) & 0xff))
+        ibytes += chr(0x80 | ((n >> 14) & 0xff))
 
     if n > 0x7f:
-        bytes += chr(0x80 | ((n >> 7) & 0xff))
+        ibytes += chr(0x80 | ((n >> 7) & 0xff))
 
     if real_value is not None:
         n = real_value
 
     if n > 0x1fffff:
-        bytes += chr(n & 0xff)
+        ibytes += chr(n & 0xff)
     else:
-        bytes += chr(n & 0x7f)
+        ibytes += chr(n & 0x7f)
 
-    ENCODED_INT_CACHE[n] = bytes
+    ENCODED_INT_CACHE[n] = ibytes
 
-    return bytes
+    return ibytes
 
 
 def decode_int(stream, signed=False):

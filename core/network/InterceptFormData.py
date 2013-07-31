@@ -25,7 +25,7 @@ class InterceptFormData(QIODevice):
     def __init__(self, ioDevice):
         QIODevice.__init__(self, ioDevice.parent())
         self.ioDevice = ioDevice
-        self.__data = ''
+        self.__data = b''
 
         self.open(self.ReadOnly)
         self.setOpenMode(self.ioDevice.openMode())
@@ -51,6 +51,6 @@ class InterceptFormData(QIODevice):
     def readData(self, maxSize):
         data = self.ioDevice.read(maxSize)
         if data:
-            self.__data += str(data)
+            self.__data += data
         return data
 

@@ -20,28 +20,34 @@
 #
 
 from core.database.constants import ResponsesTable
+from actions import interface
 
 class RaftDbCapture():
-    def __init__(self, framework, Data, cursor, Id):
+    def __init__(self):
+        pass
+    def populate_by_id(self, framework, Data, cursor, Id):
         row = Data.read_responses_by_id(cursor, Id)
         if row:
-            dbrow = [m or '' for m in row]
-            self.origin = str(dbrow[ResponsesTable.DATA_ORIGIN])
-            self.host = str(dbrow[ResponsesTable.REQ_HOST])
-            self.hostip = str(dbrow[ResponsesTable.HOST_IP])
-            self.url = str(dbrow[ResponsesTable.URL])
-            self.status = str(dbrow[ResponsesTable.STATUS])
-            self.datetime = str(dbrow[ResponsesTable.REQDATE])
-            self.method = str(dbrow[ResponsesTable.REQ_METHOD])
-            self.content_type = str(dbrow[ResponsesTable.RES_CONTENT_TYPE])
-            self.request_headers = str(dbrow[ResponsesTable.REQ_HEADERS])
-            self.request_body = str(dbrow[ResponsesTable.REQ_DATA])
-            self.response_headers = str(dbrow[ResponsesTable.RES_HEADERS])
-            self.response_body = str(dbrow[ResponsesTable.RES_DATA])
-            self.content_length = str(dbrow[ResponsesTable.RES_LENGTH])
-            self.elapsed = str(dbrow[ResponsesTable.REQTIME])
-            self.notes = str(dbrow[ResponsesTable.NOTES])
-            self.confirmed = str(dbrow[ResponsesTable.CONFIRMED])
+            self.populate_by_dbrow(row)
         else:
             raise Exception('unrecognized Id=%s' % (Id))
+
+    def populate_by_dbrow(self, row):
+        responseItems = interface.data_row_to_response_items(row)
+        self.origin = responseItems[ResponsesTable.DATA_ORIGIN]
+        self.host = responseItems[ResponsesTable.REQ_HOST]
+        self.hostip = responseItems[ResponsesTable.HOST_IP]
+        self.url = responseItems[ResponsesTable.URL]
+        self.status = responseItems[ResponsesTable.STATUS]
+        self.datetime = responseItems[ResponsesTable.REQDATE]
+        self.method = responseItems[ResponsesTable.REQ_METHOD]
+        self.content_type = responseItems[ResponsesTable.RES_CONTENT_TYPE]
+        self.request_headers = responseItems[ResponsesTable.REQ_HEADERS]
+        self.request_body = responseItems[ResponsesTable.REQ_DATA]
+        self.response_headers = responseItems[ResponsesTable.RES_HEADERS]
+        self.response_body = responseItems[ResponsesTable.RES_DATA]
+        self.content_length = responseItems[ResponsesTable.RES_LENGTH]
+        self.elapsed = responseItems[ResponsesTable.REQTIME]
+        self.notes = responseItems[ResponsesTable.NOTES]
+        self.confirmed = responseItems[ResponsesTable.CONFIRMED]
 

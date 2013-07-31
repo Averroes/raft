@@ -23,7 +23,7 @@
 
 from PyQt4.QtCore import QObject, SIGNAL
 
-from StandardWebPage import StandardWebPage
+from .StandardWebPage import StandardWebPage
 
 class StandardPageFactory(QObject):
     def __init__(self, framework, networkAccessManager = None, parent = None):

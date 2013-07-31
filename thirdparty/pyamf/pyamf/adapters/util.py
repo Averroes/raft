@@ -7,9 +7,9 @@ Useful helpers for adapters.
 @since: 0.4
 """
 
-import __builtin__
+import builtins
 
-if not hasattr(__builtin__, 'set'):
+if not hasattr(__builtins__, 'set'):
     from sets import Set as set
 
 

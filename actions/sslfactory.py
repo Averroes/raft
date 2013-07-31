@@ -17,8 +17,8 @@
 
 # This file is part of urlgrabber, a high-level cross-protocol url-grabber
 
-import httplib
-import urllib2
+import http.client
+import urllib.request, urllib.error, urllib.parse
 
 try:
     from M2Crypto import SSL
@@ -55,7 +55,7 @@ if have_m2crypto:
                 return ssl_context
 
         def create_https_connection(self, host, response_class = None):
-            connection = httplib.HTTPSConnection(host, self.ssl_context)
+            connection = http.client.HTTPSConnection(host, self.ssl_context)
             if response_class:
                 connection.response_class = response_class
             return connection
@@ -67,13 +67,13 @@ if have_m2crypto:
 class SSLFactory:
 
     def create_https_connection(self, host, response_class = None):
-        connection = httplib.HTTPSConnection(host)
+        connection = http.client.HTTPSConnection(host)
         if response_class:
             connection.response_class = response_class
         return connection
 
     def create_opener(self, *handlers):
-        return urllib2.build_opener(*handlers)
+        return urllib.request.build_opener(*handlers)
 
    
 

@@ -19,14 +19,25 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from BaseExtractor import BaseExtractor
-from JSLiteParser import JSLiteParser
+from .BaseExtractor import BaseExtractor
+from .JSLiteParser import JSLiteParser
 from lxml import etree
-from cStringIO import StringIO
-from urllib2 import urlparse
-import urllib2
+from io import StringIO, BytesIO
+from urllib import parse as urlparse
+import urllib.request, urllib.error, urllib.parse
 import hashlib
 import re
+import codecs
+
+BOM_MAPPINGS = (
+    (codecs.BOM_UTF32_BE,'utf-32-be'),
+    (codecs.BOM_UTF32_LE,'utf-32-le'),
+    (codecs.BOM_UTF16_BE,'utf-16-be'),
+    (codecs.BOM_UTF16_LE,'utf-16-le'),
+    (codecs.BOM_UTF32,'utf-32'), # TODO:
+    (codecs.BOM_UTF16,'utf-16'), # TODO: 
+    (codecs.BOM_UTF8,'utf-8'),
+    )
 
 class HtmlInput():
     def __init__(self):
@@ -40,7 +51,7 @@ class HtmlInput():
         self.maxlength = ''
         self.accept = ''
         self.label = ''
-        self.autocomplete = ''
+        self.autocomplete = None
 
     def __eq__(self, other):
         return self.make_input_string() ==  other.make_input_string()
@@ -49,8 +60,12 @@ class HtmlInput():
         return self.make_input_string()
 
     def make_input_string(self):
+        autocomplete = ''
+        if self.autocomplete is not None:
+            autocomplete=' autocomplete="%s"' % (self.autocomplete)
+
         # TODO: finish
-        s = '<input name="%s" id="%s" type="%s" value="%s">' % (self.name, self.Id, self.Type, self.value)
+        s = '<input name="%s" id="%s" type="%s" value="%s"%s>' % (self.name, self.Id, self.Type, self.value, autocomplete)
         if self.label:
             s = '<label>%s%s</label>\n' % (self.label, s)
         else:
@@ -78,15 +93,19 @@ class HtmlForm():
         return self.make_form_string_start() == other.make_form_string_start()
 
     def make_form_string_start(self):
-        return '<form id="%s" class="%s" action="%s" method="%s" enctype="%s" onsubmit="%s" onreset="%s" target="%s" autocomplete="%s">\n' % (
-            self.Id, self.Class, self.action, self.method, self.enctype, self.onsubmit, self.onreset, self.target, self.autocomplete)
+        autocomplete = ''
+        if self.autocomplete is not None:
+            autocomplete=' autocomplete="%s"' % (self.autocomplete)
+
+        return '<form id="%s" class="%s" action="%s" method="%s" enctype="%s" onsubmit="%s" onreset="%s" target="%s"%s>\n' % (
+            self.Id, self.Class, self.action, self.method, self.enctype, self.onsubmit, self.onreset, self.target, autocomplete)
     
     def __str__(self):
         s = StringIO()
         s.write(self.make_form_string_start())
         for input in self.inputs:
             if isinstance(input, HtmlInput):
-                tmp = input.make_input_string().encode('utf-8')
+                tmp = input.make_input_string()
             else:
                 tmp = str(input)
             s.write(tmp)
@@ -122,7 +141,7 @@ class HtmlParseResults():
         splitted = urlparse.urlsplit(uri)
         if self.__re_url_encoded.search(splitted.path):
             # url-encoded
-            uri = urllib2.unquote(uri)
+            uri = urllib.parse.unquote(uri)
             splitted = urlparse.urlsplit(uri)
         if not splitted.scheme and splitted.path and not splitted.path.startswith('/'):
             if splitted.path not in self.relative_links:
@@ -209,9 +228,9 @@ class HtmlParseResults():
     def attach_input_label(self, input):
         name = input.name
         Id = input.Id
-        if name and self.labels_by_name.has_key(name):
+        if name and name in self.labels_by_name:
             input.label = self.labels_by_name[name]
-        if Id and self.labels_by_id.has_key(Id):
+        if Id and Id in self.labels_by_id:
             input.label = self.labels_by_id[Id]
 
     def set_baseurl(self, baseurl):
@@ -224,12 +243,12 @@ class HtmlParseResults():
 
     def set_contextual_fingerprint(self, data):
         sha256 = hashlib.sha256()
-        sha256.update(data)
+        sha256.update(data.encode('utf-8'))
         self.contextual_fingerprint = sha256.hexdigest()
 
     def set_structural_fingerprint(self, data):
         sha256 = hashlib.sha256()
-        sha256.update(data)
+        sha256.update(data.encode('utf-8'))
         self.structural_fingerprint = sha256.hexdigest()
 
 class HtmlExtractor(BaseExtractor):
@@ -387,8 +406,8 @@ class HtmlExtractor(BaseExtractor):
 
         # merge default attribute types
         for tag in self.HTML_TAG_ATTRS:
-            for attr_name in self.DEFAULT_TAG_ATTRS.keys():
-                if not self.HTML_TAG_ATTRS[tag].has_key(attr_name):
+            for attr_name in list(self.DEFAULT_TAG_ATTRS.keys()):
+                if attr_name not in self.HTML_TAG_ATTRS[tag]:
                     self.HTML_TAG_ATTRS[tag][attr_name] = self.DEFAULT_TAG_ATTRS[attr_name]
         
     def process_tag(self, results, jsParser, elem):
@@ -412,24 +431,27 @@ class HtmlExtractor(BaseExtractor):
     def get_text_string(self, results, text):
         if text is None:
             return ''
-        try:
-            ret = None
+        if bytes == type(text):
             try:
-                ret = text.decode(results.encoding)
+                ret = None
+                try:
+                    ret = text.decode(results.encoding)
+                except UnicodeDecodeError:
+                    pass
+                except UnicodeEncodeError:
+                    pass
+                except LookupError:
+                    pass
+                if ret is None:
+                    ret = text.decode('utf-8')
             except UnicodeDecodeError:
-                pass
+                ret = repr(text)[2:-1]
             except UnicodeEncodeError:
-                pass
-            except LookupError:
-                pass
-            if ret is None:
-                ret = text.decode('utf-8')
-        except UnicodeDecodeError:
-            ret = repr(text)[1:-1]
-        except UnicodeEncodeError:
-            ret = repr(text)[1:-1]
+                ret = repr(text)[2:-1]
 
-        return ret
+            return ret
+        else:
+            return text
 
     def process_script_block(self, results, jsParser, elem):
         script = self.get_text_string(results, elem.text)
@@ -457,7 +479,7 @@ class HtmlExtractor(BaseExtractor):
 
     def process_form(self, results, elem):
         form = HtmlForm(results.baseurl)
-        for name, value in elem.attrib.iteritems():
+        for name, value in elem.attrib.items():
             if value:
                 lname = name.lower()
                 if 'method' == lname:
@@ -482,7 +504,7 @@ class HtmlExtractor(BaseExtractor):
 
     def process_input_element(self, results, elem):
         input = HtmlInput()
-        for name, value in elem.attrib.iteritems():
+        for name, value in elem.attrib.items():
             if value:
                 lname = name.lower()
                 if 'name' == lname:
@@ -512,7 +534,7 @@ class HtmlExtractor(BaseExtractor):
     def process_label(self, results, elem):
         forId, forName = '', ''
         text = self.get_text_string(results, elem.text)
-        for name, value in elem.attrib.iteritems():
+        for name, value in elem.attrib.items():
             if value:
                 lname = name.lower()
                 if 'for' == lname:
@@ -522,7 +544,7 @@ class HtmlExtractor(BaseExtractor):
             if input_elem is not None:
                 if not text:
                     text == self.get_text_string(results, input_elem.text)
-                for name, value in input_elem.attrib.iteritems():
+                for name, value in input_elem.attrib.items():
                     if value:
                         lname = name.lower()
                         if 'id' == lname:
@@ -553,14 +575,14 @@ class HtmlExtractor(BaseExtractor):
 
     def process_attributes(self, results, jsParser, elem):
         tag = elem.tag.lower()
-        if self.HTML_TAG_ATTRS.has_key(tag):
+        if tag in self.HTML_TAG_ATTRS:
             tag_attrs = self.HTML_TAG_ATTRS[tag]
         else:
             tag_attrs = self.DEFAULT_TAG_ATTRS
-        for name, value in elem.attrib.iteritems():
+        for name, value in elem.attrib.items():
             if value:
                 lname = name.lower()
-                if tag_attrs.has_key(lname):
+                if lname in tag_attrs:
                     attr_type = tag_attrs[lname]
                     if self.T_SCRIPT == attr_type:
                         self.process_inline_script(results, jsParser, value)
@@ -585,7 +607,7 @@ class HtmlExtractor(BaseExtractor):
 
     def normalize_attributes(self, attrib):
         normalized = {}
-        for name, value in elem.attrib.iteritems():
+        for name, value in elem.attrib.items():
             lname = name.lower()
             if lname and value:
                 # TODO: should use a multi-map?
@@ -602,7 +624,7 @@ class HtmlExtractor(BaseExtractor):
     def process_anchor_uri(self, results, elem, uri):
         anchor_text = self.get_text_string(results, elem.text)
         Id, classname, title = '', '', ''
-        for name, value in elem.attrib.iteritems():
+        for name, value in elem.attrib.items():
             lname = name.lower()
             if value:
                 if 'id' == lname:
@@ -616,7 +638,7 @@ class HtmlExtractor(BaseExtractor):
         
     def process_meta_content(self, results, elem):
         http_equiv, content = '', ''
-        for name, value in elem.attrib.iteritems():
+        for name, value in elem.attrib.items():
             lname = name.lower()
             if lname and value:
                 if 'http-equiv' == lname:
@@ -660,13 +682,13 @@ class HtmlExtractor(BaseExtractor):
             results.add_uri(m.strip())
 
     def process_param_content(self, results, elem):
-        for name, value in elem.attrib.iteritems():
+        for name, value in elem.attrib.items():
             lname = name.lower()
             if lname and value:
                 if 'value' == lname:
                     self.match_uri_contents(results, value)
 
-    def process_etree(self, results, jsParser, htmlbuf, html):
+    def process_etree(self, results, jsParser, htmlbuf, html_bytes):
 
         # TODO: decide if XHTML needs different parsing
         parser = etree.HTMLParser()
@@ -678,14 +700,14 @@ class HtmlExtractor(BaseExtractor):
 
         if root is None:
             # okay, maybe not real HTML
-            if html.startswith('<!--') and html.endswith('-->'):
-                htmlbuf = StringIO(html[4:-3])
+            if html_bytes.startswith(b'<!--') and html_bytes.endswith(b'-->'):
+                htmlbuf = BytesIO(html_bytes[4:-3])
                 dom = etree.parse(htmlbuf, parser)
                 root = dom.getroot()
             else:
                 # something else or totallly invalid
-                raise Exception('invalid content for now: %s' % html)
-                self.match_uri_contents(results, self.get_text_string(results, html))
+                raise Exception('invalid content for now: %s' % html_bytes)
+                self.match_uri_contents(results, self.get_text_string(results, html_bytes))
 
         if root is not None:
             for elem in root.itersiblings(tag=etree.Comment, preceding=True):
@@ -704,7 +726,7 @@ class HtmlExtractor(BaseExtractor):
                         contextual_io.write('<')
                         structural_io.write('<')
                         contextual_io.write(str(elem.tag))
-                        for k in elem.attrib.keys():
+                        for k in list(elem.attrib.keys()):
                             contextual_io.write(' ')
                             contextual_io.write(k)
                             structural_io.write('@')
@@ -730,23 +752,37 @@ class HtmlExtractor(BaseExtractor):
             for elem in root.itersiblings(tag=etree.Comment, preceding=False):
                 self.process_comment(results, elem)
 
-    def process(self, html, baseurl, encoding = 'utf-8', results = None):
+    def process(self, html_bytes, baseurl, encoding = 'utf-8', results = None):
         parser = etree.HTMLParser()
         jsParser = JSLiteParser()
 
         if results is None:
             results = HtmlParseResults(baseurl, encoding)
 
-        if html is not None:
-            html = html.strip()
-            if len(html) > 0:
-                htmlbuf = StringIO(html)
+        if html_bytes is not None:
+            # TODO: refactor
+            if not isinstance(html_bytes, bytes):
+                html_bytes = html_bytes.encode('utf-8', 'ignore')
+            else:
+                # TODO: is it best to normalize to UTF-8 or work from original?
+                for bom, encoding in BOM_MAPPINGS:
+                    if html_bytes.startswith(bom): 
+                        temp = html_bytes[len(bom):]
+                        if temp.startswith(bom):
+                            temp = temp[len(bom):]
+                        bodyText = temp.decode(encoding, 'ignore')
+                        html_bytes = bodyText.encode('utf-8', 'ignore')
+                        break
+
+            html = html_bytes.strip()
+            if len(html_bytes) > 0:
+                htmlbuf = BytesIO(html_bytes)
                 try:
-                    self.process_etree(results, jsParser, htmlbuf, html)
-                except etree.XMLSyntaxError, e:
+                    self.process_etree(results, jsParser, htmlbuf, html_bytes)
+                except etree.XMLSyntaxError as e:
                     # TODO: consider using beautiful soup
                     # TODO: real warning
-                    print('Exception on html extraction: %s (%s)' % (e, html[0:128]))
+                    print(('Exception on html extraction: %s (%s)' % (e, html_bytes[0:128])))
                     pass
 
         js_comments =jsParser.comments()
@@ -788,37 +824,37 @@ if '__main__' == __name__:
     extractor = HtmlExtractor()
     results = extractor.process(contents, url)
 
-    print('contextual fingerprint: %s' % (results.contextual_fingerprint))
-    print('structural fingerprint: %s' % (results.structural_fingerprint))
+    print(('contextual fingerprint: %s' % (results.contextual_fingerprint)))
+    print(('structural fingerprint: %s' % (results.structural_fingerprint)))
 
     for form in results.forms:
-        print('form:\n%s' % (form))
+        print(('form:\n%s' % (form)))
 
     for input in results.other_inputs:
-        print('input:\n%s' % (input))
+        print(('input:\n%s' % (input)))
 
     if True:
         for comment in results.comments:
-            print('comment: %s' % comment)
+            print(('comment: %s' % comment))
 
         for link in results.links:
-            print('link: %s' % link)
+            print(('link: %s' % link))
 
         for link in results.relative_links:
-            print('relative link: %s' % link)
+            print(('relative link: %s' % link))
 
         for anchor in results.anchors:
-            print('anchor: %s' % repr(anchor))
+            print(('anchor: %s' % repr(anchor)))
 
         for script in results.inline_scripts:
-            print('inline script: %s' % script)
+            print(('inline script: %s' % script))
 
         for script in results.scripts:
-            print('script: %s' % script)
+            print(('script: %s' % script))
 
         for style in results.inline_styles:
-            print('inline style: %s' % style)
+            print(('inline style: %s' % style))
 
         for style in results.styles:
-            print('style: %s' % style)
+            print(('style: %s' % style))
 

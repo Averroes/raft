@@ -13,10 +13,7 @@ Do not reference directly, use L{pyamf.util.BufferedByteStream} instead.
 
 import struct
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+from io import BytesIO
 
 from pyamf import python
 
@@ -24,9 +21,9 @@ from pyamf import python
 SYSTEM_ENDIAN = None
 
 
-class StringIOProxy(object):
+class BytesIOProxy(object):
     """
-    I am a C{StringIO} type object containing byte data from the AMF stream.
+    I am a C{BytesIO} type object containing byte data from the AMF stream.
 
     @see: U{ByteArray on OSFlash
         <http://osflash.org/documentation/amf3#x0c_-_bytearray>}
@@ -36,11 +33,14 @@ class StringIOProxy(object):
 
     def __init__(self, buf=None):
         """
-        @raise TypeError: Unable to coerce C{buf} to C{StringIO}.
+        @raise TypeError: Unable to coerce C{buf} to C{BytesIO}.
         """
-        self._buffer = StringIO()
+        self._buffer = BytesIO()
 
+        # XXX: should str_types assume utf-8?
         if isinstance(buf, python.str_types):
+            self._buffer.write(buf.encode('utf-8'))
+        elif isinstance(buf, bytes):
             self._buffer.write(buf)
         elif hasattr(buf, 'getvalue'):
             self._buffer.write(buf.getvalue())
@@ -50,7 +50,7 @@ class StringIOProxy(object):
             self._buffer.write(buf.read())
             buf.seek(old_pos)
         elif buf is not None:
-            raise TypeError("Unable to coerce buf->StringIO got %r" % (buf,))
+            raise TypeError("Unable to coerce buf->BytesIO got %r" % (buf,))
 
         self._get_len()
         self._len_changed = False
@@ -69,9 +69,9 @@ class StringIOProxy(object):
         if n < -1:
             raise IOError('Cannot read backwards')
 
-        bytes = self._buffer.read(n)
+        dbytes = self._buffer.read(n)
 
-        return bytes
+        return dbytes
 
     def seek(self, pos, mode=0):
         """
@@ -99,7 +99,7 @@ class StringIOProxy(object):
         @type size: C{int}
         """
         if size == 0:
-            self._buffer = StringIO()
+            self._buffer = BytesIO()
             self._len_changed = True
 
             return
@@ -107,7 +107,7 @@ class StringIOProxy(object):
         cur_pos = self.tell()
         self.seek(0)
         buf = self.read(size)
-        self._buffer = StringIO()
+        self._buffer = BytesIO()
 
         self._buffer.write(buf)
         self.seek(cur_pos)
@@ -154,14 +154,14 @@ class StringIOProxy(object):
         @since: 0.4
         """
         try:
-            bytes = self.read()
+            dbytes = self.read()
         except IOError:
-            bytes = ''
+            dbytes = b''
 
         self.truncate()
 
-        if len(bytes) > 0:
-            self.write(bytes)
+        if len(dbytes) > 0:
+            self.write(dbytes)
             self.seek(0)
 
 
@@ -191,14 +191,14 @@ class DataTypeMixIn(object):
         Reads C{length} bytes from the stream. If an attempt to read past the
         end of the buffer is made, L{IOError} is raised.
         """
-        bytes = self.read(length)
+        dbytes = self.read(length)
 
-        if len(bytes) != length:
-            self.seek(0 - len(bytes), 1)
+        if len(dbytes) != length:
+            self.seek(0 - len(dbytes), 1)
 
             raise IOError("Tried to read %d byte(s) from the stream" % length)
 
-        return bytes
+        return dbytes
 
     def _is_big_endian(self):
         """
@@ -482,7 +482,7 @@ class DataTypeMixIn(object):
         """
         s = struct.unpack("%s%ds" % (self.endian, length), self.read(length))[0]
 
-        return s.decode('utf-8')
+        return s.decode('utf-8', 'ignore')
 
     def write_utf8_string(self, u):
         """
@@ -494,17 +494,17 @@ class DataTypeMixIn(object):
         if not isinstance(u, python.str_types):
             raise TypeError('Expected %r, got %r' % (python.str_types, u))
 
-        bytes = u
+        sbytes = u
 
-        if isinstance(bytes, unicode):
-            bytes = u.encode("utf8")
+        if isinstance(sbytes, str):
+            sbytes = u.encode("utf8")
 
-        self.write(struct.pack("%s%ds" % (self.endian, len(bytes)), bytes))
+        self.write(struct.pack("%s%ds" % (self.endian, len(sbytes)), sbytes))
 
 
-class BufferedByteStream(StringIOProxy, DataTypeMixIn):
+class BufferedByteStream(BytesIOProxy, DataTypeMixIn):
     """
-    An extension of C{StringIO}.
+    An extension of C{BytesIO}.
 
     Features:
      - Raises L{IOError} if reading past end.
@@ -514,10 +514,10 @@ class BufferedByteStream(StringIOProxy, DataTypeMixIn):
     def __init__(self, buf=None, min_buf_size=None):
         """
         @param buf: Initial byte stream.
-        @type buf: C{str} or C{StringIO} instance
+        @type buf: C{str} or C{BytesIO} instance
         @param min_buf_size: Ignored in the pure python version.
         """
-        StringIOProxy.__init__(self, buf=buf)
+        BytesIOProxy.__init__(self, buf=buf)
 
     def read(self, length=-1):
         """
@@ -533,7 +533,7 @@ class BufferedByteStream(StringIOProxy, DataTypeMixIn):
             raise IOError('Attempted to read %d bytes from the buffer but '
                 'only %d remain' % (length, len(self) - self.tell()))
 
-        return StringIOProxy.read(self, length)
+        return BytesIOProxy.read(self, length)
 
     def peek(self, size=1):
         """
@@ -552,15 +552,15 @@ class BufferedByteStream(StringIOProxy, DataTypeMixIn):
         if size < -1:
             raise ValueError("Cannot peek backwards")
 
-        bytes = ''
+        dbytes = b''
         pos = self.tell()
 
-        while not self.at_eof() and len(bytes) != size:
-            bytes += self.read(1)
+        while not self.at_eof() and len(dbytes) != size:
+            dbytes += self.read(1)
 
         self.seek(pos)
 
-        return bytes
+        return dbytes
 
     def remaining(self):
         """
@@ -627,7 +627,7 @@ def is_float_broken():
     @rtype: C{bool}
     """
     return str(python.NaN) != str(
-        struct.unpack("!d", '\xff\xf8\x00\x00\x00\x00\x00\x00')[0])
+        struct.unpack("!d", b'\xff\xf8\x00\x00\x00\x00\x00\x00')[0])
 
 
 # init the module from here ..
@@ -638,28 +638,28 @@ if is_float_broken():
         Override the L{DataTypeMixIn.read_double} method to fix problems
         with doubles by using the third-party C{fpconst} library.
         """
-        bytes = self.read(8)
+        dbytes = self.read(8)
 
         if self._is_big_endian():
-            if bytes == '\xff\xf8\x00\x00\x00\x00\x00\x00':
+            if dbytes == b'\xff\xf8\x00\x00\x00\x00\x00\x00':
                 return python.NaN
 
-            if bytes == '\xff\xf0\x00\x00\x00\x00\x00\x00':
+            if dbytes == b'\xff\xf0\x00\x00\x00\x00\x00\x00':
                 return python.NegInf
 
-            if bytes == '\x7f\xf0\x00\x00\x00\x00\x00\x00':
+            if dbytes == b'\x7f\xf0\x00\x00\x00\x00\x00\x00':
                 return python.PosInf
         else:
-            if bytes == '\x00\x00\x00\x00\x00\x00\xf8\xff':
+            if dbytes == b'\x00\x00\x00\x00\x00\x00\xf8\xff':
                 return python.NaN
 
-            if bytes == '\x00\x00\x00\x00\x00\x00\xf0\xff':
+            if dbytes == b'\x00\x00\x00\x00\x00\x00\xf0\xff':
                 return python.NegInf
 
-            if bytes == '\x00\x00\x00\x00\x00\x00\xf0\x7f':
+            if dbytes == b'\x00\x00\x00\x00\x00\x00\xf0\x7f':
                 return python.PosInf
 
-        return struct.unpack("%sd" % self.endian, bytes)[0]
+        return struct.unpack("%sd" % self.endian, dbytes)[0]
 
     DataTypeMixIn.read_double = read_double_workaround
 
@@ -673,19 +673,19 @@ if is_float_broken():
 
         if python.isNaN(d):
             if self._is_big_endian():
-                self.write('\xff\xf8\x00\x00\x00\x00\x00\x00')
+                self.write(b'\xff\xf8\x00\x00\x00\x00\x00\x00')
             else:
-                self.write('\x00\x00\x00\x00\x00\x00\xf8\xff')
+                self.write(b'\x00\x00\x00\x00\x00\x00\xf8\xff')
         elif python.isNegInf(d):
             if self._is_big_endian():
-                self.write('\xff\xf0\x00\x00\x00\x00\x00\x00')
+                self.write(b'\xff\xf0\x00\x00\x00\x00\x00\x00')
             else:
-                self.write('\x00\x00\x00\x00\x00\x00\xf0\xff')
+                self.write(b'\x00\x00\x00\x00\x00\x00\xf0\xff')
         elif python.isPosInf(d):
             if self._is_big_endian():
-                self.write('\x7f\xf0\x00\x00\x00\x00\x00\x00')
+                self.write(b'\x7f\xf0\x00\x00\x00\x00\x00\x00')
             else:
-                self.write('\x00\x00\x00\x00\x00\x00\xf0\x7f')
+                self.write(b'\x00\x00\x00\x00\x00\x00\xf0\x7f')
         else:
             write_double_workaround.old_func(self, d)
 
@@ -694,7 +694,7 @@ if is_float_broken():
     write_double_workaround.old_func = x
 
 
-if struct.pack('@H', 1)[0] == '\x01':
+if struct.pack('@H', 1)[0] == b'\x01':
     SYSTEM_ENDIAN = DataTypeMixIn.ENDIAN_LITTLE
 else:
     SYSTEM_ENDIAN = DataTypeMixIn.ENDIAN_BIG

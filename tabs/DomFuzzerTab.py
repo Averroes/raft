@@ -54,7 +54,7 @@ class DomFuzzerTab(QObject):
         self.mainWindow.domFuzzerStartButton.setEnabled(True)
         self.mainWindow.domFuzzerStopButton.setEnabled(False)
 
-        self.miniResponseRenderWidget = MiniResponseRenderWidget(self.framework, self.mainWindow.domFuzzerResultsTabWidget, self)
+        self.miniResponseRenderWidget = MiniResponseRenderWidget(self.framework, self.mainWindow.domFuzzerResultsTabWidget, False, self)
         self.setup_fuzz_window()
 
         self.Data = None
@@ -95,6 +95,9 @@ class DomFuzzerTab(QObject):
         treeView.setSelectionModel(self.resultsTreeViewSelectionModel)
 
         treeView.clicked.connect(self.handle_resultsTreeView_clicked)
+        
+#        self.resultsTreeViewSelectionModel.selectionChanged.connect(self.handle_selectionChanged)
+        self.resultsTreeViewSelectionModel.currentChanged.connect(self.handle_currentChanged)
 
         treeView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.connect(treeView, SIGNAL("customContextMenuRequested(const QPoint&)"), self.fuzzer_results_context_menu)
@@ -114,8 +117,8 @@ class DomFuzzerTab(QObject):
         index = dataModel.index(index.row(), 5) # TODO: use constant
         if index.isValid():
             currentItem = dataModel.data(index)
-            if currentItem.isValid():
-                url = str(currentItem.toString())
+            if currentItem is not None:
+                url = currentItem
                 return url
         return None
 
@@ -125,7 +128,7 @@ class DomFuzzerTab(QObject):
         for index in self.resultsTreeViewSelectionModel.selectedRows():
             curUrl = self.fuzzer_results_index_to_url(dataModel, index)
             if curUrl:
-                url_list.append('%s' % (str(curUrl)))
+                url_list.append(curUrl)
 
         QApplication.clipboard().setText('\n'.join(url_list))
 
@@ -143,7 +146,7 @@ class DomFuzzerTab(QObject):
 
     def set_fuzzer_thread(self, domFuzzerThread):
         self.domFuzzerThread = domFuzzerThread
-        QObject.connect(self, SIGNAL('fuzzItemAvailable(int, QString, QUrl)'), self.handle_fuzzItemAvailable)
+        QObject.connect(self, SIGNAL('fuzzItemAvailable(int, QByteArray, QUrl)'), self.handle_fuzzItemAvailable)
         QObject.connect(self, SIGNAL('fuzzRunFinished()'), self.handle_fuzzRunFinished)
         self.qtimer = QTimer()
         self.qtimer2 = QTimer()
@@ -152,16 +155,20 @@ class DomFuzzerTab(QObject):
 
     def handle_fuzzItemAvailable(self, fuzzId, htmlContent, qurl):
         self.currentFuzzId = fuzzId
-        self.currentFuzzUrl = str(qurl.toEncoded())
+        self.currentFuzzUrl = qurl.toEncoded().data().decode('utf-8')
         self.callbackLogger.clear_messages()
         self.qtimer.start(3000) # 3 seconds to finish
-        self.domFuzzerWebView.setHtml(htmlContent, qurl)
+        self.domFuzzerWebView.setContent(htmlContent, '', qurl)
 
     def handle_webView_loadStarted(self):
-        print('loading started')
+        # print('loading started')
+        pass
 
     def handle_webView_loadFinished(self, ok):
-        print('handle_webView_loadFinished', ok)
+        url = self.domFuzzerWebView.url().toString()
+#        print(('handle_webView_loadFinished', ok, url))
+        if url == 'about:blank':
+            return
         if self.qtimer.isActive():
             self.qtimer.stop()
         if self.qtimer2.isActive():
@@ -174,7 +181,7 @@ class DomFuzzerTab(QObject):
     def handle_load_timeout(self):
         if self.qtimer.isActive():
             self.qtimer.stop()
-        print('forcbily stopping page')
+#        print('forcbily stopping page')
         self.domFuzzerWebView.stop()
         self.fuzzItemCompleted(False)
 
@@ -189,8 +196,9 @@ class DomFuzzerTab(QObject):
         if self.currentFuzzId is not None:
             mainFrame = self.domFuzzerWebView.page().mainFrame()
             dom = mainFrame.documentElement()
-            html = str(dom.toOuterXml().toUtf8()) # TODO: fix encoding issues
+            html = dom.toOuterXml()
             self.domFuzzerThread.fuzzItemFinished(self.currentFuzzId, self.currentFuzzUrl, html, self.callbackLogger.get_messages())
+            self.domFuzzerWebView.setUrl(QUrl('about:blank'))
             self.currentFuzzId = None
 
     def handle_fuzzRunFinished(self):
@@ -199,21 +207,30 @@ class DomFuzzerTab(QObject):
 
     def handle_resultsTreeView_clicked(self):
         index = self.mainWindow.domFuzzerResultsTreeView.currentIndex()
+        self.fill_results_view(index)
+
+    def handle_currentChanged(self, index):
+        self.fill_results_view(index)
+
+    def fill_results_view(self, index):
         index = self.mainWindow.domFuzzerResultsDataModel.index(index.row(), DomFuzzerResultsTable.ID)
         if index.isValid():
             currentItem = self.mainWindow.domFuzzerResultsDataModel.data(index)
-            if currentItem.isValid():
-                fuzzId = str(currentItem.toString())
+            if currentItem is not None:
+                fuzzId = str(currentItem)
                 self.populate_results_response_render(fuzzId)
 
     def populate_results_response_render(self, fuzzId):
         results = self.Data.read_dom_fuzzer_results_by_id(self.cursor, int(fuzzId))
         if results:
             resultsItems = [m or '' for m in results]
-            self.miniResponseRenderWidget.populate_response_text(
-                str(resultsItems[DomFuzzerResultsTable.URL]),
-                '',
-                str(resultsItems[DomFuzzerResultsTable.RENDERED_DATA]),
+            self.miniResponseRenderWidget.populate_response_content(
+                resultsItems[DomFuzzerResultsTable.URL],
+                b'', # TODO: determine if it makes sense to expose these values
+                b'',
+                b'',
+                bytes(resultsItems[DomFuzzerResultsTable.RENDERED_DATA]),
                 ''
                 )
+
                 

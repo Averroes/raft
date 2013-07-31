@@ -26,8 +26,8 @@ from analysis.AbstractAnalyzer import AbstractAnalyzer
 class FindJSComments(AbstractAnalyzer):
     
     #Class variables shared across all instances
-    JSSingleLineCommentRegex = re.compile("\s+(//.*)")
-    JSMultiLineCommentRegex = re.compile("(/\*.*?\*/)",re.M|re.DOTALL)
+    JSSingleLineCommentRegex = re.compile(b"\s+(//.*)")
+    JSMultiLineCommentRegex = re.compile(b"(/\*.*?\*/)",re.M|re.DOTALL)
     ContentTypeRegex = re.compile("html|javascript|css",re.I)
     
     def __init__(self):

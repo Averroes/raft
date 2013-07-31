@@ -29,16 +29,16 @@ from PyQt4.QtCore import QTimer, SIGNAL, QUrl, QObject
 class CustomNetworkReply(QtNetwork.QNetworkReply):
     def __init__(self, parent, url, rawHeaders, data):
         QtNetwork.QNetworkReply.__init__(self, parent)
-        self.data = str(data)
+        self.data =data
         self.datalen = len(self.data)
         self.offset = 0
 
         self.setUrl(url)
         self.open(self.ReadOnly | self.Unbuffered)
         for line in rawHeaders.splitlines():
-            if ':' in line:
-                name, value = line.split(':', 1)
-                self.setRawHeader(name, value)
+            if b':' in line:
+                name, value = line.split(b':', 1)
+                self.setRawHeader(name.rstrip(), value.strip())
 
         QTimer.singleShot(0, self, SIGNAL("metaDataChanged()"))
         QTimer.singleShot(0, self, SIGNAL("readyRead()"))
@@ -53,15 +53,17 @@ class CustomNetworkReply(QtNetwork.QNetworkReply):
     def bytesAvailable(self):
         available = self.datalen - self.offset
 #        print('bytesavailable: %d (%s)' % (available, self.url().toString()))
+        if available < 0:
+            available = 0
         return available
 
     def canReadLine(self):
-        return data[self.offset:].index('\n') != -1 and QtNetwork.QNetworkReply.canReadLine(self)
+        return data[self.offset:].index(b'\n') != -1 and QtNetwork.QNetworkReply.canReadLine(self)
 
     def readData(self, maxSize):
 #        print('readData: %s (%s)' % (maxSize, self.url().toString()))
         if self.offset > self.datalen:
-            return -1 # TODO: was None, does it matter?
+            return b'' # TODO: was None, then -1, does it matter?
         if self.offset + maxSize > self.datalen:
             maxSize = self.datalen - self.offset
         data = self.data[self.offset:self.offset+maxSize]

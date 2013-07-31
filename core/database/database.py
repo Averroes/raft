@@ -7,7 +7,7 @@
 #          Justin Engler
 #          Seth Law
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2013 RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -25,7 +25,11 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os, hashlib, zlib, traceback
+import sys
+import os
+import hashlib
+import zlib
+import traceback
 import shutil
 import time,datetime
 import uuid
@@ -37,25 +41,33 @@ from core.database.constants import *
 
 class Compressed(object):
     def __init__(self, value):
+        # TODO: remove this check eventually
+        if bytes != type(value):
+            raise Exception('unsupported type[%s] for Compressed objects: [%s]' % (type(value), value))
         self.value = value
 
     def __str__(self):
-        return str(self.value)
+        # TODO: should warn
+        return str(self.value, 'utf-8', 'ignore') # assume utf-8 for unknown content
 
     def __repr__(self):
-        return str(self.value)
+        return repr(self.value)
+
+    def __bytes__(self):
+        return self.value
 
 def adapt_compressed(compressed):
-    return buffer(zlib.compress(compressed.value))
+    return zlib.compress(compressed.value)
 
 def convert_compressed(blob):
-    return Compressed(zlib.decompress(str(blob)))
+    return Compressed(zlib.decompress(blob))
 
 class Db:
     """ Db database class """
 
-    def __init__(self, version):
+    def __init__(self, version, exception_reporter = None):
         self.version = version
+        self.exception_reporter = exception_reporter
 
     def connect(self, filename):
 
@@ -65,8 +77,6 @@ class Db:
         sqlite.register_adapter(Compressed, adapt_compressed)
         sqlite.register_converter("compressed", convert_compressed)
 
-        self.conn = self.get_connection(filename, version)
-
         self.filename = filename
         self.threadMutex = QMutex()
         self.threadCursors = []
@@ -74,6 +84,8 @@ class Db:
 
         self.hashval_lookup = {}
         self.hashalgo = hashlib.sha256
+
+        self.conn = self.get_connection(filename, version)
 
         # perform any upgrade now that all internal values are setup
         cursor = self.conn.cursor()
@@ -134,7 +146,7 @@ class Db:
         cursor.execute(""" CREATE TABLE differ_items (response_id INTEGER PRIMARY KEY NOT NULL UNIQUE, time_added INTEGER) """)
 
         cursor.execute(""" CREATE TABLE configuration (
-                       Component TEXTNOT NULL,
+                       Component TEXT NOT NULL,
                        ConfigName TEXT, 
                        ConfigValue compressed,
                        PRIMARY KEY (Component, ConfigName)
@@ -369,7 +381,7 @@ class Db:
                           )
                           """)
 
-        cursor.execute("""INSERT INTO configuration (Component, ConfigName, ConfigValue) values (?, ?, ?)""", ['RAFT', 'black_hole_network', Compressed(str(True))])
+        cursor.execute("""INSERT INTO configuration (Component, ConfigName, ConfigValue) values (?, ?, ?)""", ['RAFT', 'black_hole_network', Compressed(b'True')])
 
         conn.commit()
         cursor.close()
@@ -403,16 +415,20 @@ class Db:
 
     def do_backup(self, filename):
         backup_filename =  '%s.%d-backup' % (filename, int(time.time()))
-        print('backing up %s to %s' % (filename, backup_filename))
+        print(('backing up %s to %s' % (filename, backup_filename)))
         shutil.copy(filename, backup_filename)
 
     def perform_upgrade(self, cursor, dbversion, version):
-        print('upgrading %s to version %s from %s' % (self.filename, version, dbversion))
+        print(('upgrading %s to version %s from %s' % (self.filename, version, dbversion)))
         while version != dbversion:
             if '2011.7.14-alpha' == dbversion:
                 dbversion = self.upgrade_to_2011_8_31_alpha(cursor)
             elif '2011.8.31-alpha' == dbversion:
                 dbversion = self.upgrade_to_2011_9_1_alpha(cursor)
+            elif '2011.9.1-alpha' == dbversion and '3.0.1-pre' == version:
+                dbversion = self.upgrade_to_3_0_1_pre(cursor)
+            elif '3.0.1-pre' == dbversion and '3.0.1' == version:
+                dbversion = self.upgrade_to_3_0_1(cursor)
             else:
                 raise Exception('Implement upgrade from %s to %s' % (dbversion, version))
 
@@ -528,7 +544,7 @@ class Db:
     def get_sitemap_info(self, cursor, lastId):
         self.qlock.lock()
         try:
-            cursor.execute("SELECT Id, Url, Status, ResHeaders FROM responses where Id > ?", [int(lastId)])
+            cursor.execute("SELECT Id, Url, Status, ResHeaders, ReqHeaders FROM responses where Id > ?", [int(lastId)])
             return cursor
         finally:
             self.qlock.unlock()
@@ -668,7 +684,7 @@ class Db:
     def insert_sequence_source_parameter(self, cursor, insertlist):
         self.qlock.lock()
         try:
-            insertlist[SequenceSourceParameters.INPUT_VALUE] = Compressed(str(insertlist[SequenceSourceParameters.INPUT_VALUE]))
+            insertlist[SequenceSourceParameters.INPUT_VALUE] = Compressed(insertlist[SequenceSourceParameters.INPUT_VALUE])
             cursor.execute("""INSERT INTO sequence_source_parameters (
                               Sequence_Id, 
                               Response_Id, 
@@ -682,17 +698,36 @@ class Db:
                              ?, ?, ?, ?, ?, ?, ?, ?
                            )""", insertlist)
         except Exception as error:
-            print('FIX ME! ERROR: %s' % (traceback.format_exc(error)))
+            if self.exception_reporter is not None:
+                self.exception_reporter(error)
+            message = traceback.format_exception(type(error), error, error.__traceback__)
+            print(('FIX ME! ERROR:\n%s' % (message)))
             for i in range(0, len(insertlist)):
                 if i not in [SequenceSourceParameters.INPUT_VALUE]:
-                    print('[%d] %s' % (i, insertlist[i]))
+                    print(('[%d] %s' % (i, insertlist[i])))
+        finally:
+            self.qlock.unlock()
+
+    def get_sequence_source_parameter_by_id(self, cursor, sequence_id):
+        self.qlock.lock()
+        try:
+            cursor.execute("""SELECT
+                              Sequence_Id, 
+                              Response_Id, 
+                              Input_Location,
+                              Input_Position,
+                              Input_Name,
+                              Input_Value,
+                              Is_Dynamic
+                          FROM sequence_source_parameters WHERE Sequence_Id=?""", [int(sequence_id)])
+            return cursor
         finally:
             self.qlock.unlock()
 
     def insert_sequence_target_parameter(self, cursor, insertlist):
         self.qlock.lock()
         try:
-            insertlist[SequenceTargetParameters.INPUT_VALUE] = Compressed(str(insertlist[SequenceTargetParameters.INPUT_VALUE]))
+            insertlist[SequenceTargetParameters.INPUT_VALUE] = Compressed(insertlist[SequenceTargetParameters.INPUT_VALUE])
             cursor.execute("""INSERT INTO sequence_target_parameters (
                               Sequence_Id, 
                               Response_Id, 
@@ -705,17 +740,36 @@ class Db:
                              ?, ?, ?, ?, ?, ?, ?
                            )""", insertlist)
         except Exception as error:
-            print('FIX ME! ERROR: %s' % (traceback.format_exc(error)))
+            if self.exception_reporter is not None:
+                self.exception_reporter(error)
+            message = traceback.format_exception(type(error), error, error.__traceback__)
+            print(('FIX ME! ERROR:\n%s' % (message)))
             for i in range(0, len(insertlist)):
                 if i not in [SequenceTargetParameters.INPUT_VALUE]:
-                    print('[%d] %s' % (i, insertlist[i]))
+                    print(('[%d] %s' % (i, insertlist[i])))
+        finally:
+            self.qlock.unlock()
+
+    def get_sequence_target_parameter_by_id(self, cursor, sequence_id):
+        self.qlock.lock()
+        try:
+            cursor.execute("""SELECT
+                              Sequence_Id, 
+                              Response_Id, 
+                              Input_Location,
+                              Input_Position,
+                              Input_Name,
+                              Input_Value,
+                              Is_Dynamic
+                          FROM sequence_target_parameters WHERE Sequence_Id=?""", [int(sequence_id)])
+            return cursor
         finally:
             self.qlock.unlock()
 
     def insert_sequence_cookie(self, cursor, insertlist):
         self.qlock.lock()
         try:
-            insertlist[SequenceCookies.COOKIE_RAW_VALUE] = Compressed(str(insertlist[SequenceCookies.COOKIE_RAW_VALUE]))
+            insertlist[SequenceCookies.COOKIE_RAW_VALUE] = Compressed(insertlist[SequenceCookies.COOKIE_RAW_VALUE])
             cursor.execute("""INSERT INTO sequence_cookies (
                               Sequence_Id, 
                               Cookie_Domain,
@@ -725,6 +779,20 @@ class Db:
                            ) values (
                              ?, ?, ?, ?, ?
                            )""", insertlist)
+        finally:
+            self.qlock.unlock()
+
+    def get_sequence_cookies_by_id(self, cursor, sequence_id):
+        self.qlock.lock()
+        try:
+            cursor.execute("""SELECT 
+                              Sequence_Id, 
+                              Cookie_Domain,
+                              Cookie_Name,
+                              Cookie_Raw_Value,
+                              Is_Dynamic
+                           FROM sequence_cookies WHERE Sequence_Id=?""", [int(sequence_id)])
+            return cursor
         finally:
             self.qlock.unlock()
 
@@ -856,6 +924,7 @@ class Db:
         self.qlock.lock()
         try:
             """ Truncate the responses table. """
+            # TODO: clear additional locations
             cursor.execute("DELETE FROM differ_items")
             cursor.execute("DELETE FROM responses")
             cursor.execute("DELETE FROM content_data")
@@ -880,20 +949,20 @@ class Db:
 
     def insert_content_data(self, cursor, value):
         if not value or len(value) == 0:
-            digest = ''
-            value = ''
+            digest = b''
+            value = b''
         else:
             h = self.hashalgo()
             h.update(value)
             digest = h.hexdigest()
-        if not self.hashval_lookup.has_key(digest):
+        if digest not in self.hashval_lookup:
             try:
                 cursor.execute("INSERT INTO content_data (Hashval, Data) VALUES (?, ?)", [digest, Compressed(value)])
                 self.hashval_lookup[digest] = True
             except sqlite.IntegrityError:
                 # okay if exists
                 self.hashval_lookup[digest] = True
-            except sqlite.DatabaseError, e:
+            except sqlite.DatabaseError as e:
                 # okay if exists
                 if 'not unique' in str(e):
                     self.hashval_lookup[digest] = True
@@ -926,11 +995,14 @@ class Db:
 
             return rowid
 
-        except Exception, error:
-            print('FIX ME! ERROR: %s' % (traceback.format_exc(error)))
+        except Exception as error:
+            if self.exception_reporter is not None:
+                self.exception_reporter(error)
+            message = traceback.format_exception(type(error), error, error.__traceback__)
+            print(('FIX ME! ERROR:\n%s' % (message)))
             for i in range(0, len(values)):
                 if i not in [ResponsesTable.REQ_DATA, ResponsesTable.RES_DATA]:
-                    print('[%d] %s' % (i, values[i]))
+                    print(('[%d] %s' % (i, values[i])))
 
         finally:
             self.qlock.unlock()
@@ -1016,16 +1088,23 @@ class Db:
                 else:
                     value = ''
             else:
-                value = str(row[0])
+                # XXX: should convert bytes(?)
+                value = str(bytes(row[0]), 'utf-8', 'ignore')
+
             if rtype == bool:
                 if not value:
                     return False
-                return value.lower() in ['true', 'yes', 'y', '1']
+                if value.lower() in ['true', 'yes', 'y', '1']:
+                    return True
+                else:
+                    return False
             elif rtype == int:
                 try:
                     return int(value)
                 except ValueError:
                     return 0
+            elif rtype == bytes:
+                return value.encode('utf-8')
             else:
                 # TODO: implement more types
                 return value
@@ -1036,7 +1115,10 @@ class Db:
         if not is_locked:
             self.qlock.lock()
         try:
-            cursor.execute("UPDATE configuration SET ConfigValue=? WHERE Component=? AND ConfigName=?", [Compressed(str(value)), component, name])
+            # XXX: need to add correct handling for types instead assuming string conversions
+            if type(value) is not bytes:
+                value = bytes(str(value), 'utf-8')
+            cursor.execute("UPDATE configuration SET ConfigValue=? WHERE Component=? AND ConfigName=?", [Compressed(value), component, name])
             self.commit()
         finally:
             if not is_locked:
@@ -1049,7 +1131,10 @@ class Db:
             count = int(cursor.fetchone()[0])
             if 0 == count:
                 # TODO: gross
-                cursor.execute("INSERT INTO configuration (Component, ConfigName, ConfigValue) VALUES (?, ?, ?)", [component, name, Compressed(str(value))])
+                # XXX: need to add correct handling for types instead assuming string conversions
+                if type(value) is not bytes:
+                    value = bytes(str(value), 'utf-8')
+                cursor.execute("INSERT INTO configuration (Component, ConfigName, ConfigValue) VALUES (?, ?, ?)", [component, name, Compressed(value)])
                 self.commit()
             else:
                 self.update_config_value(cursor, component, name, value, True)
@@ -1480,7 +1565,11 @@ class Db:
         self.qlock.lock()
         try:
             duplist = insertlist[:]
-            duplist[SpiderPendingAnalysisTable.CONTENT] = Compressed(str(duplist[SpiderPendingAnalysisTable.CONTENT]))
+            if isinstance(duplist[SpiderPendingAnalysisTable.CONTENT], bytes):
+                item_bytes = duplist[SpiderPendingAnalysisTable.CONTENT]
+            else:
+                item_bytes = str(duplist[SpiderPendingAnalysisTable.CONTENT]).encode('utf-8', 'ignore')
+            duplist[SpiderPendingAnalysisTable.CONTENT] = Compressed(item_bytes)
             cursor.execute("""INSERT INTO spider_pending_analysis (Id, Analysis_Type, Content, Url, Depth) VALUES (?,?,?,?,?)""", duplist)
 
             cursor.execute("SELECT last_insert_rowid()")
@@ -1606,8 +1695,8 @@ class Db:
         self.qlock.lock()
         try:
             if not includeBody:
-                cursor.execute("SELECT Id, Url, ReqHeaders, '' ReqData, ResHeaders, \
-                               '' ResContent, Status, Length, ReqTime, ReqDate, Notes, \
+                cursor.execute("SELECT Id, Url, ReqHeaders, null ReqData, ResHeaders, \
+                               null ResContent, Status, Length, ReqTime, ReqDate, Notes, \
                                Results, Confirmed, \
                                ReqMethod, HostIP, ResContentType, DataOrigin, ReqDataHashval, ResContentHashval, ReqHost \
                                FROM responses")
@@ -1619,7 +1708,7 @@ class Db:
                                FROM responses, content_data cd1, content_data cd2 \
                                WHERE \
                                cd1.Hashval = ReqDataHashval and cd2.Hashval = ResContentHashval")
-            return cursor.fetchall()
+            return cursor
         finally:
             self.qlock.unlock()
 
@@ -1648,6 +1737,24 @@ class Db:
             if new_name != old_name:
                 cursor.execute("""INSERT INTO configuration (Component, ConfigName, ConfigValue) values (?, ?, ?)""", [component, new_name, old_value])
                 cursor.execute("""DELETE FROM configuration WHERE Component=? and ConfigName=?""", [component, old_name])
+        
+        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
+        self.conn.commit()
+
+        return version
+
+    def upgrade_to_3_0_1_pre(self, cursor):
+
+        version = '3.0.1-pre'
+        
+        cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
+        self.conn.commit()
+
+        return version
+
+    def upgrade_to_3_0_1(self, cursor):
+
+        version = '3.0.1'
         
         cursor.execute("UPDATE raft SET Value=? WHERE Name=?", [version, 'VERSION'])
         self.conn.commit()

@@ -79,6 +79,7 @@ class RequestRunner(QObject):
         self.sequence_enabled = False
         self.sequence_needed = False
         self.post_sequence_enabled = False
+        self.is_running_sequence = False
         if sequenceId:
             self.sequenceManager = SequenceManager(self.framework, sequenceId, self)
             self.sequence_enabled = True
@@ -126,6 +127,25 @@ class RequestRunner(QObject):
 
         return request
 
+    def run_sequence(self):
+        self.qlock.lock()
+        sequence_items = {}
+        try:
+            if self.sequence_needed:
+                self.setup_sequence_items()
+                self.sequence_needed = False
+            self.is_running_sequence = True
+        
+            for request in self.request_queue:
+                sequence_items[request.context] = request
+
+        finally:
+            self.qlock.unlock()
+
+        self.process_next()
+
+        return sequence_items
+
     def response_received(self, response):
         do_process = False
         user_request_completed = False
@@ -133,11 +153,11 @@ class RequestRunner(QObject):
         original_request = None
         self.qlock.lock()
         try:
-            if not self.inflight_list.has_key(response.context):
+            if response.context not in self.inflight_list:
                 raise Exception('unexpected response; context=%s' % (response.context))
             request = self.inflight_list.pop(response.context)
 
-            if self.request_context.has_key(response.context):
+            if response.context in self.request_context:
                 # user request
                 if not self.sequence_enabled:
                     user_request_completed = True
@@ -159,8 +179,12 @@ class RequestRunner(QObject):
                         self.setup_post_sequence_items()
             else:
                 is_sequence = True
+                if self.is_running_sequence:
+                    user_request_completed = True
 
             if 0 == len(self.inflight_list):
+                do_process = True
+            elif self.is_running_sequence:
                 do_process = True
             elif is_sequence:
                 do_process = False
@@ -194,11 +218,13 @@ class RequestRunner(QObject):
                     single_step = True
                 elif  self.post_sequence_enabled:
                     single_step = True
+                elif self.is_running_sequence:
+                    single_step = True
                 else:
                     single_step = False
 
                 request = self.request_queue.popleft()
-                if self.request_context.has_key(request.context):
+                if request.context in self.request_context:
                     if self.sequence_enabled and request.sequence_needed:
                         single_step = True
                         # put back user request

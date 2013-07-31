@@ -1,7 +1,7 @@
 #
 # Author: Gregory Fleischer (gfleischer@gmail.com)
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2013 RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -20,7 +20,9 @@
 #
 
 import collections
-import sys, re
+import sys
+import re
+import os
 
 re_counter = re.compile(r'^\d+=>')
 
@@ -43,15 +45,25 @@ def process(file):
     outfile = file[0:-4]+'.txt'
     output = open(outfile, 'w')
     count = 0
-    for k in ordered.keys():
+    for k in list(ordered.keys()):
         count += 1
 #        output.write('%s\t%s\n' % (k, count))
         output.write('%s\n' % (k))
     output.close()
 
-for file in sys.argv[1:]:
-    if not file.endswith('.dat'):
-        print('sorry don\'t know what to do with: %s' % file)
-    else:
-        process(file)
+files = []
+for arg in sys.argv[1:]:
+    if os.path.isfile(arg):
+        if not arg.endswith('.dat'):
+            print(('sorry don\'t know what to do with: %s' % arg))
+        else:
+            files.append(arg)
+    elif os.path.isdir(arg):
+        for file in os.listdir(arg):
+            if file.endswith('.dat'):
+                files.append(os.path.join(arg, file))
+
+for file in files:
+    process(file)
+
 

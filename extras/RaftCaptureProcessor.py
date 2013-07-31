@@ -1,7 +1,7 @@
 #
-# A urllib2 compatible processor module to generate RAFT capture files
+# A Python 3 urllib compatible processor module to generate RAFT capture files
 #
-# Copyright (c) 2011 by RAFT Team
+# Copyright (c) 2011-2013 by RAFT Team
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,26 @@
 # THE SOFTWARE
 # 
 
-import urllib2, StringIO, os, time, bz2, sys
-import re, string
+import urllib.request, urllib.error, urllib.parse
+import io
+import os
+import time
+import sys
+import lzma
+import re
+import string
 import threading
-import cStringIO
-from urllib2 import urlparse
+import base64
+from urllib import parse as urlparse
 from xml.sax.saxutils import escape, quoteattr
 
-class RaftCaptureProcessor(urllib2.BaseHandler):
-    class _wrapper(StringIO.StringIO):
+class RaftCaptureProcessor(urllib.request.BaseHandler):
+    class _wrapper(io.BytesIO):
         def __init__(self, parent, request, response):
             request = request
             self.response = response
             data = parent.write_capture(request, response)
-            StringIO.StringIO.__init__(self, data)
+            io.BytesIO.__init__(self, data)
 
         def __getattr__(self, name):
             return getattr(self.response,name)
@@ -43,19 +49,20 @@ class RaftCaptureProcessor(urllib2.BaseHandler):
     def __init__(self, directory, cut_count = 10000):
         self.lock = threading.Lock()
         self.directory = directory
-        self.re_nonprintable = re.compile('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r'))
+        self.re_nonprintable = re.compile(bytes('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r'), 'ascii'))
+        self.re_nonprintable_str = re.compile('[^%s]' % re.escape('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r'))
         self.cut_count = cut_count # TODO: add max size as well
         self.open_file()
     
     def open_file(self):
         now = time.time()
-        self.filename = os.path.join(self.directory, 'RaftCapture-{0}.xml.bz2'.format(int(now*1000)))
-        self.ofhandle = bz2.BZ2File(self.filename, 'wb')
-        self.ofhandle.write('<raft version="1.0">\n')
+        self.filename = os.path.join(self.directory, 'RaftCapture-{0}.xml.xz'.format(int(now*1000)))
+        self.ofhandle = lzma.LZMAFile(self.filename, 'wb')
+        self.ofhandle.write(b'<raft version="1.0">\n')
         self.write_count = 0
         
     def close(self):
-        self.ofhandle.write('</raft>')
+        self.ofhandle.write(b'</raft>')
         self.ofhandle.close()
 
     def http_request(self, req):
@@ -81,8 +88,8 @@ class RaftCaptureProcessor(urllib2.BaseHandler):
 
     def __write_capture(self, request, response):
 
-        ohandle = cStringIO.StringIO()
-        response_body = ''
+        ohandle = io.StringIO()
+        response_body = b''
         saved_exception = None
         try:
             ohandle.write('<capture>\n')
@@ -102,7 +109,7 @@ class RaftCaptureProcessor(urllib2.BaseHandler):
             ohandle.write('<host>%s</host>\n' % escape(request.get_host()))
             try:
                 # ghetto
-                addr = response.fp._sock.fp._sock.getpeername()
+                addr = response.fp.raw._sock.getpeername()
                 if addr:
                     ohandle.write('<hostip>%s</hostip>\n' % escape(addr[0]))
             except Exception as error:
@@ -112,50 +119,52 @@ class RaftCaptureProcessor(urllib2.BaseHandler):
             for item in request.header_items():
                 request_headers += item[0] + ': ' + '\r\n\t'.join(item[1:]) + '\r\n'
 
-            if self.re_nonprintable.search(request_headers):
-                ohandle.write('<headers encoding="base64">%s</headers>\n' % request_headers.encode('base64'))
+            if self.re_nonprintable_str.search(request_headers):
+                ohandle.write('<headers encoding="base64">%s</headers>\n' % base64.b64encode(request_headers.encode('utf-8')).decode('ascii'))
             else:
                 ohandle.write('<headers>%s</headers>\n' % escape(request_headers))
             if request.has_data():
                 request_body = request.get_data()
                 if self.re_nonprintable.search(request_body):
-                    ohandle.write('<body encoding="base64">%s</body>\n' % request_body.encode('base64'))
+                    ohandle.write('<body encoding="base64">%s</body>\n' % base64.b64encode(request_body).decode('ascii'))
                 else:
-                    ohandle.write('<body>%s</body>\n' % escape(request_body))
+                    ohandle.write('<body>%s</body>\n' % escape(request_body.decode('ascii')))
             ohandle.write('</request>\n')
             ohandle.write('<response>\n')
             status = int(response.getcode())
             ohandle.write('<status>%d</status>\n' % status)
             headers = response.info()
             if 'HEAD' == method or status < 200 or status in (204, 304,):
-                response_body = ''
+                response_body = b''
             else:
                 try:
                     response_body = response.read()
-                except urllib2.IncompleteRead, e:
+                except urllib2.IncompleteRead as e:
                     saved_exception = e
             response_headers = 'HTTP/1.1 %d %s\r\n' % (status, response.msg) # TODO: is there access to the HTTP version?
-            response_headers += ''.join(headers.headers)
-            content_type = headers.getheader('Content-Type')
-            content_length = headers.getheader('Content-Length')
+            response_headers += headers.as_string()
+            content_type = headers.get('Content-Type')
+            content_length = headers.get('Content-Length')
 
             if content_type:
                 ohandle.write('<content_type>%s</content_type>\n' % escape(content_type))
             if content_length:
                 ohandle.write('<content_length>%d</content_length>\n' % int(content_length))
-            if self.re_nonprintable.search(response_headers):
-                ohandle.write('<headers encoding="base64">%s</headers>\n' % response_headers.encode('base64'))
+
+            if self.re_nonprintable_str.search(response_headers):
+                ohandle.write('<headers encoding="base64">%s</headers>\n' % base64.b64encode(response_headers.encode('utf-8')).decode('ascii'))
             else:
                 ohandle.write('<headers>%s</headers>\n' % escape(response_headers))
             if response_body:
                 if self.re_nonprintable.search(response_body):
-                    ohandle.write('<body encoding="base64">%s</body>\n' % response_body.encode('base64'))
+                    ohandle.write('<body encoding="base64">%s</body>\n' % base64.b64encode(response_body).decode('ascii'))
                 else:
-                    ohandle.write('<body>%s</body>\n' % escape(response_body))
+                    ohandle.write('<body>%s</body>\n' % escape(response_body.decode('ascii')))
+
             ohandle.write('</response>\n')
             ohandle.write('</capture>\n')
 
-            self.ofhandle.write(ohandle.getvalue())
+            self.ofhandle.write(ohandle.getvalue().encode('utf-8'))
             ohandle.close()
             
             self.write_count += 1
@@ -163,7 +172,7 @@ class RaftCaptureProcessor(urllib2.BaseHandler):
                 self.close()
                 self.open_file()
 
-        except Exception, e:
+        except Exception as e:
             sys.stderr.write('*** unhandled error in RaftCaptureProcessor: %s\n' % (e))
 
         if saved_exception:
@@ -171,7 +180,7 @@ class RaftCaptureProcessor(urllib2.BaseHandler):
 
         return response_body
 
-class IgnoreRedirect(urllib2.HTTPRedirectHandler):
+class IgnoreRedirect(urllib.request.HTTPRedirectHandler):
     def http_error_301(self, req, fp, code, msg, hdrs):
         return fp
     def http_error_302(self, req, fp, code, msg, hdrs):
@@ -203,24 +212,24 @@ if '__main__' == __name__:
 
     with closing(RaftCaptureProcessor('.')) as raftCapture:
         # proxyHandler = urllib2.ProxyHandler({'http':'localhost:8080', 'https':'localhost:8080'})
-        opener = urllib2.build_opener(raftCapture, )
+        opener = urllib.request.build_opener(raftCapture, )
 
         for target in targets:
             url = 'http://'+target+'/'
-            req = urllib2.Request(url)
+            req = urllib.request.Request(url)
             req.add_header('User-agent', 'Mozilla/5.0 (Windows NT 5.1; rv:2.0) Gecko/20100101 Firefox/4.0')
 
             try:
                 response = opener.open(req, timeout=5)
-            except urllib2.HTTPError, error:
+            except urllib.error.HTTPError as error:
                 response = error
-            except urllib2.URLError, error:
+            except urllib.error.URLError as error:
                 sys.stdout.write('failed on %s: %s\n' % (url, error))
                 sys.stdout.flush()
                 response = None
 
             if False and response:
-                print('%d %s' % (response.getcode(), response.msg))
-                print(''.join(response.headers.headers))
-                print(response.read())
+                print(('%d %s' % (response.getcode(), response.msg)))
+                print((''.join(response.headers.headers)))
+                print((response.read()))
 

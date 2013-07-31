@@ -34,13 +34,13 @@ class ExifExtractorSingleResult(SingleResult.SingleResult):
         #datalist = ast.literal_eval(self.data)
         #dataoutput = '<ol><li>%s</li></ol>' % self.data
             dataoutput = "<ol>"
-            for k in self.data.iterkeys():
+            for k in self.data.keys():
                 dataoutput += "<li>%s: %s</li>" % (k,self.data[k])
             dataoutput += '</ol>'
         except ValueError:
-            print "ValueError: %s" % self.data
+            print("ValueError: %s" % self.data)
         except:
-            print "Error occurred on this data: %s" % self.data
+            print("Error occurred on this data: %s" % self.data)
 
         NiceOutput="""
         <h3>%s</h3><br>

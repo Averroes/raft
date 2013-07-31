@@ -19,7 +19,7 @@
 # along with RAFT.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from urllib2 import urlparse
+from urllib import parse as urlparse
 import re
 
 class BaseExtractor():
@@ -46,11 +46,14 @@ class BaseExtractor():
 
         self.re_full_url = re.compile('%s/(?:%s)?' % (self.host_spec, self.path_spec))
         self.re_relative_url = re.compile(self.relative_spec)
+        self._htmlExtractor = None
+        self._postDataExtractor = None
+        self._jsExtractor = None
 
     def getBaseType(self, content_type):
         # TODO: improve
         content_type = content_type.lower()
-        if self.CONTENT_TYPE_MAPPING.has_key(content_type):
+        if content_type in self.CONTENT_TYPE_MAPPING:
             return self.CONTENT_TYPE_MAPPING[content_type]
         if 'html' in content_type:
             return 'html'
@@ -59,16 +62,22 @@ class BaseExtractor():
         return content_type
 
     def getExtractor(self, content_type):
-        import HtmlExtractor
-        import PostDataExtractor
-        import JSExtractor
         base_type = self.getBaseType(content_type)
         if 'html' == content_type:
-            return HtmlExtractor.HtmlExtractor()
+            if self._htmlExtractor is None:
+                from . import HtmlExtractor
+                self._htmlExtractor = HtmlExtractor.HtmlExtractor()
+            return self._htmlExtractor
         elif 'post-data' == content_type:
-            return PostDataExtractor.PostDataExtractor()
+            if self._postDataExtractor is None:
+                from . import PostDataExtractor
+                self._postDataExtractor = PostDataExtractor.PostDataExtractor()
+            return self._postDataExtractor
         elif 'javascript' == content_type:
-            return JSExtractor.JSExtractor()
+            if self._jsExtractor is None:
+                from . import JSExtractor
+                self._jsExtractor = JSExtractor.JSExtractor()
+            return self._jsExtractor
         else:
             raise Exception('Unknown extractor: %s' % content_type)
 

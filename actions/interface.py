@@ -5,7 +5,7 @@
 #          Nathan Hamiel
 #          Gregory Fleischer
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2013 RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -27,7 +27,6 @@ from core.database.constants import ResponsesTable
 
 def format_headers_str(data):
     """ Format header values from a Python dictionary to a string """
-    
     formatted = ""
     for key in data:
         formatted += "{0}: {1}\n".format(key, data[key])
@@ -38,17 +37,25 @@ def index_to_id(dataModel, index):
     index = dataModel.index(index.row(), ResponsesTable.ID)
     if index.isValid():
         currentItem = dataModel.data(index)
-        if currentItem.isValid():
-            Id = str(currentItem.toString())
-            return Id
+        if currentItem is not None:
+            return int(currentItem)
     return None
 
 def index_to_url(dataModel, index):
     index = dataModel.index(index.row(), ResponsesTable.URL)
     if index.isValid():
         currentItem = dataModel.data(index)
-        if currentItem.isValid():
-            url = str(currentItem.toString())
-            return url
+        if str == type(currentItem):
+            return currentItem
     return None
 
+def data_row_to_response_items(row):
+    datarow = list(row)
+    responseItems = []
+    for ndx in range(len(datarow)):
+        if ndx in (ResponsesTable.REQ_HEADERS, ResponsesTable.REQ_DATA, ResponsesTable.RES_HEADERS, ResponsesTable.RES_DATA):
+            responseItems.append(bytes(datarow[ndx] or b''))
+        else:
+            responseItems.append(str(datarow[ndx] or ''))
+
+    return responseItems

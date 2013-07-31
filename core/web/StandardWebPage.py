@@ -3,7 +3,7 @@
 #
 # Author: Gregory Fleischer (gfleischer@gmail.com)
 #
-# Copyright (c) 2011 RAFT Team
+# Copyright (c) 2011-2013 RAFT Team
 #
 # This file is part of RAFT.
 #
@@ -33,6 +33,8 @@ class StandardWebPage(BaseWebPage):
         self.framework = framework
         self.loadFinished.connect(self.handle_loadFinished)
         self.contentsChanged.connect(self.handle_contentsChanged)
+        self.unsupportedContent.connect(self.handle_unsupportedContent)
+        self.setForwardUnsupportedContent(True)
 
     def set_page_settings(self, settings):
         # common settings handled by base
@@ -52,3 +54,7 @@ class StandardWebPage(BaseWebPage):
 
     def acceptNavigationRequest(self, frame, request, navigationType):
         return True
+
+    def handle_unsupportedContent(self, reply):
+        # TODO: implement
+        pass
