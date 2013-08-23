@@ -140,6 +140,8 @@ class ParseAdapter:
                         self.confirmed = bool(confirmed)
                     except ValueError:
                         self.confirmed = confirmed.lower() in ('y', '1', 'true', 'yes')
+                else:
+                    self.confirmed = ''
             else:
                 self.elapsed = ''
                 self.notes = ''
