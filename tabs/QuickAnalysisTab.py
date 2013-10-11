@@ -61,6 +61,12 @@ class QuickAnalysisTab(QObject):
         self.close_cursor()
         self.Data = None
 
+    def close_cursor(self):
+        if self.cursor and self.Data:
+            self.cursor.close()
+            self.Data.release_thread_cursor(self.cursor)
+            self.cursor = None
+
     def fill_edits(self):
         self.mainWindow.quickAnalysisCodeEntry.setText(self.framework.get_raft_config_value('QuickAnalysis.CodeEntry.Python'))
 
