@@ -295,7 +295,7 @@ class RaftCmdLine():
 
         for script_env in self.capture_filter_scripts:
             self.call_script_method_with_filename(script_env, 'end', filename)
-        for script_env in self.capture_filter_scripts:
+        for script_env in self.process_capture_scripts:
             self.call_script_method_with_filename(script_env, 'end', filename)
 
     def load_script_file(self, filename):
