@@ -630,7 +630,7 @@ class burp_parse_state():
                 elif b'<state>' == nexttag:
                     self.state = self.S_BEGIN_STATE
                 else:
-                    raise Exception
+                    raise Exception('unhandled tag in %s state: %s' % (self.state, nexttag.decode('utf-8')))
             elif self.state in (self.S_BEGIN_STATE, self.S_END_TARGET, self.S_END_PROXY, self.S_END_SCANNER, self.S_END_REPEATER):
                 nexttag = self.__read_tag()
                 if b'<target>' == nexttag:
@@ -644,7 +644,7 @@ class burp_parse_state():
                 elif b'</state>' == nexttag:
                     self.state = self.S_END_STATE
                 else:
-                    raise Exception
+                    raise Exception('unhandled tag in %s state: %s' % (self.state, nexttag.decode('utf-8')))
             elif self.S_BEGIN_TARGET == self.state:
                 nexttag = self.__read_tag()
                 if b'<item>' == nexttag:
@@ -654,17 +654,20 @@ class burp_parse_state():
                 elif b'</target>' == nexttag:
                     self.state = self.S_END_TARGET
                 else:
-                    raise Exception
+                    raise Exception('unhandled tag in S_BEGIN_TARGET state: %s' % (nexttag.decode('utf-8')))
             elif self.S_BEGIN_PROXY == self.state:
                 nexttag = self.__read_tag()
                 if b'<historyItem>' == nexttag:
                     result = self.__process_historyItem()
                     if result:
                         return result
+                elif b'<wsHistoryItem>' == nexttag:
+                    # TODO: XXX implement
+                    self.__read_until_tag(b'</wsHistoryItem>')
                 elif b'</proxy>' == nexttag:
                     self.state = self.S_END_PROXY
                 else:
-                    raise Exception
+                    raise Exception('unhandled tag in S_BEGIN_PROXY state: %s' % (nexttag.decode('utf-8')))
             elif self.S_BEGIN_SCANNER == self.state:
                 nexttag = self.__read_tag()
                 if b'<issue>' == nexttag:
@@ -685,7 +688,7 @@ class burp_parse_state():
                 elif b'</scanner>' == nexttag:
                     self.state = self.S_END_SCANNER
                 else:
-                    raise Exception
+                    raise Exception('unhandled tag in S_BEGIN_SCANNER state: %s' % (nexttag.decode('utf-8')))
             elif self.state in (self.S_BEGIN_REPEATER, self.S_END_REQUEST_PANEL):
                 nexttag = self.__read_tag()
                 if b'<requestPanel>' == nexttag:
@@ -693,7 +696,7 @@ class burp_parse_state():
                 elif b'</repeater>' == nexttag:
                     self.state = self.S_END_REPEATER
                 else:
-                    raise Exception
+                    raise Exception('unhandled tag in %s state: %s' % (self.state, nexttag.decode('utf-8')))
             elif self.S_BEGIN_REQUEST_PANEL == self.state:
                 nexttag = self.__read_tag()
                 if b'<tabCaption>' == nexttag:
@@ -708,10 +711,13 @@ class burp_parse_state():
                     result = self.__process_repeater_historyItem()
                     if result:
                         return result
+                elif b'<wsHistoryItem>' == nexttag:
+                    # TODO: XXX implement
+                    self.__read_until_tag(b'</wsHistoryItem>')
                 elif b'</requestPanel>' == nexttag:
                     self.state = self.S_END_REQUEST_PANEL
                 else:
-                    raise Exception
+                    raise Exception('unhandled tag in S_BEGIN_REQUEST_PANEL state: %s' % (nexttag.decode('utf-8')))
             elif self.S_BEGIN_CONFIG == self.state:
                 self.__read_until_tag(b'</config>')
                 self.state = self.S_END_CONFIG
