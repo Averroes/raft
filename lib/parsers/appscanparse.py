@@ -407,8 +407,10 @@ class appscan_parse_xml():
                     if res_length > 0:
                         pass
                     else:
-                        response_body = ''
-                        has_response_body = True
+                        # no response length ?
+                        pass
+#                        response_body = ''
+#                        has_response_body = True
                 elif ':' in line:
                     response_headers_io.write(line + '\r\n')
                     name, value = [m.strip() for m in line.split(':', 1)]
