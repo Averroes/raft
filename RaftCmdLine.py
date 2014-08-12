@@ -25,6 +25,7 @@ import argparse
 import os
 import bz2
 import lzma
+import glob
 
 from core.database import database
 from core.data.RaftDbCapture import RaftDbCapture
