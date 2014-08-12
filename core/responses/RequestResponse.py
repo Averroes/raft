@@ -165,3 +165,7 @@ class RequestResponse(object):
         self._responseUTF8Headers, self._responseUTF8Body, self._rawResponse = ContentHelper.combineRaw(self.responseHeaders, self.responseBody, self.charset)
         self._combinedResponse = True
 
+    @property
+    def requestUrl(self):
+        """ Alias for responseUrl """
+        return self.responseUrl
