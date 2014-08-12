@@ -774,7 +774,7 @@ class HtmlExtractor(BaseExtractor):
                         html_bytes = bodyText.encode('utf-8', 'ignore')
                         break
 
-            html = html_bytes.strip()
+            html_bytes = html_bytes.strip()
             if len(html_bytes) > 0:
                 htmlbuf = BytesIO(html_bytes)
                 try:
