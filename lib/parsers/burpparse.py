@@ -1193,7 +1193,10 @@ class burp_parse_xml():
         if response and response[0]:
             content_type = self.util.get_content_type(response[0])
         else:
-            content_type = ''
+            # TODO: fix me
+#            content_type = self.util.content_type_from_mimetype(cur['mimetype'])
+            content_type = cur['mimetype']
+            pass
 
         return ('XML', host, hostip, url, status, datetime, request, response, method, content_type, {'notes':cur['comment']})
 

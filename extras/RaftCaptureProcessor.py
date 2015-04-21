@@ -104,9 +104,21 @@ class RaftCaptureProcessor(urllib.request.BaseHandler):
                 # TODO: will this ever happen?
                 relative_url += '#' + parsed.fragment
 
+            host = None
+            request_body = None
+
+            if hasattr(request, 'get_host'):
+                host = request.get_host()
+                # support 3.3
+                if request.has_data():
+                    request_body = request.get_data()
+            else:
+                host = request.host
+                request_body = request.data
+            
             ohandle.write('<method>%s</method>\n' % escape(method))
             ohandle.write('<url>%s</url>\n' % escape(url))
-            ohandle.write('<host>%s</host>\n' % escape(request.get_host()))
+            ohandle.write('<host>%s</host>\n' % escape(host))
             try:
                 # ghetto
                 addr = response.fp.raw._sock.getpeername()
@@ -123,8 +135,7 @@ class RaftCaptureProcessor(urllib.request.BaseHandler):
                 ohandle.write('<headers encoding="base64">%s</headers>\n' % base64.b64encode(request_headers.encode('utf-8')).decode('ascii'))
             else:
                 ohandle.write('<headers>%s</headers>\n' % escape(request_headers))
-            if request.has_data():
-                request_body = request.get_data()
+            if request_body is not None:
                 if self.re_nonprintable.search(request_body):
                     ohandle.write('<body encoding="base64">%s</body>\n' % base64.b64encode(request_body).decode('ascii'))
                 else:
@@ -230,6 +241,6 @@ if '__main__' == __name__:
 
             if False and response:
                 print(('%d %s' % (response.getcode(), response.msg)))
-                print((''.join(response.headers.headers)))
+                print((''.join(response.headers._headers)))
                 print((response.read()))
 
