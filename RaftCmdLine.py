@@ -134,6 +134,13 @@ class RaftCmdLine():
                 initializer()
                 script_env['initialized'] = True
 
+    def setup_script_finalizers(self):
+        for key, script_env in self.scripts.items():
+            finalizer = script_env.functions.get('finalize')
+            if finalizer and not script_env['finalized']:
+                finalizer()
+                script_env['finalized'] = True
+
     def reset_script_begin_end(self):
         for key, script_env in self.scripts.items():
             script_env['begin_called'] = False
@@ -152,12 +159,17 @@ class RaftCmdLine():
             if arg is None:
                 continue
             for filearg in arg:
+                if filearg.startswith('~'):
+                    filearg = os.path.expanduser(filearg)
+                if '$' in filearg or '%' in filearg:
+                    filearg = os.path.expandvars(filearg)
                 if '*' in filearg:
                     file_list = glob.glob(filearg)
                 elif os.path.exists(filearg):
                     file_list = [filearg]
                 for filename in file_list:
                     call_func(filename, func, name)
+        self.setup_script_finalizers()
 
     def export_to_raft_capture(self, filename, fhandle):
         """ Export to RAFT capture format """
@@ -204,6 +216,8 @@ class RaftCmdLine():
 
         for script_env in self.capture_filter_scripts:
             self.call_script_method_with_filename(script_env, 'end', filename)
+
+        self.setup_script_finalizers()
 
     def import_one_file(self, filename, func, funcname):
         """ Import one file using specified parser function"""
@@ -304,6 +318,7 @@ class RaftCmdLine():
             return self.scripts[filename]
         script_env = self.scriptLoader.load_from_file(filename)
         script_env['initialized'] = False
+        script_env['finalized'] = False
         self.scripts[filename] = script_env
         return script_env
 
