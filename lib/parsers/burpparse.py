@@ -28,6 +28,7 @@ import base64
 from io import StringIO
 import bz2
 import lzma
+import sys
 
 class BurpUtil():
     def __init__(self):
@@ -1197,6 +1198,9 @@ class burp_parse_xml():
 #            content_type = self.util.content_type_from_mimetype(cur['mimetype'])
             content_type = cur['mimetype']
             pass
+
+        if type(content_type) is bytes:
+            content_type = str(content_type, 'utf-8', 'ignore')
 
         return ('XML', host, hostip, url, status, datetime, request, response, method, content_type, {'notes':cur['comment']})
 
